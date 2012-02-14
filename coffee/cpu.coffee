@@ -1,0 +1,9 @@
+class cpu
+	constructor: ->
+		console.log "cpu.create"
+	configure: ->
+		console.log "cpu.configure"
+	start: ->
+		console.log "cpu.start"
+	stop: ->
+		console.log "cpu.stop"

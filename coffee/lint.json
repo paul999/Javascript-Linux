@@ -1,0 +1,15 @@
+{
+  "no_tabs" : {
+    "level" : "ignore"
+  },
+  "no_throwing_strings" : {
+    "level" : "warning"
+  },
+  "indentation" : {
+    "value" : 1,
+    "level" : "error"
+  },
+  "camel_case_classes" : {
+    "level" : "ignore"
+  }
+}
