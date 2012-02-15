@@ -13,6 +13,14 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-pc = new pc
-pc.start()
-pc.stop()
+class IOPortHandler
+	configure: ->
+		console.log "IOPortHandler configure"
+
+	type: ->
+		"IOPortHandler"
+
+	registerIOPortCapable: ->
+		return
+	initialised: ->
+		return true

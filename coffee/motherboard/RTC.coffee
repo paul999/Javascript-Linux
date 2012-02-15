@@ -13,6 +13,14 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-pc = new pc
-pc.start()
-pc.stop()
+class RTC
+	constructor: (@ioPort, @irq) ->
+		console.log "Created RTC with Port #{ioPort} and irq #{irq}"
+
+	configure: ->
+		console.log "Configure RTC"
+
+	type: ->
+		"RTC"
+	initialised: ->
+		return true

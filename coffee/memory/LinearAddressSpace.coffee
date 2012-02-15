@@ -13,6 +13,10 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-pc = new pc
-pc.start()
-pc.stop()
+class LinearAddressSpace
+	configure: ->
+		console.log "LinearAddressSpace configure"
+	type: () ->
+		"LinearAddresSpace"
+	initialised: ->
+		return true

@@ -1,0 +1,21 @@
+A Javascript x86 emulator written in Coffeescript.
+
+Some of the code based on:
+	JPC: A x86 PC Hardware Emulator for a pure Java Virtual Machine
+	Release Version 2.0
+
+	A project from the Physics Dept, The University of Oxford
+
+	Copyright (C) 2007-2009 Isis Innovation Limited
+
+Build the Javascript source, use make (Coffeescript and coffeelint both need to be installed on your computer) and open index.html in the browser.
+If you want to have the minified version of the source, you can call make minify, however the minified jar from google will need to be downloaded seperately. The index.html file right now doesnt use the minified version!
+
+Please note this is work in progress, and right now it would not work at all :).
+
+If you want to run the emulator, there is debug information written into the console log, right now this cant be disabled. Right now the javascript sources will need to be build directly from the coffeescript source files, they arent in this repo.
+
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License version 2 as published by
+the Free Software Foundation.

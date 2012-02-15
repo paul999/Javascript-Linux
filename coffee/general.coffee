@@ -13,6 +13,14 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-pc = new pc
-pc.start()
-pc.stop()
+class general
+	scale64: (input,multiply,devide) ->
+		rl = (0xffffffff & input) * multiply
+		rh = (input >>> 32) * multiply
+
+		rh += (rl >> 32)
+
+		resultHigh = 0xffffffff & (rh / divide)
+		resultLow = 0xffffffff & ((((rh % divide) << 32) + (rl & 0xffffffff)) / divide)
+
+		(resultHigh << 32) | resultLow
