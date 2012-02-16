@@ -33,9 +33,9 @@ class pc
 
 		@manager = new CodeBlockManager
 		@PhysicalAddressSpace = new PhysicalAddressSpace(@manager)
-		@LinearAddressSpace = new LinearAddressSpace
+		@LinearAddr = new LinearAddressSpace
 		@add(@PhysicalAddressSpace)
-		@add(@LinearAddressSpace)
+		@add(@LinearAddr )
 
 		@add(@proc)
 		@add(new IOPortHandler)
@@ -118,6 +118,7 @@ class pc
 		init = @_configure()
 
 		while init == false && count < 100
+			console.log "init loop"
 			init = @_configure()
 			count++
 
@@ -149,8 +150,8 @@ class pc
 		nextClockCheck = @INSTRUCTIONS_BETWEEN_INTERRUPTS
 
 		for i in [0..99]
-			block = 0
-			#block = @linearAddr.executeVirtual8086(@proc, @proc.getInstructionPointer())
+			#block = 0
+			block = @LinearAddr.executeVirtual8086(@proc, @proc.getInstructionPointer())
 
 			x86Count += block
 			clockx86Count += block

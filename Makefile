@@ -31,4 +31,4 @@ test:
 	coffeelint -f coffee/lint.json coffee/processor/*.coffee
 
 minify: test build
-	java -jar ../compiler-latest/compiler.jar --language_in=ECMASCRIPT5_STRICT --compilation_level=ADVANCED_OPTIMIZATIONS --manage_closure_dependencies --js=src/memory.js --js=src/motherboard.js --js=src/processor.js --js=src/pc.js --js_output_file=src/emulator-min.js
+	java -jar ../compiler-latest/compiler.jar --output_manifest=src/out --create_source_map=src/src --language_in=ECMASCRIPT5_STRICT --compilation_level=ADVANCED_OPTIMIZATIONS --manage_closure_dependencies --js=src/memory.js --js=src/motherboard.js --js=src/processor.js --js=src/pc.js --js_output_file=src/emulator-min.js
