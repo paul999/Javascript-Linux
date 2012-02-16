@@ -13,12 +13,11 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-class LinearAddressSpace
-	configure: ->
-		console.log "LinearAddressSpace configure"
-
-
+class LazyCodeBlockMemory
 	type: () ->
-		"LinearAddresSpace"
+		"LazyCodeBlockMemory"
+
+	getSize: ->
+		return 4096
 	initialised: ->
 		return true

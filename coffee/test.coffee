@@ -14,5 +14,3 @@
 # the Free Software Foundation.
 
 pc = new pc
-pc.start()
-pc.stop()

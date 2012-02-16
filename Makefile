@@ -22,11 +22,13 @@ build:
 	coffee -l -b -c -j pc.js -o src/ coffee/*.coffee
 	coffee -l -b -c -j motherboard.js -o src/ coffee/motherboard/*.coffee
 	coffee -l -b -c -j memory.js -o src/ coffee/memory/*
+	coffee -l -b -c -j processor.js -o src/ coffee/processor/*
 
 test:
 	coffeelint -f coffee/lint.json coffee/*.coffee
 	coffeelint -f coffee/lint.json coffee/motherboard/*.coffee
 	coffeelint -f coffee/lint.json coffee/memory/*.coffee
+	coffeelint -f coffee/lint.json coffee/processor/*.coffee
 
-minify: build test
-	java -jar ../compiler-latest/compiler.jar --language_in=ECMASCRIPT5_STRICT --compilation_level=ADVANCED_OPTIMIZATIONS --manage_closure_dependencies --js=src/memory.js --js=src/motherboard.js --js=src/pc.js --js_output_file=src/emulator-min.js
+minify: test build
+	java -jar ../compiler-latest/compiler.jar --language_in=ECMASCRIPT5_STRICT --compilation_level=ADVANCED_OPTIMIZATIONS --manage_closure_dependencies --js=src/memory.js --js=src/motherboard.js --js=src/processor.js --js=src/pc.js --js_output_file=src/emulator-min.js

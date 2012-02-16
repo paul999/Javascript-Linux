@@ -15,7 +15,12 @@
 
 #TODO: Controleer of coffeescript/javascript references gebruikt
 # of vars kopieert.
+
+SYS_RAM_SIZE = 1024
+
 class pc
+	@INSTRUCTIONS_BETWEEN_INTERRUPTS = 1
+	@stp = false
 	constructor: ->
 		console.log "pc.create"
 		@items = new Array()
@@ -23,7 +28,8 @@ class pc
 		@configured = false
 		@started = false
 
-		@general = new general
+		@general = new general()
+		@proc= new processor()
 
 		@manager = new CodeBlockManager
 		@PhysicalAddressSpace = new PhysicalAddressSpace(@manager)
@@ -31,7 +37,7 @@ class pc
 		@add(@PhysicalAddressSpace)
 		@add(@LinearAddressSpace)
 
-		@add(new cpu)
+		@add(@proc)
 		@add(new IOPortHandler)
 		@add(new InterruptController)
 		@add(new DMAController(false, true))
@@ -47,7 +53,49 @@ class pc
 	start: ->
 		@configure()
 
+		@running = true
+
+
+		COUNTDOWN = 10000000
+		COUNTDOWN = 1000
+		markTime = 0#System.currentTimeMillis()
+		execCount = COUNTDOWN
+		totalExec = 0
+		while @running
+			if (@stp)
+				console.log "stop"
+				return
+
+			execCount -= @execute()
+			execCount -= 1
+			if (execCount > 0)
+				continue
+
+			totalExec += (COUNTDOWN - execCount)
+			execCount = COUNTDOWN
+			if (@updateMHz(markTime, totalExec))
+				markTime = 0 #System.currentTimeMillis()
+				totalExec = 0
+				return
+
+
+
+		@stop()
+		console.log "PC stopped"
+
+	updateMHz: () ->
+		console.log "updateMHz"
+		return
+
 	stop: ->
+		@running = false
+		@stp = true
+		console.log "STOP!"
+
+		alert("stop")
+
+		@proc = null
+
 
 	_configure: ->
 		init = true
@@ -83,3 +131,33 @@ class pc
 			console.log errors
 			alert errors
 			return false
+
+	execute: ->
+#		console.log "PC execute"
+		return @executeVirtual8086()
+#		if (processor.isProtectedMode())
+#			if (processor.isVirtual8086Mode())
+#				return executeVirtual8086()
+#			else
+#				return executeProtected()
+#
+#		else
+#			return executeReal()
+	executeVirtual8086: ->
+		x86Count = 0
+		clockx86Count = 0
+		nextClockCheck = @INSTRUCTIONS_BETWEEN_INTERRUPTS
+
+		for i in [0..99]
+			block = 0
+			#block = @linearAddr.executeVirtual8086(@proc, @proc.getInstructionPointer())
+
+			x86Count += block
+			clockx86Count += block
+
+			if (x86Count > nextClockCheck)
+				nextClockCheck = x86Count + @INSTRUCTIONS_BETWEEN_INTERRUPTS
+				proc.processVirtual8086Modeinterrupts(clockx86Count)
+				clockx86Count = 0
+
+		return x86Count

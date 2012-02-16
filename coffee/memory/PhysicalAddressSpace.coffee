@@ -38,13 +38,115 @@ class PhysicalAddressSpace extends AddressSpace
 #		@nona20MaskedIndex = [][] #TODO: Check for syntax
 #		@a20MaskedIndex = [][]
 
-		@initialiseMemory()
+#		@initialiseMemory() # I dont think we really need to write all memory already.
 		@setGateA20State(false)
+
+	initialiseMemory: ->
+#		return
+		ct = 0
+		while true
+			@mapMemory(ct, new LazyCodeBlockMemory(@BLOCK_SIZE, @manager))
+
+			ct+= @BLOCK_SIZE
+			console.log "New CT: " + ct
+			if ct >= @SYS_RAM_SIZE
+				break
+
+#		for i in [0..31]
+#			@mapMemory(0xd0000 + 1 * @BLOCK_SIZE, new UnconnectedMemoryBlock())
+
+	mapMemory: (start, block) ->
+		if ((start % @BLOCK_SIZE) != 0)
+			throw "Cannot allocate memory starting at " + start + "; this is not aligned with " + @BLOCK_SIZE + " bytes."
+
+		if (block.getSize() != @BLOCK_SIZE)
+			throw "Can only allocate memory in blocks of " + @BLOCK_SIZE
+
+		@unmap(start, @BLOCK_SIZE)
+
+		s = 0xFFFFFFFF & start
+		@setMemoryBlockAt(s, block)
+
+		return
+
+	unmap: (start, length) ->
+		if ((start % @BLOCK_SIZE) != 0)
+			throw "Cannot deallocate memory starting at " + start + "; this not not block aligned at " + @BLOCK_SIZE + " bytes"
+
+		if ((length % @BLOCK_SIZE) != 0)
+			throw "Cannot deallocate memory in partial blocks. " + length + " is not a multiple of  " + @BLOCK_SIZE
+
+		i = 0
+		while true
+			@setMemoryBlockAt(i, @UNCONNECTED)
+
+			i += @BLOCK_SIZE
+			if (i >= start + length)
+				break
+
+	setMemoryBlockAt:(i, b) ->
+		try
+			int idx = i >>> @INDEX_SHIFT
+			@quickNonA20MaskedIndex[idx] = b
+
+			if ((idx & (@GATE20_MASK >>> @INDEX_SHIFT)) == idx)
+				@quickA20MaskedIndex[idx] = b
+				@quickA20MaskedIndex[idx | ((~@GATE20_MASK) >>> @INDEX_SHIFT)] = b
+		catch error
+			try
+				@nonA20MaskedIndex[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & BOTTOM_INDEX_MASK] = b
+			catch e
+				return
+#				console.log e
+#				console.log "Origal code declares new memory object here."
+
+			if ((i & @GATEA20_MASK) == i)
+				try
+					@a20MaskedIndex[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK] = b
+				catch e
+					return
+#					console.log e
+#					console.log "Origal code declares new memory object here."
+				modi = i | ~@GATE20_MASK
+
+				try
+					@a20MaskedIndex[mode >>> @TOP_INDEX_SHIFT][(modi >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK] = b
+				catch e
+					return
+#					console.log e
+#					console.log "Origal code declares new memory object here."
+
+	setGateA20State: (value) ->
+		@gateA20MaskState = value
+
+		if (value)
+			throw "Not supported"
+			#@quickIndex = @quickNonA20MaskedIndex
+			#@index = @nonA20MaskedIndex
+		else
+			@quickIndex = @quickA20MaskedIndex
+			@index = @a20MaskedIndex
+
+		if ((@linearAddr) && @linearAddr.isPagingEnabled())
+			@linearAddr.flush()
+
 
 	type: ->
 		"PhysicalAddressSpace"
 	initialised: ->
-		return true
+		if (@linearAddr && @linearAddr != null)
+			return true
+		return false
+
+	acceptComponent: (component, type = "error") ->
+		if (!type || type == "error" || type == null)
+			throw "bc break, type is required"
+
+
+		if (type == "LinearAddresSpace")
+			console.log "got a LinearAddresSpace"
+			@linearAddr = component
+
 
 class UnconnectedMemoryBlock
 	constructor: ->
@@ -60,7 +162,7 @@ class UnconnectedMemoryBlock
 		throw "Cannot load array into unconnected memory block"
 
 	getSize: ->
-		return
+		return 4096
 
 	getByte: ->
 		return -1
