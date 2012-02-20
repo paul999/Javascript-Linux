@@ -88,32 +88,32 @@ class PageFaultWrapper
 		throw "Not supported yet."
 
 class LinearAddressSpace extends AddressSpace
-	@PF_NOT_PRESENT_RU = new PageFaultWrapper(4)
-	@PF_NOT_PRESENT_RS = new PageFaultWrapper(0)
-	@PF_NOT_PRESENT_WU = new PageFaultWrapper(6)
-	@PF_NOT_PRESENT_WS = new PageFaultWrapper(2)
-
-
-	@PF_PROTECTION_VIOLATION_RU = new PageFaultWrapper(5)
-	@PF_PROTECTION_VIOLATION_WU = new PageFaultWrapper(7)
-	@PF_PROTECTION_VIOLATION_WS = new PageFaultWrapper(3)
-
-	@FOUR_M = 0x01
-	@FOUR_K = 0x00
-
-	@baseAddress = 0
-	@lastAddress = 0
-	@pagingDisabled = true
-	@globalPagesEnabled = false
-	@writeProtectedUserPages = false
-	@pageSizeExtensions = false
-
 	constructor: ->
 		console.log "create LinearAddressSpacce"
 
 		super
 
-		@nonGlobalPAges = new Int32Array()
+		@PF_NOT_PRESENT_RU = new PageFaultWrapper(4)
+		@PF_NOT_PRESENT_RS = new PageFaultWrapper(0)
+		@PF_NOT_PRESENT_WU = new PageFaultWrapper(6)
+		@PF_NOT_PRESENT_WS = new PageFaultWrapper(2)
+
+
+		@PF_PROTECTION_VIOLATION_RU = new PageFaultWrapper(5)
+		@PF_PROTECTION_VIOLATION_WU = new PageFaultWrapper(7)
+		@PF_PROTECTION_VIOLATION_WS = new PageFaultWrapper(3)
+
+		@FOUR_M = 0x01
+		@FOUR_K = 0x00
+
+		@baseAddress = 0
+		@lastAddress = 0
+		@pagingDisabled = true
+		@globalPagesEnabled = false
+		@writeProtectedUserPages = false
+		@pageSizeExtensions = false
+
+		@nonGlobalPages = new Int32Array()
 
 		@pageSize = new Int32Array(@INDEX_SIZE)
 		@readUserIndex = new Int32Array(@INDEX_SIZE)
@@ -128,7 +128,7 @@ class LinearAddressSpace extends AddressSpace
 
 	executeVirtual8086: (cpu, offset) ->
 
-		console.log "executeVirtual8086 @ linear"
+		console.log "executeVirtual8086 @ linear (What should not happen, as we dont support virtual8086...)"
 		memory = @getReadMemoryBlockAt(offset)
 
 		try
@@ -146,7 +146,28 @@ class LinearAddressSpace extends AddressSpace
 		catch e
 			cpu.handleProtectedModeException(e)
 			return 1
+	executeProtected: (cpu, offset) ->
 
+		console.log "executeProtected @linear"
+		memory = @getReadMemoryBlockAt(offset)
+
+		try
+			tmp = memory.executeProtected(cpu, offset & @BLOCK_MASK)
+		catch e
+			console.log "Nope"
+
+		if (!tmp)
+			memory = @validateTLBEntryRead(offset)
+		else
+			return tmp
+
+
+		try
+			tmp = memory.executeProtected(cpu, offset & @BLOCK_MASK)
+		catch e
+			console.log "Nope"
+			cpu.handleProtectedModeException(e)
+			return 1
 
 	getReadMemoryBlockAt: (offset) ->
 		return @getReadIndexValue(offset >>> @INDEX_SHIFT)
@@ -265,3 +286,29 @@ class LinearAddressSpace extends AddressSpace
 		if (type == "PhysicalAddressSpace")
 			console.log "Got a  PhysicalAddressSpace"
 			@target = component
+	reset: ->
+		console.log "Reset linearAddressSpace"
+		@flush()
+
+		@baseAddress = 0
+		@lastAddress = 0
+		@pagingDisabled = true
+		@globalPagesEnabled = false
+		@writeProtectUserPages = false
+		@pageSizeExtensions = false
+
+		@readUserIndex = null
+		@writeUserIndex = null
+		@readSupervisorIndex = null
+		@writeSupervisorIndex = null
+
+	flush: ->
+		for i in [0..@INDEX_SIZE-1]
+			@pageSize[i] = @FOUR_K
+
+		@nonGlobalPages = new Int32Array()
+
+		@readUserIndex = null
+		@writeUserIndex = null
+		@readSupervisorIndex = null
+		@writeSupervisorIndex = null

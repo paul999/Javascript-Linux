@@ -13,8 +13,10 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-class AddressSpace
+class AddressSpace extends AbstractMemory
 	constructor: ->
+		super()
+		console.log "create AddressSpace"
 		@BLOCK_SIZE = 4*1024
 		@BLOCK_MASK = @BLOCK_SIZE - 1
 		@INDEX_MASK = ~(@BLOCK_MASK)
@@ -32,4 +34,14 @@ class AddressSpace
 			else
 				return super.getDoubleWord(offset)
 		catch e
+			console.log e
 			return super.getDoubleWord(offset)
+
+
+	getByte: (offset) ->
+		tmp = @getReadMemoryBlockAt(offset)
+
+		if (tmp == "undefined" || tmp == null)
+			throw "getReadMemoryBlockAt returned wrong value"
+
+		return tmp.getByte(offset & @BLOCK_MASK)

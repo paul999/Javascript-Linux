@@ -105,7 +105,7 @@ class pc
 				continue
 
 			for inner in @items
-				console.log "acceptComponent on " + part
+				console.log "acceptComponent on " + part.type()
 				part.acceptComponent(inner, inner.type())
 
 			init &= part.initialised()
@@ -117,7 +117,9 @@ class pc
 		count = 1
 		init = @_configure()
 
-		while init == false && count < 100
+		console.log "Init: " + init
+
+		while !init && count < 100
 			console.log "init loop"
 			init = @_configure()
 			count++
@@ -127,7 +129,7 @@ class pc
 
 			for hwc in @items
 				if (!hwc.initialised())
-					errors += "component " + hwc.toString() + " not configured\n"
+					errors += "component " + hwc.type() + " not configured\n"
 
 			console.log errors
 			alert errors
@@ -135,30 +137,31 @@ class pc
 
 	execute: ->
 #		console.log "PC execute"
-		return @executeVirtual8086()
-#		if (processor.isProtectedMode())
-#			if (processor.isVirtual8086Mode())
-#				return executeVirtual8086()
-#			else
-#				return executeProtected()
-#
-#		else
-#			return executeReal()
-	executeVirtual8086: ->
+		if (!@proc.isProtectedMode())
+			throw "Only protected Mode is supported."
+		if (@proc.isVirtual8086Mode())
+			throw "Virtual8086 Mode is not supported."
+
+		return @executeProtected()
+
+	executeReal: ->
+		throw "Real mode is not supported"
+
+	executeProtected: ->
 		x86Count = 0
 		clockx86Count = 0
 		nextClockCheck = @INSTRUCTIONS_BETWEEN_INTERRUPTS
 
-		for i in [0..99]
-			#block = 0
-			block = @LinearAddr.executeVirtual8086(@proc, @proc.getInstructionPointer())
 
+		for i in [0..99]
+			block = @LinearAddr.executeProtected(@proc, @proc.getInstructionPointer())
 			x86Count += block
 			clockx86Count += block
 
 			if (x86Count > nextClockCheck)
 				nextClockCheck = x86Count + @INSTRUCTIONS_BETWEEN_INTERRUPTS
-				proc.processVirtual8086Modeinterrupts(clockx86Count)
+				@proc.processProtectedModeInterrupts(clockx86Count)
 				clockx86Count = 0
+
 
 		return x86Count
