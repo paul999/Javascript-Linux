@@ -19,7 +19,8 @@ class InterruptController
 	configure: ->
 		console.log "configure InterruptController"
 
-	type: ->
-		"InteruptController"
+	toString: ->
+		"InterruptController"
+
 	initialised: ->
 		return true

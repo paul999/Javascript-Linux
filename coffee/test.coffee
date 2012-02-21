@@ -13,4 +13,4 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-pc = new pc
+window.pc = new pc

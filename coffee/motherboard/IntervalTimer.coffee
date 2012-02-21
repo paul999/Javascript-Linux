@@ -17,7 +17,7 @@ class IntervalTimer
 	constructor: ->
 		console.log "create IntervalTimer"
 
-	type: ->
+	toString: ->
 		"IntervalTimer"
 	initialised: ->
 		return true

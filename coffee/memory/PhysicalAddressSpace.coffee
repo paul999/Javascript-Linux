@@ -52,7 +52,7 @@ class PhysicalAddressSpace extends AddressSpace
 			if ct >= @SYS_RAM_SIZE
 				break
 
-#		for i in [0..31]
+#		for i in [0...32]
 #			@mapMemory(0xd0000 + 1 * @BLOCK_SIZE, new UnconnectedMemoryBlock())
 
 	mapMemory: (start, block) ->
@@ -77,12 +77,10 @@ class PhysicalAddressSpace extends AddressSpace
 			throw "Cannot deallocate memory in partial blocks. " + length + " is not a multiple of  " + @BLOCK_SIZE
 
 		i = 0
-		while true
-			@setMemoryBlockAt(i, @UNCONNECTED)
 
-			i += @BLOCK_SIZE
-			if (i >= start + length)
-				break
+
+		for i in [0...start+length] by @BLOCK_SIZE
+			@setMemoryBlockAt(i, @UNCONNECTED)
 
 	setMemoryBlockAt:(i, b) ->
 		try
@@ -130,20 +128,30 @@ class PhysicalAddressSpace extends AddressSpace
 		if ((@linearAddr) && @linearAddr.isPagingEnabled())
 			@linearAddr.flush()
 
+	getReadMemoryBlockAt: (offset) ->
+		console.log "getReadMemoryBlockAt " + offset
+		return @getMemoryBlockAt(offset)
 
-	type: ->
+	getMemoryBlockAt: (i) ->
+		console.log "getMemoryBlockAt " + i
+
+		if (@quickIndex[i >>> @INDEX_SHIFT])
+			return @quickIndex[i >>> @INDEX_SHIFT]
+
+		if (@index[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK])
+			return @index[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK]
+
+		return @UNCONNECTED
+
+	toString: ->
 		"PhysicalAddressSpace"
 	initialised: ->
 		if (@linearAddr && @linearAddr != null)
 			return true
 		return false
 
-	acceptComponent: (component, type = "error") ->
-		if (!type || type == "error" || type == null)
-			throw "bc break, type is required"
-
-
-		if (type == "LinearAddresSpace")
+	acceptComponent: (component) ->
+		if (component instanceof LinearAddressSpace)
 			console.log "got a LinearAddresSpace"
 			@linearAddr = component
 

@@ -17,10 +17,12 @@
 # of vars kopieert.
 
 SYS_RAM_SIZE = 1024
+# Pas: PhysicalAddressSpace
+# Las: LinearAddressSpace
+proc = pas = manager = las = null
+
 
 class pc
-	@INSTRUCTIONS_BETWEEN_INTERRUPTS = 1
-	@stp = false
 	constructor: ->
 		console.log "pc.create"
 		@items = new Array()
@@ -28,16 +30,19 @@ class pc
 		@configured = false
 		@started = false
 
+		@INSTRUCTIONS_BETWEEN_INTERRUPTS = 1
+		@stp = false
+
 		@general = new general()
-		@proc= new processor()
+		proc= new processor()
 
-		@manager = new CodeBlockManager
-		@PhysicalAddressSpace = new PhysicalAddressSpace(@manager)
-		@LinearAddr = new LinearAddressSpace
-		@add(@PhysicalAddressSpace)
-		@add(@LinearAddr )
+		manager = new CodeBlockManager
+		pas = new PhysicalAddressSpace(manager)
+		las = new LinearAddressSpace
+		@add(pas)
+		@add(las)
 
-		@add(@proc)
+		@add(proc)
 		@add(new IOPortHandler)
 		@add(new InterruptController)
 		@add(new DMAController(false, true))
@@ -50,6 +55,7 @@ class pc
 	add: (itm) ->
 		@items[@count] = itm
 		@count++
+
 	start: ->
 		@configure()
 
@@ -105,8 +111,8 @@ class pc
 				continue
 
 			for inner in @items
-				console.log "acceptComponent on " + part.type()
-				part.acceptComponent(inner, inner.type())
+				console.log "acceptComponent on " + part
+				part.acceptComponent(inner)
 
 			init &= part.initialised()
 		return init
@@ -129,7 +135,7 @@ class pc
 
 			for hwc in @items
 				if (!hwc.initialised())
-					errors += "component " + hwc.type() + " not configured\n"
+					errors += "component " + hwc + " not configured\n"
 
 			console.log errors
 			alert errors
@@ -137,9 +143,9 @@ class pc
 
 	execute: ->
 #		console.log "PC execute"
-		if (!@proc.isProtectedMode())
+		if (!proc.isProtectedMode())
 			throw "Only protected Mode is supported."
-		if (@proc.isVirtual8086Mode())
+		if (proc.isVirtual8086Mode())
 			throw "Virtual8086 Mode is not supported."
 
 		return @executeProtected()
@@ -153,14 +159,14 @@ class pc
 		nextClockCheck = @INSTRUCTIONS_BETWEEN_INTERRUPTS
 
 
-		for i in [0..99]
-			block = @LinearAddr.executeProtected(@proc, @proc.getInstructionPointer())
+		for i in [0...100]
+			block = las.executeProtected(proc, proc.getInstructionPointer())
 			x86Count += block
 			clockx86Count += block
 
 			if (x86Count > nextClockCheck)
 				nextClockCheck = x86Count + @INSTRUCTIONS_BETWEEN_INTERRUPTS
-				@proc.processProtectedModeInterrupts(clockx86Count)
+				proc.processProtectedModeInterrupts(clockx86Count)
 				clockx86Count = 0
 
 

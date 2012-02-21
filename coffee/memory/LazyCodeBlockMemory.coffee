@@ -14,7 +14,7 @@
 # the Free Software Foundation.
 
 class LazyCodeBlockMemory
-	type: () ->
+	toString: () ->
 		"LazyCodeBlockMemory"
 
 	getSize: ->

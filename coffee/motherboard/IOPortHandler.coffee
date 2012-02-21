@@ -17,7 +17,7 @@ class IOPortHandler
 	configure: ->
 		console.log "IOPortHandler configure"
 
-	type: ->
+	toString: ->
 		"IOPortHandler"
 
 	registerIOPortCapable: ->

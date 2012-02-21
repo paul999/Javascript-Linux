@@ -18,7 +18,7 @@ class AbstractMemory
 		console.log "create AbstractMemory"
 
 	clear: ->
-		for i in [0..@getSize()-1]
+		for i in [0...@getSize()]
 			@setByte(i, 0)
 
 	clear: (start, length) ->
@@ -26,7 +26,7 @@ class AbstractMemory
 		if (limit > @getSize())
 			throw "Attempt to clear outside of memory bounds"
 
-		for i in [start..limit-1]
+		for i in [start...limit]
 			@setByte(i, 0)
 
 	copyContentsIntoArray: (address, buffer, offset, len)->
@@ -36,7 +36,7 @@ class AbstractMemory
 		return buffer
 
 	copyArrayIntoContents: (address, buffer, offset, len) ->
-		for i in [offset..offset+len-1]
+		for i in [offset...offset+len]
 			@setByte(address, buffer[i])
 
 	# Get little-endian word at <code>offset</code> by repeated calls to
@@ -139,6 +139,6 @@ class AbstractMemory
 		if (target == undefined || target == null)
 			return
 
-		for i in [i..target.length-1]
+		for i in [i...target.length]
 			target[i] = value
 		return target

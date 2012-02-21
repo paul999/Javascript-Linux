@@ -57,7 +57,7 @@ class processor
 		@SYSENTER_ESP_MSR = 0x175
 		@SYSENTER_EIP_MSR = 0x176
 
-	type: ->
+	toString: ->
 		return "Processor"
 
 	getEFlags: ->
@@ -165,7 +165,7 @@ class processor
 	getInstructionPointer: ->
 		#TODO: CS is null
 		#return @cs.translateAddressRead(@eip)
-		return
+		return 1
 
 	reset: ->
 		console.log "Resetting CPU"
@@ -184,10 +184,7 @@ class processor
 
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0
-		@cr0 |= @CR0_CACHE_DISABLE
-		@cr0 |= @CR0_NOT_WRITETHROUGH
-		@cr0 |= 0x10
-		@cr0 |= @CR0_PROTECTION_ENABLE
+		@cr0 |= @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH | @CR0_PROTECTION_ENABLE | 0x10
 		console.log "@CR0_CACHE_DISABLE" + @CR0_CACHE_DISABLE
 		console.log "cr0: " + @cr0
 		@cr2 = @cr3 = @cr4 = 0x0
@@ -236,24 +233,21 @@ class processor
 
 
 		return result
-	acceptComponent: (component, type="error") ->
-		if (!type || type == null || type == undefined || type =="error")
-			throw "BC break, type missing"
+	acceptComponent: (component) ->
+		console.log "Got a " + component + " for proc"
 
-		console.log "Got a " + type + " for proc"
-
-		if (type == "LinearAddresSpace" && !@linearMemory)
+		if (component instanceof LinearAddressSpace && !@linearMemory)
 			@linearMemory = component
 
 #			@alignmentCheckedMemory = new AlignmentCheckedAddressSpace(linearMemory)
 
-		if (type == "PhysicalAddressSpace" && !@physicalMemory)
+		if (component instanceof PhysicalAddressSpace && !@physicalMemory)
 			@physicalMemory = component
 
-		if (type == "IOPortHandler" && !@ioports)
+		if (component instanceof IOPortHandler && !@ioports)
 			@ioports = component
 
-		if (type == "InteruptController" && component.initialised() && !@interruptController)
+		if (component instanceof InterruptController && component.initialised() && !@interruptController)
 			@interruptController = component
 
 	processVirtual8086ModeInterrupts: (instructions) ->

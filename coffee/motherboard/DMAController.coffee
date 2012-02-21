@@ -53,7 +53,7 @@ class DMAController
 		@channels = [-1, 2, 3, 1, -1, -1, -1, 0]
 
 		@dmaChannels = new Array(4)
-		for num in [0..4]
+		for num in [0...5]
 			@dmaChannels[num] = new dmaChannel()
 		@reset()
 
@@ -214,15 +214,15 @@ class DMAController
 		else
 			temp = new Int32Array(16 + pagePortList.length)
 		j = 0
-		for k in [0..7]
+		for k in [0...8]
 			temp[j++] = @ioBase + (i << @dShift)
 
-		for k in [0..pagePortList.length-1]
+		for k in [0...pagePortList.length]
 			temp[j++] = pageLowBase + pagePortList[i]
 			if (pageHighBase >= 0)
 				temp[j++] = pageHighBase + pagePortList[i]
 
-		for k in [0..7]
+		for k in [0...8]
 			temp[j++] = @ioBase + ((i+8) << @dShift)
 		temp
 
@@ -304,15 +304,13 @@ class DMAController
 	updated: ->
 		@memory.updated() && @ioportRegistered
 
-	acceptComponent: (component, type="error") ->
-		console.log "accept component: " + type
-		if (type == "error" || type == null || type == undefined)
-			throw "BC break, type is required"
+	acceptComponent: (component) ->
+		console.log "accept component: " + component
 
-		if (type == "PhysicalAddressSpace")
+		if (component instanceof PhysicalAddressSpace)
 			console.log "Got PhysicalAddressSpace"
 			@memory = component
-		else if (type == "IOPortHandler")
+		else if (component instanceof IOPortHandler)
 			component.registerIOPortCapable(this)
 			@ioportRegistered = true
 		return
@@ -322,8 +320,6 @@ class DMAController
 
 	configure: ->
 		console.log "DMA start"
-	type: ->
-		return "DMAController"
 
 class dmaChannel
 	constructor: () ->

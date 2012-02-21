@@ -20,7 +20,7 @@ class RTC
 	configure: ->
 		console.log "Configure RTC"
 
-	type: ->
+	toString: ->
 		"RTC"
 	initialised: ->
 		return true

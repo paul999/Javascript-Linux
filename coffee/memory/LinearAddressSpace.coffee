@@ -89,7 +89,7 @@ class PageFaultWrapper
 
 class LinearAddressSpace extends AddressSpace
 	constructor: ->
-		console.log "create LinearAddressSpacce"
+		console.log "create LinearAddressSpace"
 
 		super
 
@@ -123,7 +123,7 @@ class LinearAddressSpace extends AddressSpace
 		@readIndex = new Int32Array(@INDEX_SIZE)
 		@writeIndex = new Int32Array(@INDEX_SIZE)
 
-		for i in [0..@INDEX_SIZE - 1]
+		for i in [0...@INDEX_SIZE]
 			@pageSize[i] = @FOUR_K
 
 	executeVirtual8086: (cpu, offset) ->
@@ -148,7 +148,7 @@ class LinearAddressSpace extends AddressSpace
 			return 1
 	executeProtected: (cpu, offset) ->
 
-		console.log "executeProtected @linear"
+		console.log "executeProtected @linear " + offset
 		memory = @getReadMemoryBlockAt(offset)
 
 		try
@@ -170,11 +170,12 @@ class LinearAddressSpace extends AddressSpace
 			return 1
 
 	getReadMemoryBlockAt: (offset) ->
+		console.log "linear getReadMemoryBlockAt " + offset
 		return @getReadIndexValue(offset >>> @INDEX_SHIFT)
 
 	getReadIndexValue: (index) ->
 		console.log "Get data of " + index
-		if (@readIndex[index] != "undefined")
+		if (@readIndex[index])
 			return @readIndex[index]
 		else
 			@createReadIndex()
@@ -225,7 +226,7 @@ class LinearAddressSpace extends AddressSpace
 
 			tableIndex = (0xFFC00000 & offset) >>> 12
 
-			for i in [0..1023]
+			for i in [0...1024]
 				m = target.getReadMemoryBlockAt(fourMegPageStartAddress)
 				fourMegPageStartAddress += @BLOCK_SIZE
 				@pageSize[@tableIndex] = @FOUR_M
@@ -272,18 +273,16 @@ class LinearAddressSpace extends AddressSpace
 
 			return @readIndex[idx]
 
-	type: ->
-		"LinearAddresSpace"
+	toString: ->
+		"LinearAddressSpace"
+
 	initialised: ->
 		if (@target && @target != null)
 			return true
 		return false
 
-	acceptComponent: (component, type="error") ->
-		if (!type || type == null || type == "error")
-			throw "BC break"
-
-		if (type == "PhysicalAddressSpace")
+	acceptComponent: (component) ->
+		if (component instanceof PhysicalAddressSpace)
 			console.log "Got a  PhysicalAddressSpace"
 			@target = component
 	reset: ->
@@ -303,7 +302,7 @@ class LinearAddressSpace extends AddressSpace
 		@writeSupervisorIndex = null
 
 	flush: ->
-		for i in [0..@INDEX_SIZE-1]
+		for i in [0...@INDEX_SIZE]
 			@pageSize[i] = @FOUR_K
 
 		@nonGlobalPages = new Int32Array()
