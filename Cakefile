@@ -75,9 +75,9 @@ task 'watchugly', 'Watch source files and build + minify changes', ->
 
 	for file in CoffeeFiles then do (file) ->
 		fs.watchFile "#{SrcCoffeeDir}/#{file}.coffee", (curr, prev) ->
-		if +curr.mtime isnt +prev.mtime
-			util.log "Saw change in #{SrcCoffeeDir}/#{file}.coffee"
-			invoke 'buildugly'
+			if +curr.mtime isnt +prev.mtime
+				util.log "Saw change in #{SrcCoffeeDir}/#{file}.coffee"
+				invoke 'buildugly'
 
 task 'watch', 'Watch source files and build changes', ->
 	invoke 'build'
@@ -85,9 +85,9 @@ task 'watch', 'Watch source files and build changes', ->
 
 	for file in CoffeeFiles then do (file) ->
 		fs.watchFile "#{SrcCoffeeDir}/#{file}.coffee", (curr, prev) ->
-		if +curr.mtime isnt +prev.mtime
-			util.log "Saw change in #{SrcCoffeeDir}/#{file}.coffee"
-			invoke 'build'
+			if +curr.mtime isnt +prev.mtime
+				util.log "Saw change in #{SrcCoffeeDir}/#{file}.coffee"
+				invoke 'build'
 
 task 'buildugly', 'Build a single JavaScript file from src files and minify them', ->
 	invoke 'build'
