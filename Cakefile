@@ -114,7 +114,8 @@ task 'build', 'Build a single JavaScript file from src files', ->
 		handleError(stderr) if stderr
 		cf = stdout.split("\n")
 
-		appContents = new Array remaining = cf.length
+		appContents = new Array
+		remaining = cf.length
 		util.log "Appending #{cf.length} files to #{TargetCoffeeFile}"
 
 		for file, index in cf then do (file, index) ->
@@ -127,6 +128,8 @@ task 'build', 'Build a single JavaScript file from src files', ->
 					appContents[index] = "#Start file: #{file}\n\n" + fileContents + "#end file: #{file}\n\n"
 					util.log "[#{index + 1}] #{file}.coffee"
 					process() if --remaining is 0
+			else
+				process() if --remaining is 0
 
 		process = ->
 			fs.writeFile TargetCoffeeFile
@@ -143,7 +146,6 @@ task 'build', 'Build a single JavaScript file from src files', ->
 	#				fs.unlink TargetCoffeeFile, (err) -> handleError(err) if err
 
 					addHeader TargetJsFile
-
 task 'uglify', 'Minify and obfuscate', ->
 	#Compiler: http://code.google.com/closure/compiler/
 	exec "java -jar ../compiler-latest/compiler.jar --language_in=ECMASCRIPT5_STRICT --compilation_level=ADVANCED_OPTIMIZATIONS --manage_closure_dependencies --js=src/emulator.js --js_output_file=src/emulator-min.js", (err, stdout, stderr) ->
