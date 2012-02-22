@@ -18,7 +18,6 @@ fs     = require 'fs'
 {exec} = require 'child_process'
 util   = require 'util'
 coffee = require 'coffee-script'
-coffeelint = require 'coffeelint'
 
 SrcCoffeeDir     = 'coffee'
 
