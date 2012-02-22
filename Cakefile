@@ -69,15 +69,29 @@ header = """
 
 """
 
-task 'watch', 'Watch source files and build changes', ->
-    invoke 'build'
-    util.log "Watching for changes in #{SrcCoffeeDir}"
+task 'watchugly', 'Watch source files and build + minify changes', ->
+	invoke 'buildugly'
+	util.log "Watching for changes in #{SrcCoffeeDir}"
 
-    for file in CoffeeFiles then do (file) ->
-        fs.watchFile "#{SrcCoffeeDir}/#{file}.coffee", (curr, prev) ->
-            if +curr.mtime isnt +prev.mtime
-                util.log "Saw change in #{SrcCoffeeDir}/#{file}.coffee"
-                invoke 'build'
+	for file in CoffeeFiles then do (file) ->
+		fs.watchFile "#{SrcCoffeeDir}/#{file}.coffee", (curr, prev) ->
+		if +curr.mtime isnt +prev.mtime
+			util.log "Saw change in #{SrcCoffeeDir}/#{file}.coffee"
+			invoke 'buildugly'
+
+task 'watch', 'Watch source files and build changes', ->
+	invoke 'build'
+	util.log "Watching for changes in #{SrcCoffeeDir}"
+
+	for file in CoffeeFiles then do (file) ->
+		fs.watchFile "#{SrcCoffeeDir}/#{file}.coffee", (curr, prev) ->
+		if +curr.mtime isnt +prev.mtime
+			util.log "Saw change in #{SrcCoffeeDir}/#{file}.coffee"
+			invoke 'build'
+
+task 'buildugly', 'Build a single JavaScript file from src files and minify them', ->
+	invoke 'build'
+	invoke 'uglify'
 
 task 'build', 'Build a single JavaScript file from src files', ->
 	util.log "Building #{TargetJsFile}"
@@ -109,7 +123,6 @@ task 'build', 'Build a single JavaScript file from src files', ->
 #				fs.unlink TargetCoffeeFile, (err) -> handleError(err) if err
 
 				addHeader TargetJsFile
-			invoke 'uglify'
 
 task 'uglify', 'Minify and obfuscate', ->
 	#Compiler: http://code.google.com/closure/compiler/
