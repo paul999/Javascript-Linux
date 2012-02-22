@@ -11,6 +11,7 @@ motherboard/IOPortHandler
 motherboard/RTC
 processor/ProcessorException
 processor/processor
+processor/IllegalStateException
 general
 pc
 test

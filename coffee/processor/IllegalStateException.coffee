@@ -13,11 +13,6 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-class IntervalTimer
-	constructor: ->
-		log "create IntervalTimer"
-
-	toString: ->
-		"IntervalTimer"
-	initialised: ->
-		return true
+class IllegalStateException
+	constructor: (@message="") ->
+		log @message

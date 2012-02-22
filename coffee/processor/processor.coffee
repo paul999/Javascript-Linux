@@ -15,8 +15,8 @@
 
 
 class processor
-	constructor: ->
-		console.log "Processor created"
+	constructor: (@vmClock) ->
+		log "Processor created"
 
 		@STATE_VERSION = 1
 		@STATE_MINOR_VERSION = 0
@@ -155,11 +155,11 @@ class processor
 		@interruptFlags |= @IFLAGS_RESET_REQUEST
 
 	isProtectedMode: ->
-		console.log "Protected: " + (@cr0 & @CR0_PROTECTION_ENABLE)
+		log "Protected: " + (@cr0 & @CR0_PROTECTION_ENABLE)
 		return (@cr0 & @CR0_PROTECTION_ENABLE) == 1
 
 	isVirtual8086Mode: ->
-		console.log "isVirtual8086: " + @eflagsVirtual8086Mode
+		log "isVirtual8086: " + @eflagsVirtual8086Mode
 		return @eflagsVirtual8086Mode
 
 	getInstructionPointer: ->
@@ -168,7 +168,7 @@ class processor
 		return 1
 
 	reset: ->
-		console.log "Resetting CPU"
+		log "Resetting CPU"
 		@resetTime = 0 #TODO: Get reset time in JS
 		@eax = @ebx = @ecx = @edx = 0
 		@edi = @esi = @ebp = @esp = 0
@@ -185,8 +185,8 @@ class processor
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0
 		@cr0 |= @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH | @CR0_PROTECTION_ENABLE | 0x10
-		console.log "@CR0_CACHE_DISABLE" + @CR0_CACHE_DISABLE
-		console.log "cr0: " + @cr0
+		log "@CR0_CACHE_DISABLE" + @CR0_CACHE_DISABLE
+		log "cr0: " + @cr0
 		@cr2 = @cr3 = @cr4 = 0x0
 
 		@dr0 = @dr1 = @dr2 = @dr3 = 0x0
@@ -220,21 +220,15 @@ class processor
 	initialised: ->
 		result = @physicalMemory != undefined && @physicalMemory != null && @linearMemory != undefined && @linearMemory != null && @ioports != undefined && @ioports != null && @interruptController != undefined && @interruptController != null
 
-		console.log @physicalMemory != undefined && @physicalMemory != null
-		console.log @linearMemory != undefined && @linearMemory != null
-		console.log @ioports != undefined && @ioports != null
-		console.log @interruptController != undefined && @interruptController != null
-
-
 		if (result && !@started)
-			console.log "Started"
+			log "Started"
 			@reset()
 			@started = true
 
 
 		return result
 	acceptComponent: (component) ->
-		console.log "Got a " + component + " for proc"
+		log "Got a " + component + " for proc"
 
 		if (component instanceof LinearAddressSpace && !@linearMemory)
 			@linearMemory = component
@@ -252,3 +246,55 @@ class processor
 
 	processVirtual8086ModeInterrupts: (instructions) ->
 		throw "Virtual8086 Mode is not supported"
+
+	processProtectedModeInterrupts: (instructions) ->
+		@vmCLock.updateAndProcess(instructions)
+
+		if (@eflagsInterruptEnable)
+			if ((@interruptFlags & @IFLAGS_RESET_REQUEST) != 0)
+				@reset()
+				return
+
+			if ((@interruptFlags & @IFLAGS_HARDWARE_INTERRUPT) != 0)
+				interruptFlags &= ~@IFLAGS_HARDWARE_INTERRUPT
+				@handleHardProtectedModeInterrupt(@interruptController.cpuGetInterrupt())
+		@eflagsInterruptEnable = @eflagsInterruptEnableSoon
+
+	handleProtectedModeException: (pe) ->
+		savedESP = @esp
+		savedEIP = @eip
+		savedCS = @cs
+		savedSS = @ss
+
+		try
+			@followProtectedModeException(pe, false, false)
+		catch e
+			if (e instanceof ProcessorException)
+				log "Double fault" + e
+
+				@esp = savedESP
+				@eip = savedEIP
+				@cs = savedCS
+				@ss = savedSS
+
+				if (pe.getType() == Type.DOUBLE_FAULT)
+					log "Triple-Fault: Unhandleable, machine will halt!"
+					pc.stop()
+					return
+				else if (e.combinesToDoubleFault(pe))
+					@handleProtectedModeException(DOUBLE_FAULT_0)
+					return
+				else
+					@handleProtectedModeException(e)
+			else
+				log "Different error: " + e
+
+	followProtectedModeException: (error, hardware, software) ->
+		log "followProtectedModeException"
+
+		if (error.type == Type.PAGE_FAULT)
+			@setCR2(les.getLastWalkedAddress())
+
+			if (les.getLastWalkedAddress() == 0xbff9a3c0)
+				log "Found it?"
+				pc.stop()

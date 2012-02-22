@@ -16,7 +16,7 @@
 #TODO: Controleer of coffeescript/javascript references gebruikt
 # of vars kopieert.
 
-SYS_RAM_SIZE = 1024
+SYS_RAM_SIZE = 1024 * 1024 * 5
 # Pas: PhysicalAddressSpace
 # Las: LinearAddressSpace
 proc = pas = manager = las = null
@@ -24,7 +24,9 @@ proc = pas = manager = las = null
 
 class pc
 	constructor: ->
-		console.log "pc.create"
+		log "pc.construct"
+	create: ->
+		log "pc.create"
 		@items = new Array()
 		@count = 0
 		@configured = false
@@ -69,7 +71,7 @@ class pc
 		totalExec = 0
 		while @running
 			if (@stp)
-				console.log "stop"
+				log "stop"
 				return
 
 			execCount -= @execute()
@@ -84,19 +86,17 @@ class pc
 				totalExec = 0
 				return
 
-
-
 		@stop()
-		console.log "PC stopped"
+		log "PC stopped"
 
 	updateMHz: () ->
-		console.log "updateMHz"
+		log "updateMHz"
 		return
 
 	stop: ->
 		@running = false
 		@stp = true
-		console.log "STOP!"
+		log "STOP!"
 
 		alert("stop")
 
@@ -111,7 +111,7 @@ class pc
 				continue
 
 			for inner in @items
-				console.log "acceptComponent on " + part
+				log "acceptComponent on " + part
 				part.acceptComponent(inner)
 
 			init &= part.initialised()
@@ -123,10 +123,10 @@ class pc
 		count = 1
 		init = @_configure()
 
-		console.log "Init: " + init
+		log "Init: " + init
 
 		while !init && count < 100
-			console.log "init loop"
+			log "init loop"
 			init = @_configure()
 			count++
 
@@ -137,12 +137,13 @@ class pc
 				if (!hwc.initialised())
 					errors += "component " + hwc + " not configured\n"
 
-			console.log errors
+			log errors
 			alert errors
 			return false
+		@configured = true
 
 	execute: ->
-#		console.log "PC execute"
+#		log "PC execute"
 		if (!proc.isProtectedMode())
 			throw "Only protected Mode is supported."
 		if (proc.isVirtual8086Mode())
@@ -158,16 +159,21 @@ class pc
 		clockx86Count = 0
 		nextClockCheck = @INSTRUCTIONS_BETWEEN_INTERRUPTS
 
+		try
+			for i in [0...100]
+				block = las.executeProtected(proc, proc.getInstructionPointer())
+				x86Count += block
+				clockx86Count += block
 
-		for i in [0...100]
-			block = las.executeProtected(proc, proc.getInstructionPointer())
-			x86Count += block
-			clockx86Count += block
-
-			if (x86Count > nextClockCheck)
-				nextClockCheck = x86Count + @INSTRUCTIONS_BETWEEN_INTERRUPTS
-				proc.processProtectedModeInterrupts(clockx86Count)
-				clockx86Count = 0
+				if (x86Count > nextClockCheck)
+					nextClockCheck = x86Count + @INSTRUCTIONS_BETWEEN_INTERRUPTS
+					proc.processProtectedModeInterrupts(clockx86Count)
+					clockx86Count = 0
 
 
-		return x86Count
+			return x86Count
+		catch e
+			if (e instanceof ProcessorException)
+				proc.handleProtectedModeException(e)
+			else
+				throw e

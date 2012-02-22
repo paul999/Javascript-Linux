@@ -15,7 +15,7 @@
 
 class PhysicalAddressSpace extends AddressSpace
 	constructor: (@manager) ->
-		console.log "create PhysicalAddressSpace"
+		log "create PhysicalAddressSpace"
 		super()
 
 		@GATEA20_MASK = 0xffefffff
@@ -35,25 +35,25 @@ class PhysicalAddressSpace extends AddressSpace
 		@quickA20MaskedIndex = new Array(@QUICK_INDEX_SIZE)
 		@clearArray(@quickNonA20MaskedIndex, @UNCONNECTED)
 
-#		@nona20MaskedIndex = [][] #TODO: Check for syntax
-#		@a20MaskedIndex = [][]
+		@nonA20MaskedIndex = new Array()
+		@A20MaskedIndex = new Array()
 
-#		@initialiseMemory() # I dont think we really need to write all memory already.
+		@initialiseMemory() # I dont think we really need to write all memory already.
 		@setGateA20State(false)
 
 	initialiseMemory: ->
 #		return
-		ct = 0
-		while true
-			@mapMemory(ct, new LazyCodeBlockMemory(@BLOCK_SIZE, @manager))
+		for i in [0...SYS_RAM_SIZE] by @BLOCK_SIZE
+			@mapMemory(i, new LazyCodeBlockMemory(@BLOCK_SIZE, @manager))
+		log "Ram done"
 
-			ct+= @BLOCK_SIZE
-			console.log "New CT: " + ct
-			if ct >= @SYS_RAM_SIZE
-				break
 
-#		for i in [0...32]
-#			@mapMemory(0xd0000 + 1 * @BLOCK_SIZE, new UnconnectedMemoryBlock())
+		for j in [0...32]
+			tmp = 0xd0000 + j * @BLOCK_SIZE
+			@mapMemory(tmp, new UnconnectedMemoryBlock())
+
+		log "Rest done"
+#		return
 
 	mapMemory: (start, block) ->
 		if ((start % @BLOCK_SIZE) != 0)
@@ -78,8 +78,7 @@ class PhysicalAddressSpace extends AddressSpace
 
 		i = 0
 
-
-		for i in [0...start+length] by @BLOCK_SIZE
+		for i in [start...start+length] by @BLOCK_SIZE
 			@setMemoryBlockAt(i, @UNCONNECTED)
 
 	setMemoryBlockAt:(i, b) ->
@@ -92,27 +91,27 @@ class PhysicalAddressSpace extends AddressSpace
 				@quickA20MaskedIndex[idx | ((~@GATE20_MASK) >>> @INDEX_SHIFT)] = b
 		catch error
 			try
-				@nonA20MaskedIndex[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & BOTTOM_INDEX_MASK] = b
+				@nonA20MaskedIndex[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK] = b
 			catch e
-				return
-#				console.log e
-#				console.log "Origal code declares new memory object here."
+#				return
+				@nonA20MaskedIndex[i >>> @TOP_INDEX_SHIFT] = new Array(@BOTTOM_INDEX_SIZE);
+				@nonA20MaskedIndex[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK] = b;
 
 			if ((i & @GATEA20_MASK) == i)
 				try
 					@a20MaskedIndex[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK] = b
 				catch e
 					return
-#					console.log e
-#					console.log "Origal code declares new memory object here."
+#					log e
+#					log "Origal code declares new memory object here."
 				modi = i | ~@GATE20_MASK
 
 				try
 					@a20MaskedIndex[mode >>> @TOP_INDEX_SHIFT][(modi >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK] = b
 				catch e
 					return
-#					console.log e
-#					console.log "Origal code declares new memory object here."
+#					log e
+#					log "Origal code declares new memory object here."
 
 	setGateA20State: (value) ->
 		@gateA20MaskState = value
@@ -129,16 +128,18 @@ class PhysicalAddressSpace extends AddressSpace
 			@linearAddr.flush()
 
 	getReadMemoryBlockAt: (offset) ->
-		console.log "getReadMemoryBlockAt " + offset
+		log "pas getReadMemoryBlockAt " + offset
 		return @getMemoryBlockAt(offset)
 
 	getMemoryBlockAt: (i) ->
-		console.log "getMemoryBlockAt " + i
+		log "pas getMemoryBlockAt " + i
 
 		if (@quickIndex[i >>> @INDEX_SHIFT])
+			log "pas option1"
 			return @quickIndex[i >>> @INDEX_SHIFT]
 
-		if (@index[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK])
+		if (@index && @index[i >>> @TOP_INDEX_SHIFT] && @index[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK])
+			log "pas option 2"
 			return @index[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK]
 
 		return @UNCONNECTED
@@ -152,13 +153,13 @@ class PhysicalAddressSpace extends AddressSpace
 
 	acceptComponent: (component) ->
 		if (component instanceof LinearAddressSpace)
-			console.log "got a LinearAddresSpace"
+			log "got a LinearAddresSpace"
 			@linearAddr = component
 
 
 class UnconnectedMemoryBlock
 	constructor: ->
-		console.log "create UnconnectedMemoryBlock"
+		log "create UnconnectedMemoryBlock"
 
 	isAllocated: ->
 		return false
@@ -167,7 +168,7 @@ class UnconnectedMemoryBlock
 	copyContentsIntoArray: ->
 		return
 	copyArrayIntoContents: ->
-		throw "Cannot load array into unconnected memory block"
+		throw new IllegalStateException("Cannot load array into unconnected memory block")
 
 	getSize: ->
 		return 4096
@@ -207,7 +208,7 @@ class UnconnectedMemoryBlock
 		return
 
 	executeReal: (cpu, offset) ->
-		throw "Trying to execute in Unconnected Block @ 0x" + offset
+		throw new IllegalStateException("Trying to execute in Unconnected Block @ 0x" + offset)
 	executeProtected: (cpu, offset) ->
 		@executeReal(cpu, offset)
 	executeVirtual8086: (cpu, offset) ->

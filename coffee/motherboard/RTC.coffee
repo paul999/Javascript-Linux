@@ -15,10 +15,10 @@
 
 class RTC
 	constructor: (@ioPort, @irq) ->
-		console.log "Created RTC with Port #{ioPort} and irq #{irq}"
+		log "Created RTC with Port #{ioPort} and irq #{irq}"
 
 	configure: ->
-		console.log "Configure RTC"
+		log "Configure RTC"
 
 	toString: ->
 		"RTC"

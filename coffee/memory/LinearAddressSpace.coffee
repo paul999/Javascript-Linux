@@ -75,7 +75,7 @@ class PageFaultWrapper
 		@fill()
 		throw @pageFault
 	executeReal:(cpu, offset) ->
-		throw "Cannot execute a Real Mode block in linear memory"
+		throw new IllegalStateException("Cannot execute a Real Mode block in linear memory")
 	executeProtected:(cpu, offset) ->
 		@fill()
 		throw @pageFault
@@ -89,7 +89,7 @@ class PageFaultWrapper
 
 class LinearAddressSpace extends AddressSpace
 	constructor: ->
-		console.log "create LinearAddressSpace"
+		log "create LinearAddressSpace"
 
 		super
 
@@ -113,48 +113,33 @@ class LinearAddressSpace extends AddressSpace
 		@writeProtectedUserPages = false
 		@pageSizeExtensions = false
 
-		@nonGlobalPages = new Int32Array()
+		@nonGlobalPages = new Array()
 
-		@pageSize = new Int32Array(@INDEX_SIZE)
-		@readUserIndex = new Int32Array(@INDEX_SIZE)
-		@readSupervisorIndex = new Int32Array(@INDEX_SIZE)
-		@writeUserIndex = new Int32Array(@INDEX_SIZE)
-		@writeSuperVisorIndex = new Int32Array(@INDEX_SIZE)
-		@readIndex = new Int32Array(@INDEX_SIZE)
-		@writeIndex = new Int32Array(@INDEX_SIZE)
+		@pageSize = new Array(@INDEX_SIZE)
+		@readUserIndex = new Array(@INDEX_SIZE)
+		@readSupervisorIndex = new Array(@INDEX_SIZE)
+		@writeUserIndex = new Array(@INDEX_SIZE)
+		@writeSuperVisorIndex = new Array(@INDEX_SIZE)
+		@readIndex = new Array(@INDEX_SIZE)
+		@writeIndex = new Array(@INDEX_SIZE)
 
 		for i in [0...@INDEX_SIZE]
 			@pageSize[i] = @FOUR_K
 
 	executeVirtual8086: (cpu, offset) ->
 
-		console.log "executeVirtual8086 @ linear (What should not happen, as we dont support virtual8086...)"
-		memory = @getReadMemoryBlockAt(offset)
+		log "executeVirtual8086 @ linear (What should not happen, as we dont support virtual8086...)"
 
-		try
-			tmp = memory.executeVirtual8086(cpu, offset & @BLOCK_MASK)
-		catch e
-			console.log "Nope"
+		throw "virtual8086 is not supported"
 
-		if (!tmp)
-			memory = @validateTLBEntryRead(offset) # Memory object was null
-		else
-			return tmp
-
-		try
-			tmp = memory.executeVirtual8086(cpu, offset & @BLOCK_MASK)
-		catch e
-			cpu.handleProtectedModeException(e)
-			return 1
 	executeProtected: (cpu, offset) ->
 
-		console.log "executeProtected @linear " + offset
+		log "executeProtected @linear " + offset
 		memory = @getReadMemoryBlockAt(offset)
 
 		try
 			tmp = memory.executeProtected(cpu, offset & @BLOCK_MASK)
 		catch e
-			console.log "Nope"
 
 		if (!tmp)
 			memory = @validateTLBEntryRead(offset)
@@ -165,16 +150,21 @@ class LinearAddressSpace extends AddressSpace
 		try
 			tmp = memory.executeProtected(cpu, offset & @BLOCK_MASK)
 		catch e
-			console.log "Nope"
-			cpu.handleProtectedModeException(e)
+			if (e instanceof ProcessorException)
+				log "ProcessorException"
+				cpu.handleProtectedModeException(e)
+			else if (e instanceof IllegalStateException)
+				log "Current eip = " + Integer.toHexString(cpu.eip)
+			else
+				log "Got a exception I didnt expect: " + e
 			return 1
 
 	getReadMemoryBlockAt: (offset) ->
-		console.log "linear getReadMemoryBlockAt " + offset
+		log "linear getReadMemoryBlockAt " + offset
 		return @getReadIndexValue(offset >>> @INDEX_SHIFT)
 
 	getReadIndexValue: (index) ->
-		console.log "Get data of " + index
+		log "Get data of " + index
 		if (@readIndex[index])
 			return @readIndex[index]
 		else
@@ -183,14 +173,30 @@ class LinearAddressSpace extends AddressSpace
 
 	#TODO: Check if this is OK and works
 	createReadIndex: ->
-		throw "Error, should not happen"
+		if (@isSupervisor)
+			@readIndex = @readSupervisorIndex = new Array(@INDEX_SIZE)
+		else
+			@readIndex = @readUserIndex = new Array(@INDEX_SIZE)
+
+	setReadIndexValue: (index, value) ->
+		try
+			log "readIndex[#{index}] = #{value}"
+			@readIndex[index] = value
+			log "readIndex[#{index}] = #{@readIndex[index]}"
+		catch e
+			log "CreateIndex did not exists"
+			@createReadIndex()
+			@readIndex[index] = value
 
 	validateTLBEntryRead: (offset) ->
 		idx = offset >>> @INDEX_SHIFT
+		log "validateTLBEntryRead(" + offset + ") IDX returned: " + idx
 
 		if (@pagingDisabled)
-			@setReadIndexValue(idx, @target.getReadMemoryBlockAt(offset))
-			return readIndex[idx]
+			tmp = @target.getReadMemoryBlockAt(offset)
+			log "Paging disabled, got data: " + tmp
+			@setReadIndexValue(idx, tmp)
+			return @readIndex[idx]
 
 		@lastAddress = offset
 
@@ -283,10 +289,10 @@ class LinearAddressSpace extends AddressSpace
 
 	acceptComponent: (component) ->
 		if (component instanceof PhysicalAddressSpace)
-			console.log "Got a  PhysicalAddressSpace"
+			log "Got a  PhysicalAddressSpace"
 			@target = component
 	reset: ->
-		console.log "Reset linearAddressSpace"
+		log "Reset linearAddressSpace"
 		@flush()
 
 		@baseAddress = 0
@@ -305,7 +311,7 @@ class LinearAddressSpace extends AddressSpace
 		for i in [0...@INDEX_SIZE]
 			@pageSize[i] = @FOUR_K
 
-		@nonGlobalPages = new Int32Array()
+		@nonGlobalPages = new Array()
 
 		@readUserIndex = null
 		@writeUserIndex = null

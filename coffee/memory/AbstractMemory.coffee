@@ -15,7 +15,7 @@
 
 class AbstractMemory
 	constructor: ->
-		console.log "create AbstractMemory"
+		log "create AbstractMemory"
 
 	clear: ->
 		for i in [0...@getSize()]

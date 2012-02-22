@@ -15,7 +15,7 @@
 
 class CodeBlockManager
 	configure: ->
-		console.log "CodeBlockManager start"
+		log "CodeBlockManager start"
 
 	toString: () ->
 		"CodeBlockManager"

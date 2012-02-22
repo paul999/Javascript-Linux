@@ -12,6 +12,13 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
+c = document.getElementById("log");
+log = (message) ->
+	c.appendChild(document.createTextNode(message));
+	c.appendChild(document.createElement("br"));
+	console.log(message);
+	c.scrollTop += 20;
+	return
 
 class general
 	scale64: (input,multiply,devide) ->

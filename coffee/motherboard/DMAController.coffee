@@ -15,7 +15,7 @@
 
 class DMAController
 	constructor: (@highPageEnable, @primary) ->
-		console.log "DMA create with HighPageEnable #{highPageEnable} and primary #{primary}"
+		log "DMA create with HighPageEnable #{highPageEnable} and primary #{primary}"
 		@pagePortList0 = 0x1
 		@pagePortList1 = 0x2
 		@pagePortList2 = 0x3
@@ -125,7 +125,7 @@ class DMAController
 			@mask = data
 			@runTransfers()
 		else
-			console.log "did not understand #{port}"
+			log "did not understand #{port}"
 	writePageLow: (portNumber, data) ->
 		channelNumber = int @channels[portNumber & 7]
 
@@ -298,17 +298,17 @@ class DMAController
 		if (tmp == undefined)
 			tmp = false
 
-		console.log "DMA -> initialised: " + tmp
+		log "DMA -> initialised: " + tmp
 		return tmp
 
 	updated: ->
 		@memory.updated() && @ioportRegistered
 
 	acceptComponent: (component) ->
-		console.log "accept component: " + component
+		log "accept component: " + component
 
 		if (component instanceof PhysicalAddressSpace)
-			console.log "Got PhysicalAddressSpace"
+			log "Got PhysicalAddressSpace"
 			@memory = component
 		else if (component instanceof IOPortHandler)
 			component.registerIOPortCapable(this)
@@ -319,11 +319,11 @@ class DMAController
 		"DMA Controller [element " + @dShift + "]"
 
 	configure: ->
-		console.log "DMA start"
+		log "DMA start"
 
 class dmaChannel
 	constructor: () ->
-		console.log "create dmaChannel"
+		log "create dmaChannel"
 		@MODE_CHANNEL_SELECT = 0x03
 		@MODE_ADDRESS_INCREMENT = 0x20
 		@ADDRESS = 0
@@ -335,7 +335,7 @@ class dmaChannel
 		address = (@pageHigh << 24) | (@pageLow << 16) | @currentAddress
 
 		if ((mode & @MODE_ADDRESS_INCREMENT) != 0)
-			console.log "read in address decrement mode"
+			log "read in address decrement mode"
 			throw "Not supported"
 			memory.copyContentsIntoArray(address - position - length, buffer, offset, length)
 
@@ -355,13 +355,13 @@ class dmaChannel
 		address = (@pageHigh << 24) | (@pageLow << 16) | @currentAddress
 
 		if ((mode & @MODE_ADDRESS_INCREMENT) != 0)
-			console.log "write in address decrement mode"
+			log "write in address decrement mode"
 			throw "not supported"
 		else
 			memory.copyArrayIntoContents(address + position, buffer, offset, length)
 
 	run: () ->
-		console.log "dmaChannel -> run (" + @controllerNumber + ")"
+		log "dmaChannel -> run (" + @controllerNumber + ")"
 		n = transferDevice.handleTransfer(this, @currentWordCount, (@baseWordCount + 1) << @controllerNumber)
 		currentWordCount = n
 		return

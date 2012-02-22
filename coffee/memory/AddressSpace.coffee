@@ -16,7 +16,7 @@
 class AddressSpace extends AbstractMemory
 	constructor: ->
 		super()
-		console.log "create AddressSpace"
+		log "create AddressSpace"
 		@BLOCK_SIZE = 4*1024
 		@BLOCK_MASK = @BLOCK_SIZE - 1
 		@INDEX_MASK = ~(@BLOCK_MASK)
@@ -34,7 +34,7 @@ class AddressSpace extends AbstractMemory
 			else
 				return super.getDoubleWord(offset)
 		catch e
-			console.log e
+			log e
 			return super.getDoubleWord(offset)
 
 

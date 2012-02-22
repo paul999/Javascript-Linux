@@ -15,9 +15,9 @@
 
 class InterruptController
 	constructor: ->
-		console.log "create InterruptController"
+		log "create InterruptController"
 	configure: ->
-		console.log "configure InterruptController"
+		log "configure InterruptController"
 
 	toString: ->
 		"InterruptController"
