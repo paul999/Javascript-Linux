@@ -12,6 +12,7 @@ motherboard/RTC
 processor/ProcessorException
 processor/processor
 processor/IllegalStateException
+clock
 general
 pc
 test

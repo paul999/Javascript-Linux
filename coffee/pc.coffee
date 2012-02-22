@@ -19,7 +19,7 @@
 SYS_RAM_SIZE = 1024 * 1024 * 5
 # Pas: PhysicalAddressSpace
 # Las: LinearAddressSpace
-proc = pas = manager = las = null
+proc = pas = manager = las = Clock = null
 
 
 class pc
@@ -37,6 +37,7 @@ class pc
 
 		@general = new general()
 		proc= new processor()
+		Clock = new clock
 
 		manager = new CodeBlockManager
 		pas = new PhysicalAddressSpace(manager)
@@ -94,11 +95,11 @@ class pc
 		return
 
 	stop: ->
+		if (!@running)
+			return
 		@running = false
 		@stp = true
 		log "STOP!"
-
-		alert("stop")
 
 		@proc = null
 
@@ -176,4 +177,40 @@ class pc
 			if (e instanceof ProcessorException)
 				proc.handleProtectedModeException(e)
 			else
-				throw e
+				@printStackTrace(e)
+				window.pc.stop()
+
+	printStackTrace: (e) ->
+		callstack = new Array()
+		isCallstackPopulated = false
+		if (e.stack)
+			lines = e.stack.split("\n")
+			log "Got a error: "
+			for i in [0...lines.length]
+
+				log(lines[i])
+
+			callstack.shift()
+			isCallstackPopulated = true
+		else if (window.opera && e.message)
+			log "b"
+			lines = e.message.split('\n')
+			for i in [0...lines.length]
+				if (lines[i].match(/^\s*[A-Za-z0-9\-_\$]+\(/))
+					entry = lines[i]
+					if (lines[i+1])
+						entry += ' at ' + lines[i+1]
+						i++
+					callstack.push(entry)
+			callstack.shift()
+			isCallstackPopulated = true
+
+
+		if (!isCallstackPopulated)
+			log "c"
+			currentFunction = arguments.callee.caller
+			while (currentFunction)
+				fn = currentFunction.toString()
+				fname = fn.substring(fn.indexOf("function") + 8, fn.indexOf('')) || 'anonymous'
+				callstack.push(fname)
+				currentFunction = currentFunction.caller

@@ -15,7 +15,7 @@
 
 
 class processor
-	constructor: (@vmClock) ->
+	constructor: () ->
 		log "Processor created"
 
 		@STATE_VERSION = 1
@@ -140,7 +140,7 @@ class processor
 
 	waitForInterrupt: ->
 		while ((@interruptFlags & @IFLAGS_HARDWARE_INTERRUPT) == 0)
-			@vmClock.updateNowAndProcess()
+			Clock.updateNowAndProcess()
 
 		if (@isProtectedMode())
 			if (@isVirtual8086Mode())
@@ -248,7 +248,7 @@ class processor
 		throw "Virtual8086 Mode is not supported"
 
 	processProtectedModeInterrupts: (instructions) ->
-		@vmCLock.updateAndProcess(instructions)
+		Clock.updateAndProcess(instructions)
 
 		if (@eflagsInterruptEnable)
 			if ((@interruptFlags & @IFLAGS_RESET_REQUEST) != 0)
@@ -298,3 +298,28 @@ class processor
 			if (les.getLastWalkedAddress() == 0xbff9a3c0)
 				log "Found it?"
 				pc.stop()
+
+
+		selector = vector << 3
+		EXT = hardware ? 1:0
+
+		gate = null
+		isSup = les.isSupervisor()
+
+		try
+			les.setSupervisor(true)
+			descriptor = @idtr.getQuadWord(selector)
+			#gate = SegmentFactory.createProtectedModeSegment(linearMemory, selector, descriptor);
+			#TODO FIX
+		catch e
+			log "failed to create gate"
+			les.setSupervisor(isSup)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, selector+2+EXT, true)
+		les.setSupervisor(isSup)
+
+		switch gate.getType()
+			when 0x05
+				throw new IllegalStateException("Unimplemented Interrupt Handler: Task Gate")
+			else
+				log "Invalid gate type for throwing interrupt 0x#{gate.getType()}"
+				throw new ProcessorException(Type.GENERAL_PROTECTION, selector + 2 + EXT, true)
