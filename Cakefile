@@ -152,5 +152,6 @@ displayNotification = (message = '') ->
     options = {
         title: 'Compileresult'
     }
-    growl = require('growl')
-    growl(message, options)
+    try
+	    growl = require('growl')
+	    growl(message, options)
