@@ -19,7 +19,7 @@
 SYS_RAM_SIZE = 1024 * 1024 * 5
 # Pas: PhysicalAddressSpace
 # Las: LinearAddressSpace
-proc = pas = manager = las = Clock = null
+proc = pas = manager = las = Clock = sgm = null
 
 
 class pc
@@ -34,6 +34,8 @@ class pc
 
 		@INSTRUCTIONS_BETWEEN_INTERRUPTS = 1
 		@stp = false
+
+		sgm = new SegmentFactory()
 
 		@general = new general()
 		proc= new processor()

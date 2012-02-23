@@ -21,8 +21,16 @@ class InterruptController
 		@ioportRegistrered = false
 		@cpuFound = false
 
-		#@master = new InterruptControllerElement(true)
-		#@master = new InterruptControllerElement(false)
+		@master = new InterruptControllerElement(true, @)
+		@slave = new InterruptControllerElement(false, @)
+
+	reset: ->
+		@master.reset()
+		@slave.reset()
+
+		@ioportRegistrered = false
+		@cpuFound = false
+
 	configure: ->
 		log "configure InterruptController"
 

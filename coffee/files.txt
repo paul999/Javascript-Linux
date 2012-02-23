@@ -5,10 +5,13 @@ memory/LazyCodeBlockMemory
 memory/LinearAddressSpace
 memory/PhysicalAddressSpace
 motherboard/DMAController
+motherboard/InterruptControllerElement
 motherboard/InterruptController
 motherboard/IntervalTimer
 motherboard/IOPortHandler
 motherboard/RTC
+processor/segment/NullSegment
+processor/segment/factory
 processor/ProcessorException
 processor/processor
 processor/IllegalStateException
