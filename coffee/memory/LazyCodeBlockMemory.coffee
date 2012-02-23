@@ -14,6 +14,16 @@
 # the Free Software Foundation.
 
 class LazyCodeBlockMemory
+	constructor: (@size, manager) ->
+		@PLACEHOLDER = null#new BlankCodeBlock()
+		@realCodeBuffer = new Array()
+		@protectedCodeBuffer = new Array()
+		@ALLOCATION_THRESHOLD = 10
+		@buffer = new Int32Array()
+		@nullReadCount = 0
+
+		log "create LazyCodeBlockMemory"
+
 	toString: () ->
 		"LazyCodeBlockMemory"
 
@@ -21,3 +31,30 @@ class LazyCodeBlockMemory
 		return 4096
 	initialised: ->
 		return true
+
+	copyArrayIntoContents: (address, buf, offset, len) ->
+		log "CopyArray (#{address}, #{buf}, #{offset}, #{len})"
+		try
+			@buffer = arraycopy(buf, offset, @buffer, address, len)
+		catch e
+			@allocateBuffer()
+			@buffer = arraycopy(buf, offset, @buffer, address, len)
+		@regionAltered(address, address + len - 1)
+
+	allocateBuffer: ->
+		throw "This should not happen at all..."
+
+	regionAltered: (start, end) ->
+		for i in [end...start]
+			b = @protectedCodeBuffer[i]
+
+			if (!b || b == null)
+				if (i < start)
+					break
+				else
+					continue
+			if (b == @PLACEHOLDER)
+				continue
+
+			if (b.handleMemoryRegionChange(start, end))
+				@removeProtectedCodeBlockAt(i)

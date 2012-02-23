@@ -163,9 +163,7 @@ class processor
 		return @eflagsVirtual8086Mode
 
 	getInstructionPointer: ->
-		#TODO: CS is null
-		#return @cs.translateAddressRead(@eip)
-		return 1
+		return @cs.translateAddressRead(@eip)
 
 	reset: ->
 		log "Resetting CPU"
@@ -180,7 +178,7 @@ class processor
 		@linearMemory.reset()
 		@alignmentChecking = false
 
-		@eip = 0x000fff0
+		@eip = 0x10000#0x000fff0 # Controle nodig, zie wiki
 
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0
@@ -203,12 +201,12 @@ class processor
 		@eflagsIOPrivilegeLevel = 0
 		@eflagsInterruptEnableSoon = false
 #TODO: FIXME :(
-#		@cs = @SegmentFactory.createRealModeSegment(@physicalMemory, 0xf000)
-#		@ds = @SegmentFactory.createRealModeSegment(@physicalMemory, 0)
-#		@ss = @SegmentFactory.createRealModeSegment(@physicalMemory, 0)
-#		@es = @SegmentFactory.createRealModeSegment(@physicalMemory, 0)
-#		@fs = @SegmentFactory.createRealModeSegment(@physicalMemory, 0)
-#		@gs = @SegmentFactory.createRealModeSegment(@physicalMemory, 0)
+		@cs = sgm.createRealModeSegment(@physicalMemory, 0xf000)
+		@ds = sgm.createRealModeSegment(@physicalMemory, 0)
+		@ss = sgm.createRealModeSegment(@physicalMemory, 0)
+		@es = sgm.createRealModeSegment(@physicalMemory, 0)
+		@fs = sgm.createRealModeSegment(@physicalMemory, 0)
+		@gs = sgm.createRealModeSegment(@physicalMemory, 0)
 
 #		@idtr = @SegmentFactory.createDescriptorTableSegment(@physicalMemory, 0, 0xFFFF)
 #		@ldtr = @SegmentFactory.NULL_SEGMENT

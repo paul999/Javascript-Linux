@@ -20,6 +20,17 @@ log = (message) ->
 	c.scrollTop += 20;
 	return
 
+# Copy of the java method Systemarraycopy
+arraycopy = (buf, offset, buffer, address, len) ->
+	j = 0
+	for i in [offset...len]
+		buffer[address + j] = buf[i]
+		j++
+
+	return buffer
+
+
+
 class general
 	scale64: (input,multiply,devide) ->
 		rl = (0xffffffff & input) * multiply

@@ -57,6 +57,33 @@ class pc
 #		@add(new GateA20Handler()) #Needed?
 
 #		@add(new Keyboard)
+
+		# Loading the start files
+
+		loadFile("linuxstart.bin", 0x10000, @loadedstart, @savememory)
+
+	loadedstart: (result) ->
+		if (!result)
+			log "There had been an error loadeding the files"
+			return
+
+		document.getElementById("start").disabled = false
+
+	savememory: (data, address) ->
+		log "saving file data at #{address} with length #{data.length}"
+
+
+		load = 0x10000
+		endLoadAddress = 0x100000000 - data.length
+		nextBlockStart = (load & pas.INDEX_MASK) + pas.BLOCK_SIZE;
+		ep = new EPROMMemory(pas.BLOCK_SIZE, load & pas.BLOCK_MASK, data, 0, nextBlockStart - load, manager)
+
+		pas.mapMemory(load & pas.INDEX_MASK, ep);
+
+
+#        addressSpace.mapMemory(loadAddress & AddressSpace.INDEX_MASK, ep);
+		return true
+
 	add: (itm) ->
 		@items[@count] = itm
 		@count++

@@ -13,15 +13,17 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-class SegmentFactory
-	constructor: ->
-		log "Create SegmentFactory"
-		@DESCRIPTOR_TYPE = 0x100000000000
-		@SEGMENT_TYPE = 0xf0000000000
-		@NULL_SEGMENT = new NullSegment()
+class RealModeSegment extends Segment
+	constructor: (@memory, @selector) ->
+		super(@memory)
+		log "create realmodesegment"
 
-	createRealModeSegment: (memory, selector) ->
-		if (memory == null)
-			throw "Null reference to memory"
+		@base = @selector << 4
+		@limit = 0xffff
+		@rpl = 0
+		@type = @TYPE_DATA_WRITABLE | @TYPE_ACCESSED
 
-		return new RealModeSegment(memory, selector)
+		log @base
+
+	translateAddressRead: (offset) ->
+		return @base + offset

@@ -1,7 +1,9 @@
+specific/load
 memory/codeblock/CodeBlockManager
 memory/AbstractMemory
 memory/AddressSpace
 memory/LazyCodeBlockMemory
+memory/EPROMMemory
 memory/LinearAddressSpace
 memory/PhysicalAddressSpace
 motherboard/DMAController
@@ -10,7 +12,9 @@ motherboard/InterruptController
 motherboard/IntervalTimer
 motherboard/IOPortHandler
 motherboard/RTC
+processor/segment/Segment
 processor/segment/NullSegment
+processor/segment/RealModeSegment
 processor/segment/factory
 processor/ProcessorException
 processor/processor

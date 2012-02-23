@@ -13,15 +13,16 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-class SegmentFactory
-	constructor: ->
-		log "Create SegmentFactory"
-		@DESCRIPTOR_TYPE = 0x100000000000
-		@SEGMENT_TYPE = 0xf0000000000
-		@NULL_SEGMENT = new NullSegment()
+class EPROMMemory extends LazyCodeBlockMemory
+	constructor: (size, base, data, offset, length, manager) ->
+		log "Create EPROMMemory"
+		super(size, manager)
 
-	createRealModeSegment: (memory, selector) ->
-		if (memory == null)
-			throw "Null reference to memory"
+		@copyArrayIntoContents(base, data, offset, length)
+	toString: () ->
+		"LazyCodeBlockMemory"
 
-		return new RealModeSegment(memory, selector)
+	getSize: ->
+		return 4096
+	initialised: ->
+		return true

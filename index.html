@@ -5,8 +5,8 @@
 </head>
 <body>
 <a href="info.html">Update information</a><br />
-<input type="button" onclick="pc.create(); this.disabled=true" value="PC create" />
-<input type="button" onclick="pc.start();this.disabled=true" value="start" />
+<input type="button" onclick="this.disabled=true;pc.create();" value="PC create" />
+<input type="button" disabled="true" onclick="pc.start();this.disabled=true" id="start" value="start" />
 <input type="button" onclick="pc.stop();this.disabled=true;" id="stop" value="stop" />
 <div id="log" style="height: 90%;border:black solid 1px; overflow:auto;"></div>
 </body>
