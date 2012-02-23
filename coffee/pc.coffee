@@ -102,8 +102,7 @@ class pc
 		log "STOP!"
 
 		@proc = null
-
-
+		document.getElementById("stop").disabled = true
 	_configure: ->
 		init = true
 		for part in @items

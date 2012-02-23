@@ -30,26 +30,6 @@ TargetJsMinFile  = "#{TargetJsDir}/#{TargetFileName}.min.js"
 
 CoffeeOpts = " --output #{TargetJsDir} --compile #{TargetCoffeeFile}"
 
-#CoffeeFiles = [
-#    'memory/codeblock/CodeBlockManager'
-#    'memory/AbstractMemory'
-#    'memory/AddressSpace'
-#    'memory/LazyCodeBlockMemory'
-#    'memory/LinearAddressSpace'
-#    'memory/PhysicalAddressSpace'
-#    'motherboard/DMAController'
-#    'motherboard/InterruptController'
-#    'motherboard/IntervalTimer'
-#    'motherboard/IOPortHandler'
-#    'motherboard/RTC'
-#    'processor/ProcessorException'
-#    'processor/processor'
-#    'general'
-#    'pc'
-#    'test'
-#]
-
-
 header = """
 /**
  * A JavaScript x86 emulator
