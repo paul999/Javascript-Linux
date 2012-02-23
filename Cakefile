@@ -118,7 +118,7 @@ task 'build', 'Build a single JavaScript file from src files', ->
 					   , (err) ->
 				handleError(err) if err
 
-				exec "coffee #{CoffeeOpts}", (err, stdout, stderr) ->
+				exec "/usr/local/bin/coffee #{CoffeeOpts}", (err, stdout, stderr) ->
 					handleError(err) if err
 					message = "Compiled #{TargetJsFile}"
 					displayNotification message
