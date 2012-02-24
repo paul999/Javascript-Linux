@@ -79,3 +79,34 @@ class LazyCodeBlockMemory extends AbstractMemory
 				return @buffer[offset]
 			else
 				return 0
+
+	executeProtected: (cpu, offset) ->
+		x86Count = 0
+		ip = proc.getInstructionPointer()
+
+		offset = ip & pas.BLOCK_MASK
+
+		block = @getProtectedModeCodeBlockAt(offset)
+
+		try
+			try
+				x86Count += block.execute(cpu)
+			catch e
+				block = manager.getProtectedModeCodeBlockAt(@, offset, proc.cs.getDefaultSizeFlag())
+				@setProtectedCodeBlockAt(offset, block)
+				x86Count += block.execute(cpu)
+		catch e
+			if (e instanceof CodeBlockReplacementException)
+				block = e.getReplacement()
+				protectedCodeBuffer[offset] = block
+				x86Count += block.execute(cpu)
+			else
+				throw e
+		return x86Count
+
+	getProtectedModeCodeBlockAt: (offset) ->
+		try
+			return @protectedCodeBuffer[offset]
+		catch e
+			@constructProtectedCodeBlocksArray()
+			return @protectedCodeBuffer[offset]

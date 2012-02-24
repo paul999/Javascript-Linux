@@ -14,9 +14,14 @@
 # the Free Software Foundation.
 
 class CodeBlockManager
-	configure: ->
+	constructor: ->
 		log "CodeBlockManager start"
+#		@byteSource = new ByteSourceWrappedMemory()
+#		@protectedModeChain = new DefaultCodeBlockFactory(new ProtectedModeUDecoder(), new OptimisedCompiler(), BLOCK_LIMIT)
 
+#		@bgc = new BackgroundCompiler(new OptimisedCompiler(), new CachedCodeBlockCompiler());
+
+#		@compilingProtectedModeChain = new DefaultCodeBlockFactory(new ProtectedModeUDecoder(), @bgc, 1000);
 	toString: () ->
 		"CodeBlockManager"
 	initialised: ->

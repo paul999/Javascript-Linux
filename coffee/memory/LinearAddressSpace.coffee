@@ -157,6 +157,7 @@ class LinearAddressSpace extends AddressSpace
 				log "Current eip = " + Integer.toHexString(cpu.eip)
 			else
 				log "Got a exception I didnt expect: " + e
+				throw e
 			return 1
 
 	getReadMemoryBlockAt: (offset) ->

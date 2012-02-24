@@ -1,5 +1,6 @@
 specific/load
 memory/codeblock/CodeBlockManager
+memory/codeblock/CodeBlockReplacementException
 memory/AbstractMemory
 memory/AddressSpace
 memory/LazyCodeBlockMemory

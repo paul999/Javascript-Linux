@@ -13,21 +13,8 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-class RealModeSegment extends Segment
-	constructor: (@memory, @selector) ->
-		super(@memory)
-		log "create realmodesegment"
+class CodeBlockReplacementException
+	constructor: (@replacement) ->
 
-		@base = @selector << 4
-		@limit = 0xffff
-		@rpl = 0
-		@type = @TYPE_DATA_WRITABLE | @TYPE_ACCESSED
-		@defaultSize = false
-
-		log @base
-
-	translateAddressRead: (offset) ->
-		return @base + offset
-
-	getDefaultSizeFlag: ->
-		return @defaultSize
+	getReplacement: ->
+		return @replacement

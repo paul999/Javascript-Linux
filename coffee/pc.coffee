@@ -230,6 +230,8 @@ class pc
 				@printStackTrace(e)
 				@printMemory()
 				window.pc.stop()
+
+				throw "STOP!"
 	printMemory: () ->
 		#f0000
 		log "Start dumping..."
