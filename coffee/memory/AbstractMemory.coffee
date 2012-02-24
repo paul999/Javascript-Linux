@@ -15,7 +15,7 @@
 
 class AbstractMemory
 	constructor: ->
-		log "create AbstractMemory"
+
 
 	clear: ->
 		for i in [0...@getSize()]
@@ -30,14 +30,23 @@ class AbstractMemory
 			@setByte(i, 0)
 
 	copyContentsIntoArray: (address, buffer, offset, len)->
-		tmp = offset + len - 1
-		for i in [offset..tmp]
+
+		log "HIER!"
+
+		tmp = offset + len
+		for i in [offset...tmp]
 			buffer[i] = @getByte(address)
+			address++
 		return buffer
 
 	copyArrayIntoContents: (address, buffer, offset, len) ->
-		for i in [offset...offset+len]
+		tmp = offset+len
+		log "HIER :)offset:  #{offset} len: #{tmp}"
+
+		for i in [offset...tmp]
 			@setByte(address, buffer[i])
+			address++
+		return buffer
 
 	# Get little-endian word at <code>offset</code> by repeated calls to
 	# <code>getByte</code>.

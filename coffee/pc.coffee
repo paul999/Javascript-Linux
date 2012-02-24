@@ -40,10 +40,13 @@ class pc
 		@general = new general()
 		proc= new processor()
 		Clock = new clock
+		try
+			manager = new CodeBlockManager
+			pas = new PhysicalAddressSpace(manager)
+			las = new LinearAddressSpace
+		catch e
+			@printStackTrace e
 
-		manager = new CodeBlockManager
-		pas = new PhysicalAddressSpace(manager)
-		las = new LinearAddressSpace
 		@add(pas)
 		@add(las)
 
@@ -59,15 +62,13 @@ class pc
 #		@add(new Keyboard)
 
 		# Loading the start files
-
-		loadFile("linuxstart.bin", 0x10000, @loadedstart, @savememory)
+		document.getElementById("start").disabled = false
 
 	loadedstart: (result) ->
 		if (!result)
 			log "There had been an error loadeding the files"
 			return
-
-		document.getElementById("start").disabled = false
+		window.pc.start2()
 
 	savememory: (data, address) ->
 		log "saving file data at #{address} with length #{data.length}"
@@ -76,12 +77,30 @@ class pc
 		load = 0x10000
 		endLoadAddress = 0x100000000 - data.length
 		nextBlockStart = (load & pas.INDEX_MASK) + pas.BLOCK_SIZE;
-		ep = new EPROMMemory(pas.BLOCK_SIZE, load & pas.BLOCK_MASK, data, 0, nextBlockStart - load, manager)
+		ep = new EPROMMemory(pas.BLOCK_SIZE, manager)
+		ep.load(load & pas.BLOCK_MASK, data, 0, nextBlockStart - load)
 
 		pas.mapMemory(load & pas.INDEX_MASK, ep);
 
+		pas.copyArrayIntoContents(endLoadAddress, data, 0, data.length)
 
-#        addressSpace.mapMemory(loadAddress & AddressSpace.INDEX_MASK, ep);
+		imageOffset = nextBlockStart - load
+		epromOffset = nextBlockStart
+		log "Writing to #{epromOffset}"
+
+		while (imageOffset + pas.BLOCK_SIZE) <= data.length
+			ep = new EPROMMemory(pas.BLOCK_SIZE, manager)
+			ep.load2(data, imageOffset, pas.BLOCK_SIZE)
+			log "Writing #{ep} to #{epromOffset}"
+			pas.mapMemory(epromOffset, ep)
+			epromOffset += pas.BLOCK_SIZE
+			imageOffset += pas.BLOCK_SIZE
+
+		if (imageOffset < data.length)
+			ep = new EPROMMemory(pas.BLOCK_SIZE, 0, data, imageOffset, data.length - imageOffset, manager)
+			log "Writing #{ep} to #{epromOffset}"
+			pas.mapMemory(epromOffset, ep)
+
 		return true
 
 	add: (itm) ->
@@ -90,6 +109,9 @@ class pc
 
 	start: ->
 		@configure()
+
+		loadFile("linuxstart.bin", 0x10000, @loadedstart, @savememory)
+	start2: ->
 
 		@running = true
 
@@ -206,14 +228,37 @@ class pc
 				proc.handleProtectedModeException(e)
 			else
 				@printStackTrace(e)
+				@printMemory()
 				window.pc.stop()
+	printMemory: () ->
+		#f0000
+		log "Start dumping..."
+		prev = null
+		start = 0
+		for i in [0...0x500000]
+			t = pas.getMemoryBlockAt(i)
+			s = t.toString()
+			if (prev == null)
+				prev = s
+				start = i
+				continue
+			if (prev == s)
+				continue
+			if (prev != s)
+				m = i - 1
+				log "Location #{start} to #{m} is #{prev}"
+				prev = s
+				start = i
+				continue
+		log "Location #{start} to #{i} is #{prev}"
+		log "Dumped"
 
 	printStackTrace: (e) ->
 		callstack = new Array()
 		isCallstackPopulated = false
 		if (e.stack)
 			lines = e.stack.split("\n")
-			log "Got a error: "
+			log "Exception trace I got:: "
 			for i in [0...lines.length]
 
 				log(lines[i])

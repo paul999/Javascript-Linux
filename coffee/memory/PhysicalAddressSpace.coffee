@@ -30,9 +30,9 @@ class PhysicalAddressSpace extends AddressSpace
 		@BOTTOM_INDEX_MASK = @BOTTOM_INDEX_SIZE - 1
 		@UNCONNECTED = new UnconnectedMemoryBlock()
 
-		@quickNona20MaskedIndex = new Array(@QUICK_INDEX_SIZE); #Check if this is actually a array.
+		@quickNona20MaskedIndex = new Array(); #Check if this is actually a array.
 		@clearArray(@quickNonA20MaskedIndex, @UNCONNECTED)
-		@quickA20MaskedIndex = new Array(@QUICK_INDEX_SIZE)
+		@quickA20MaskedIndex = new Array()
 		@clearArray(@quickNonA20MaskedIndex, @UNCONNECTED)
 
 		@nonA20MaskedIndex = new Array()
@@ -43,6 +43,7 @@ class PhysicalAddressSpace extends AddressSpace
 
 	initialiseMemory: ->
 #		return
+		log "Ram size: " + SYS_RAM_SIZE
 		for i in [0...SYS_RAM_SIZE] by @BLOCK_SIZE
 			@mapMemory(i, new LazyCodeBlockMemory(@BLOCK_SIZE, @manager))
 		log "Ram done"
@@ -64,6 +65,7 @@ class PhysicalAddressSpace extends AddressSpace
 
 		@unmap(start, @BLOCK_SIZE)
 
+		s = start
 		s = 0xFFFFFFFF & start
 		@setMemoryBlockAt(s, block)
 
@@ -101,15 +103,26 @@ class PhysicalAddressSpace extends AddressSpace
 				try
 					@a20MaskedIndex[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK] = b
 				catch e
-					return
+
 #					log e
 #					log "Origal code declares new memory object here."
-				modi = i | ~@GATE20_MASK
+					try
+						@A20MaskedIndex[i >>> @TOP_INDEX_SHIFT] = new Array()
+						@A20MaskedIndex[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK] = b
+					catch e
+						log "Exception AAA..."
+						return
+				mode = i | ~@GATE20_MASK
 
 				try
-					@a20MaskedIndex[mode >>> @TOP_INDEX_SHIFT][(modi >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK] = b
+					@a20MaskedIndex[mode >>> @TOP_INDEX_SHIFT][(mode >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK] = b
 				catch e
-					return
+					try
+						@A20MaskedIndex[mode >>> @TOP_INDEX_SHIFT] = new Array()
+						@A20MaskedIndex[mode >>> @TOP_INDEX_SHIFT][(mode >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK] = b
+					catch e
+						log "Exception BBB..."
+						return
 #					log e
 #					log "Origal code declares new memory object here."
 
@@ -128,21 +141,24 @@ class PhysicalAddressSpace extends AddressSpace
 			@linearAddr.flush()
 
 	getReadMemoryBlockAt: (offset) ->
-		log "pas getReadMemoryBlockAt " + offset
 		return @getMemoryBlockAt(offset)
 
 	getMemoryBlockAt: (i) ->
-		log "pas getMemoryBlockAt " + i
 
-		if (@quickIndex[i >>> @INDEX_SHIFT])
-			log "pas option1"
+		if (@quickA20MaskedIndex[i >>> @INDEX_SHIFT])
 			return @quickIndex[i >>> @INDEX_SHIFT]
 
-		if (@index && @index[i >>> @TOP_INDEX_SHIFT] && @index[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK])
-			log "pas option 2"
-			return @index[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK]
+		if (@A20MaskedIndex && @A20MaskedIndex[i >>> @TOP_INDEX_SHIFT] && @A20MaskedIndex[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK])
+			return @A20MaskedIndex[i >>> @TOP_INDEX_SHIFT][(i >>> @BOTTOM_INDEX_SHIFT) & @BOTTOM_INDEX_MASK]
 
+#		log "Returning unconnected data..."
 		return @UNCONNECTED
+#	setByte: (offset, data) ->
+#		offset = @baseAddress | offset
+#		@memory.setByte(offset, data)
+
+	getWriteMemoryBlockAt: (offset) ->
+		return @getMemoryBlockAt(offset)
 
 	toString: ->
 		"PhysicalAddressSpace"

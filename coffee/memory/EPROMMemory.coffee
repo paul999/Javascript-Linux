@@ -14,15 +14,26 @@
 # the Free Software Foundation.
 
 class EPROMMemory extends LazyCodeBlockMemory
-	constructor: (size, base, data, offset, length, manager) ->
+	constructor: (@size, manager) ->
 		log "Create EPROMMemory"
 		super(size, manager)
 
+	load: (base, data, offset, length) ->
 		@copyArrayIntoContents(base, data, offset, length)
+
+	load2: (data, offset, length) ->
+		@load(0, data, offset, length)
+
 	toString: () ->
-		"LazyCodeBlockMemory"
+		"EPROMMemory"
 
 	getSize: ->
 		return 4096
+
+#	setByte: ->
+#		return
 	initialised: ->
 		return true
+
+	writeAttempted: (address, size) ->
+		log "Write of #{size} bytes attempted at address #{address}"

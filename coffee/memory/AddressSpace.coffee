@@ -45,3 +45,6 @@ class AddressSpace extends AbstractMemory
 			throw "getReadMemoryBlockAt returned wrong value"
 
 		return tmp.getByte(offset & @BLOCK_MASK)
+
+	setByte: (offset, data) ->
+		@getWriteMemoryBlockAt(offset).setByte(offset & @BLOCK_MASK, data)
