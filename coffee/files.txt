@@ -1,4 +1,11 @@
 specific/load
+memory/codeblock/MicroCodeSet
+memory/codeblock/ByteSourceWrappedMemory
+memory/codeblock/DefaultCodeBlockFactory
+memory/codeblock/ProtectedModeUDecoder
+memory/codeblock/CachedCodeBlockCompiler
+memory/codeblock/BackgroundCompiler
+memory/codeblock/OptimisedCompiler
 memory/codeblock/CodeBlockManager
 memory/codeblock/CodeBlockReplacementException
 memory/AbstractMemory

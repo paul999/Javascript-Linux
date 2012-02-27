@@ -46,6 +46,7 @@ class pc
 			las = new LinearAddressSpace
 		catch e
 			@printStackTrace e
+			throw e
 
 		@add(pas)
 		@add(las)

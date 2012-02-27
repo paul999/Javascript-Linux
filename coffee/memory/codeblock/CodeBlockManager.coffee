@@ -16,13 +16,41 @@
 class CodeBlockManager
 	constructor: ->
 		log "CodeBlockManager start"
-#		@byteSource = new ByteSourceWrappedMemory()
-#		@protectedModeChain = new DefaultCodeBlockFactory(new ProtectedModeUDecoder(), new OptimisedCompiler(), BLOCK_LIMIT)
 
-#		@bgc = new BackgroundCompiler(new OptimisedCompiler(), new CachedCodeBlockCompiler());
+		@BLOCK_LIMIT = 1000
+		@protectedModeChain = null
+		@compilingProtectedModeChain = null
+		@byteSource = null
+		@bgc = null
 
-#		@compilingProtectedModeChain = new DefaultCodeBlockFactory(new ProtectedModeUDecoder(), @bgc, 1000);
+		@byteSource = new ByteSourceWrappedMemory()
+		@protectedModeChain = new DefaultCodeBlockFactory(new ProtectedModeUDecoder(), new OptimisedCompiler(), @BLOCK_LIMIT)
+
+		@bgc = new BackgroundCompiler(new OptimisedCompiler(), new CachedCodeBlockCompiler());
+
+		@compilingProtectedModeChain = new DefaultCodeBlockFactory(new ProtectedModeUDecoder(), @bgc, @BLOCK_LIMIT);
 	toString: () ->
 		"CodeBlockManager"
-	initialised: ->
-		return true
+
+	getProtectedModeCodeBlockAt: (memory, offset, operandSize) ->
+		block = null
+		block = @tryProtectedModeFactory(@compilingProtectedModeChain,memory, offset, operandSize)
+
+		if (!block || block == null)
+			block = @tryProtectedModeFactory(@protectedModeChain, memory, offset, operandSize)
+
+			if (!block || block == null)
+				throw "Couldnt find capable block"
+		return block
+
+	tryProtectedModeFactory: (ff, memory, offset, operandSizeFlag) ->
+
+		try
+			@byteSource.set(memory, offset)
+			log "Set source: " + @byteSource
+			return ff.getProtectedModeCodeBlock(@byteSource, operandSizeFlag)
+		catch e
+			#orignal:
+			#return new SpanningProtectedModeCodeBlock(new CodeBlockFactory[]{protectedModeChain});
+			log e
+			throw e

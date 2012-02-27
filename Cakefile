@@ -50,6 +50,25 @@ header = """
 
 """
 
+headerC = """
+###
+A JavaScript x86 emulator
+Some of the code based on:
+	JPC: A x86 PC Hardware Emulator for a pure Java Virtual Machine
+	Release Version 2.0
+
+	A project from the Physics Dept, The University of Oxford
+
+	Copyright (C) 2007-2009 Isis Innovation Limited
+
+Javascript version written by Paul Sohier, 2012
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License version 2 as published by
+the Free Software Foundation.
+###
+"""
+
 task 'watchugly', 'Watch source files and build + minify changes', ->
 	invoke 'buildugly'
 	util.log "Watching for changes in #{SrcCoffeeDir}"
@@ -112,8 +131,9 @@ task 'build', 'Build a single JavaScript file from src files', ->
 				process() if --remaining is 0
 
 		process = ->
+			tmp = headerC + appContents.join('\n\n')
 			fs.writeFile TargetCoffeeFile
-					   , appContents.join('\n\n')
+					   , tmp
 					   , 'utf8'
 					   , (err) ->
 				handleError(err) if err
@@ -123,14 +143,11 @@ task 'build', 'Build a single JavaScript file from src files', ->
 					message = "Compiled #{TargetJsFile}"
 					displayNotification message
 					util.log message
-	#				fs.unlink TargetCoffeeFile, (err) -> handleError(err) if err
-
-					addHeader TargetJsFile
 task 'uglify', 'Minify and obfuscate', ->
 	#Compiler: http://code.google.com/closure/compiler/
 	exec "java -jar ../compiler-latest/compiler.jar --language_in=ECMASCRIPT5_STRICT --compilation_level=ADVANCED_OPTIMIZATIONS --manage_closure_dependencies --js=src/emulator.js --js_output_file=src/emulator-min.js", (err, stdout, stderr) ->
 		handleError(err) if err
-		addHeader "src/emulator-min.js"
+		addHeader("src/emulator-min.js", header)
 		util.log stdout
 		util.log stderr
 		util.log "Minified emulator.js"
