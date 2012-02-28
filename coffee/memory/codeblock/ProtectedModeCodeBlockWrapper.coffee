@@ -13,27 +13,23 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-class EPROMMemory extends LazyCodeBlockMemory
-	constructor: (@size, manager) ->
-#		log "Create EPROMMemory"
-		super(size, manager)
+class ProtectedModeCodeBlockWrapper
 
-	load: (base, data, offset, length) ->
-		@copyArrayIntoContents(base, data, offset, length)
+	constructor: (@actualBlock) ->
 
-	load2: (data, offset, length) ->
-		@load(0, data, offset, length)
+	getX86Length: ->
+		return @actualBlock.getX86Length()
 
-	toString: () ->
-		"EPROMMemory"
+	getX86Count: ->
+		return @actualBlock.getX86Count()
 
-	getSize: ->
-		return 4096
+	execute: ->
+		return @actualBlock.execute()
 
-#	setByte: ->
-#		return
-	initialised: ->
-		return true
+	handleMemoryRegionChange: (start, stop) ->
+		return @actualBlock.handleMemoryRegionChange(start, stop)
 
-	writeAttempted: (address, size) ->
-		log "Write of #{size} bytes attempted at address #{address}"
+	setTargetBlock: (@actualBlock) ->
+
+	getTargetBlock: ->
+		return @actualBlock

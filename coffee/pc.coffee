@@ -69,39 +69,45 @@ class pc
 		if (!result)
 			log "There had been an error loadeding the files"
 			return
+
+			#
+		#loadFile("vmlinux-3.0.4-simpleblock.bin", 0x00100000, window.pc.loadedstart2, window.pc.savememory)
 		window.pc.start2()
 
-	savememory: (data, address) ->
+	loadedstart2: (result) ->
+		if (!result)
+			log "There had been an error loadeding the files"
+			return
+		window.pc.start2()
+
+	savememory: (data, len, address) ->
 		log "saving file data at #{address} with length #{data.length}"
 
-
-		load = 0x10000
-		endLoadAddress = 0x100000000 - data.length
+		load = address
+#		endLoadAddress = 0x100000000 - data.length
 		nextBlockStart = (load & pas.INDEX_MASK) + pas.BLOCK_SIZE;
-		ep = new EPROMMemory(pas.BLOCK_SIZE, manager)
-		ep.load(load & pas.BLOCK_MASK, data, 0, nextBlockStart - load)
+#		ep = new EPROMMemory(pas.BLOCK_SIZE, manager)
+#		ep.load(load & pas.BLOCK_MASK, data, 0, nextBlockStart - load)
 
-		pas.mapMemory(load & pas.INDEX_MASK, ep);
+#		pas.mapMemory(load & pas.INDEX_MASK, ep);
 
-		pas.copyArrayIntoContents(endLoadAddress, data, 0, data.length)
+#		pas.copyArrayIntoContents(endLoadAddress, data, 0, data.length)
 
-		imageOffset = nextBlockStart - load
+		imageOffset = address
 		epromOffset = nextBlockStart
 		log "Writing to #{epromOffset}"
+		written = 0
 
-		while (imageOffset + pas.BLOCK_SIZE) <= data.length
+		while (written) <= data.length
 			ep = new EPROMMemory(pas.BLOCK_SIZE, manager)
 			ep.load2(data, imageOffset, pas.BLOCK_SIZE)
 			log "Writing #{ep} to #{epromOffset}"
 			pas.mapMemory(epromOffset, ep)
 			epromOffset += pas.BLOCK_SIZE
 			imageOffset += pas.BLOCK_SIZE
+			written += pas.BLOCK_SIZE
 
-		if (imageOffset < data.length)
-			ep = new EPROMMemory(pas.BLOCK_SIZE, 0, data, imageOffset, data.length - imageOffset, manager)
-			log "Writing #{ep} to #{epromOffset}"
-			pas.mapMemory(epromOffset, ep)
-
+#		throw "die"
 		return true
 
 	add: (itm) ->
@@ -238,7 +244,7 @@ class pc
 		log "Start dumping..."
 		prev = null
 		start = 0
-		for i in [0...0x500000]
+		for i in [0...0x5000000]
 			t = pas.getMemoryBlockAt(i)
 			s = t.toString()
 			if (prev == null)
@@ -283,7 +289,7 @@ class pc
 
 
 		if (!isCallstackPopulated)
-			log "c"
+			log "No call stack?"
 			currentFunction = arguments.callee.caller
 			while (currentFunction)
 				fn = currentFunction.toString()

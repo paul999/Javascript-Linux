@@ -21,7 +21,6 @@ class BackgroundCompiler
 
 		@compilerQueue = new CompilerQueue(@COMPILER_QUEUE_SIZE);
 	getProtectedModeCodeBlock: (source) ->
-		log "got source" + source
 		imm = @immediate.getProtectedModeCodeBlock(source)
 		return new ProtectedModeCodeBlockWrapper(imm)
 

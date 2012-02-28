@@ -16,11 +16,11 @@
 class LazyCodeBlockMemory extends AbstractMemory
 	constructor: (@size, manager) ->
 		super
-		@PLACEHOLDER = null#new BlankCodeBlock()
+		@PLACEHOLDER = new BlankCodeBlock()
 		@realCodeBuffer = new Array()
 		@protectedCodeBuffer = new Array()
 		@ALLOCATION_THRESHOLD = 10
-		@buffer = new Int32Array()
+		@buffer = new Array(4096)#new Int32Array(4096)
 		@nullReadCount = 0
 
 
@@ -33,12 +33,30 @@ class LazyCodeBlockMemory extends AbstractMemory
 		return true
 
 	copyArrayIntoContents: (address, buf, offset, len) ->
+
+
+
 		try
-			@buffer = arraycopy(buf, offset, @buffer, address, len)
+			#@buffer = arraycopy(buf, offset, @buffer, address, len)
+
+			if (@buffer.length > 4096)
+				throw new LengthIncorrectError("Length: #{@buffer.length} max 4096")
+#			if typeof buf == "string"
+#				for i in [0...buf.length]
+#					@buffer[i] = buf.charCodeAt(i)
+#					address++
 		catch e
+			throw e
 			@allocateBuffer()
 			@buffer = arraycopy(buf, offset, @buffer, address, len)
 		@regionAltered(address, address + len - 1)
+
+		# Dump saved contents...
+#		log "Dump saved value: Length: " + @buffer.length
+#		log "Data result: " + arraycopy(buf, offset, @buffer, address, len).length
+#		for i in [0...@buffer.length]
+#			log "@buffer[#{i}]=#{@buffer[i]}"
+#		throw "Die"
 
 	allocateBuffer: ->
 		throw "This should not happen at all..."
@@ -64,6 +82,7 @@ class LazyCodeBlockMemory extends AbstractMemory
 		try
 			@buffer[offset] = data
 		catch e
+#			throw e
 			@allocateBuffer()
 			@buffer[offset] = data
 		@regionAltered(offset, offset)
@@ -86,20 +105,23 @@ class LazyCodeBlockMemory extends AbstractMemory
 
 		offset = ip & pas.BLOCK_MASK
 
+		log "Offset: #{offset}"
 		block = @getProtectedModeCodeBlockAt(offset)
+		log "BLock result: #{block}"
 
 		try
 			try
-				x86Count += block.execute(cpu)
+				x86Count += block.execute()
 			catch e
 				block = manager.getProtectedModeCodeBlockAt(@, offset, proc.cs.getDefaultSizeFlag())
+				log "Replacement block: #{block}"
 				@setProtectedCodeBlockAt(offset, block)
-				x86Count += block.execute(cpu)
+				x86Count += block.execute()
 		catch e
 			if (e instanceof CodeBlockReplacementException)
 				block = e.getReplacement()
 				protectedCodeBuffer[offset] = block
-				x86Count += block.execute(cpu)
+				x86Count += block.execute()
 			else
 				throw e
 		return x86Count
@@ -110,3 +132,61 @@ class LazyCodeBlockMemory extends AbstractMemory
 		catch e
 			@constructProtectedCodeBlocksArray()
 			return @protectedCodeBuffer[offset]
+
+	setProtectedCodeBlockAt: (offset, block) ->
+		@removeProtectedCodeBlockAt(offset)
+
+		if (block == null)
+			return
+
+		@protectedCodeBuffer[offset] = block
+
+		len = block.getX86Length()
+
+		for i in [offset+1...offset+len]
+			if (!@protectedCodeBuffer[i] || @protectedCodeBuffer[i] == null)
+				@protectedCodeBuffer[i] = @PLACEHOLDER
+
+	removeProtectedCodeBlockAt: (offset) ->
+
+		b = @protectedCodeBuffer[offset]
+
+		if (!b || b == null || b == @PLACEHOLDER)
+			return
+
+		len = b.getX86Length()
+
+		for i in [offset+1...offset+len]
+			if (@protectedCodeBuffer[i] == @PLACEHOLDER)
+				@protectedCodeBuffer[i] = null
+
+		for i in [offset+len-1...0]
+			if (@protectedCodeBuffer[i] == null)
+				if (i < offset)
+					break
+				else
+					continue
+			if (@protectedCodeBuffer[i] == @PLACEHOLDER)
+				continue
+
+			bb = @protectedCodeBuffer[i]
+			len = bb.getX86Length()
+
+			for j in [i+1...i+len]
+				if (@protectedCodeBuffer[j] == null)
+					@protectedCodeBuffer[j] = @PLACEHOLDER
+
+
+class BlankCodeBlock
+	getX86Length: ->
+		return 0
+	getX86Count: ->
+		return 0
+
+	execute: ->
+		throw "Cant execute code on Blankcodeblock"
+
+	handleMemoryRegionChange: ->
+		return false
+	getString: ->
+		return " -- Blank --"

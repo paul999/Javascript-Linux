@@ -41,11 +41,18 @@ class AbstractMemory
 
 	copyArrayIntoContents: (address, buffer, offset, len) ->
 		tmp = offset+len
-		log "HIER :)offset:  #{offset} len: #{tmp}"
+		log "HIER :)offset:  #{offset} len: #{tmp} type: " + typeof buffer
 
-		for i in [offset...tmp]
-			@setByte(address, buffer[i])
-			address++
+		if (typeof buffer == "string")
+			log "String"
+			for i in [offset...tmp]
+				@setByte(address, buffer.charCodeAt(i))
+				address++
+		else
+			log "Array"
+			for i in [offset...tmp]
+				@setByte(address, buffer[i])
+				address++
 		return buffer
 
 	# Get little-endian word at <code>offset</code> by repeated calls to

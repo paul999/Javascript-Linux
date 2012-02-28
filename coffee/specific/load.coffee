@@ -26,8 +26,10 @@ loadFile = (location, address, callback, save) ->
 
 	xmlhttp.onreadystatechange = () ->
 		if (xmlhttp.readyState == 4)
+
 			if(xmlhttp.status == 200 || xmlhttp.status == 0) # Chrome gives 0 back when ok
-				if (save(xmlhttp.responseText, address))
+
+				if (save(xmlhttp.response, xmlhttp.response.length, address))
 					callback (true)
 				else
 					callback(false)
@@ -36,5 +38,7 @@ loadFile = (location, address, callback, save) ->
 				callback(false)
 				return
 
+
 	xmlhttp.open("GET",location,true);
+	xmlhttp.overrideMimeType('text/plain; charset=x-user-defined')
 	xmlhttp.send();

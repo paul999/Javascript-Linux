@@ -15,34 +15,38 @@
 
 class OptimisedCompiler
 	constructor: ->
-		@bufferMicrocodes = new Int32Array()
-		@bufferPositions = new Int32Array()
+		@bufferMicrocodes = new Array()
+		@bufferPositions = new Array()
 		@bufferOffset = 0
 
 	getProtectedModeCodeBlock: (source) ->
-		log "Got source: " + source
 		@buildCodeBlockBuffers(source)
 
-		newMicrocodes = new Int32Array(@bufferOffset)
-		newPositions = new Int32Array(@bufferOffset)
+		newMicrocodes = new Array(@bufferOffset)
+		newPositions = new Array(@bufferOffset)
 
-		arraycopy(@bufferMicrocodes, 0, newMicrocodes, 0, @bufferOffset)
-		arraycopy(@bufferPositions, 0, newPositions, 0, @bufferOffset)
+#		arraycopy(@bufferMicrocodes, 0, newMicrocodes, 0, @bufferOffset)
+#		arraycopy(@bufferPositions, 0, newPositions, 0, @bufferOffset)
 
-		return new ProtectedModeUBlock(newMicrocodes, newPositions)
+		return new ProtectedModeUBlock(@bufferMicrocodes, @bufferPositions)
 
 	buildCodeBlockBuffers: (source) ->
 		@bufferOffset = 0
 		position = 0
 
+		console.log "HIERJA!"
+
 		while (source.getNext())
+
 			uCodeLength = source.getLength()
+			console.log "Length: #{uCodeLength}"
 			uCodeX86Length = source.getX86Length()
 
 			position += uCodeX86Length
 
 			for i in [0...uCodeLength]
 				data = source.getMicrocode()
+				console.log data
 				@bufferMicrocodes[@bufferOffset] = data
 				@bufferPositions[@bufferOffset] = position
 				@bufferOffset++

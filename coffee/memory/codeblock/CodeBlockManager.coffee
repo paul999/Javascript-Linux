@@ -34,6 +34,7 @@ class CodeBlockManager
 
 	getProtectedModeCodeBlockAt: (memory, offset, operandSize) ->
 		block = null
+		log "Manager memory: " + memory
 		block = @tryProtectedModeFactory(@compilingProtectedModeChain,memory, offset, operandSize)
 
 		if (!block || block == null)
@@ -47,7 +48,6 @@ class CodeBlockManager
 
 		try
 			@byteSource.set(memory, offset)
-			log "Set source: " + @byteSource
 			return ff.getProtectedModeCodeBlock(@byteSource, operandSizeFlag)
 		catch e
 			#orignal:

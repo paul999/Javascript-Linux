@@ -20,14 +20,20 @@ class ByteSourceWrappedMemory
 		@startingPosition = null
 
 	set: (@source, @offset) ->
-		startingPosition = @offset
+		@startingPosition = @offset
 
 	getOffset: ->
 		return @offset
 
 	getByte: ->
 
-		return @source.getByte(@offset++)
+		tmp = @source.getByte(@offset)
+		@offset++
+
+		if (!tmp)
+			throw "getByte has been undefined, source: #{@source}"
+
+		return tmp
 
 	skip: (count) ->
 		if (@offset + count >= @source.getSize())

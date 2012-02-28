@@ -172,6 +172,8 @@ class processor
 		@edi = @esi = @ebp = @esp = 0
 		@edx = 0x00000633 #Pentium II Model 3 Stepping 3
 
+		ecx = 0xf800 # Command line parameter
+
 		@interruptFlags = 0
 		@currentPrivilegeLevel = 0
 

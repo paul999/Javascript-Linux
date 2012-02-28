@@ -134,7 +134,7 @@ class LinearAddressSpace extends AddressSpace
 
 	executeProtected: (cpu, offset) ->
 
-		log "executeProtected @linear " + offset
+#		log "executeProtected @linear " + offset
 		memory = @getReadMemoryBlockAt(offset)
 
 		try
@@ -154,18 +154,20 @@ class LinearAddressSpace extends AddressSpace
 				log "ProcessorException"
 				cpu.handleProtectedModeException(e)
 			else if (e instanceof IllegalStateException)
-				log "Current eip = " + Integer.toHexString(cpu.eip)
+				log "Current eip = " + cpu.eip + " Exception " + e
+				throw e
+
 			else
 				log "Got a exception I didnt expect: " + e
 				throw e
 			return 1
 
 	getReadMemoryBlockAt: (offset) ->
-		log "linear getReadMemoryBlockAt " + offset
+#		log "linear getReadMemoryBlockAt " + offset
 		return @getReadIndexValue(offset >>> @INDEX_SHIFT)
 
 	getReadIndexValue: (index) ->
-		log "Get data of " + index
+#		log "Get data of " + index
 		if (@readIndex[index])
 			return @readIndex[index]
 		else
@@ -181,21 +183,21 @@ class LinearAddressSpace extends AddressSpace
 
 	setReadIndexValue: (index, value) ->
 		try
-			log "readIndex[#{index}] = #{value}"
+#			log "readIndex[#{index}] = #{value}"
 			@readIndex[index] = value
-			log "readIndex[#{index}] = #{@readIndex[index]}"
+#			log "readIndex[#{index}] = #{@readIndex[index]}"
 		catch e
-			log "CreateIndex did not exists"
+#			log "CreateIndex did not exists"
 			@createReadIndex()
 			@readIndex[index] = value
 
 	validateTLBEntryRead: (offset) ->
 		idx = offset >>> @INDEX_SHIFT
-		log "validateTLBEntryRead(" + offset + ") IDX returned: " + idx
+#		log "validateTLBEntryRead(" + offset + ") IDX returned: " + idx
 
 		if (@pagingDisabled)
 			tmp = @target.getReadMemoryBlockAt(offset)
-			log "Paging disabled, got data: " + tmp
+#			log "Paging disabled, got data: " + tmp
 			@setReadIndexValue(idx, tmp)
 			return @readIndex[idx]
 
