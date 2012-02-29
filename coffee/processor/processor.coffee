@@ -163,6 +163,8 @@ class processor
 		return @eflagsVirtual8086Mode
 
 	getInstructionPointer: ->
+		tmp = @cs.translateAddressRead(@eip)
+		log "getInstructionPointer: #{@eip}"
 		return @cs.translateAddressRead(@eip)
 
 	reset: ->
@@ -172,7 +174,7 @@ class processor
 		@edi = @esi = @ebp = @esp = 0
 		@edx = 0x00000633 #Pentium II Model 3 Stepping 3
 
-		ecx = 0xf800 # Command line parameter
+		@ecx = 0xf800 # Command line parameter
 
 		@interruptFlags = 0
 		@currentPrivilegeLevel = 0
@@ -180,7 +182,7 @@ class processor
 		@linearMemory.reset()
 		@alignmentChecking = false
 
-		@eip = 0x10000#0x000fff0 # Controle nodig, zie wiki
+		@eip = 0x000fff0 # Controle nodig, zie wiki
 
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0

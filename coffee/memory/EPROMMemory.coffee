@@ -19,6 +19,7 @@ class EPROMMemory extends LazyCodeBlockMemory
 		super(size, manager)
 
 	load: (base, data, offset, length) ->
+		log "load EPProm: offset: #{offset} length: #{length}"
 		@copyArrayIntoContents(base, data, offset, length)
 
 	load2: (data, offset, length) ->
@@ -26,6 +27,25 @@ class EPROMMemory extends LazyCodeBlockMemory
 
 	toString: () ->
 		"EPROMMemory"
+
+	dump: ->
+		tmp = ""
+
+		prev = null
+		start = 0
+
+		for i in [0...@buffer.length]
+			if i == 0
+				start = 0
+				prev = @buffer[i]
+			else
+				if @buffer[i] != prev
+					tmp += "From #{start} to #{i-1} is #{prev}"
+					prev = @buffer[i]
+					start = i
+
+			tmp += "From #{start} to #{i-1} is #{prev}"
+		log tmp
 
 	getSize: ->
 		return 4096

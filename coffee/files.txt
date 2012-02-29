@@ -10,12 +10,7 @@ memory/codeblock/BackgroundCompiler
 memory/codeblock/OptimisedCompiler
 memory/codeblock/CodeBlockManager
 memory/codeblock/CodeBlockReplacementException
-memory/AbstractMemory
 memory/AddressSpace
-memory/LazyCodeBlockMemory
-memory/EPROMMemory
-memory/LinearAddressSpace
-memory/PhysicalAddressSpace
 motherboard/DMAController
 motherboard/InterruptControllerElement
 motherboard/InterruptController

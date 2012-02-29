@@ -229,7 +229,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			read = @source.getByte()
 
 			if (!read)
-				throw "Read has been undefined, source: #{@source}"
+				throw new LengthIncorrectError("Read has been undefined, source: #{@source}")
 
 			log "DecodeOpcode read: " + read
 			opcode = 0xff & read

@@ -63,6 +63,9 @@ class pc
 #		@add(new Keyboard)
 
 		# Loading the start files
+
+		window.memory = new Array()
+
 		document.getElementById("start").disabled = false
 
 	loadedstart: (result) ->
@@ -83,9 +86,27 @@ class pc
 	savememory: (data, len, address) ->
 		log "saving file data at #{address} with length #{data.length}"
 
-		load = address
+		for i in [0...len]
+			rs = parseInt(i)
+
+			if (isNaN(rs))
+				rs = null
+
+#			log "Going to write to buffer[#{address}] #{rs}"
+
+			window.memory[address] = parseInt(rs)
+			address++
+		log memory
+		throw "die"
+
+#		load = address
 #		endLoadAddress = 0x100000000 - data.length
-		nextBlockStart = (load & pas.INDEX_MASK) + pas.BLOCK_SIZE;
+#		nextBlockStart = (load & pas.INDEX_MASK);
+#		nulldata = address - nextBlockStart
+#		log "nextBlockStart: #{nextBlockStart} number: #{nulldata}"
+
+#		for i in [0...nulldata]
+#			data = "0#{data}"
 #		ep = new EPROMMemory(pas.BLOCK_SIZE, manager)
 #		ep.load(load & pas.BLOCK_MASK, data, 0, nextBlockStart - load)
 
@@ -93,19 +114,19 @@ class pc
 
 #		pas.copyArrayIntoContents(endLoadAddress, data, 0, data.length)
 
-		imageOffset = address
-		epromOffset = nextBlockStart
-		log "Writing to #{epromOffset}"
-		written = 0
+#		imageOffset = 0
+#		epromOffset = nextBlockStart
+#		log "Writing to #{epromOffset}"
+#		written = 0
 
-		while (written) <= data.length
-			ep = new EPROMMemory(pas.BLOCK_SIZE, manager)
-			ep.load2(data, imageOffset, pas.BLOCK_SIZE)
-			log "Writing #{ep} to #{epromOffset}"
-			pas.mapMemory(epromOffset, ep)
-			epromOffset += pas.BLOCK_SIZE
-			imageOffset += pas.BLOCK_SIZE
-			written += pas.BLOCK_SIZE
+#		while (written) <= data.length
+#			ep = new EPROMMemory(pas.BLOCK_SIZE, manager)
+#			ep.load2(data, imageOffset, pas.BLOCK_SIZE)
+#			log "Writing #{ep} to #{epromOffset}"
+#			pas.mapMemory(epromOffset, ep)
+#			epromOffset += pas.BLOCK_SIZE
+#			imageOffset += pas.BLOCK_SIZE
+#			written += pas.BLOCK_SIZE
 
 #		throw "die"
 		return true
@@ -117,7 +138,7 @@ class pc
 	start: ->
 		@configure()
 
-		loadFile("linuxstart.bin", 0x10000, @loadedstart, @savememory)
+		loadFile("linuxstart.bin", 0x000fff0, @loadedstart, @savememory)
 	start2: ->
 
 		@running = true
@@ -150,6 +171,7 @@ class pc
 
 	updateMHz: () ->
 		log "updateMHz"
+		throw "blargh"
 		return
 
 	stop: ->
@@ -247,6 +269,9 @@ class pc
 		for i in [0...0x5000000]
 			t = pas.getMemoryBlockAt(i)
 			s = t.toString()
+
+#			t.dump()
+
 			if (prev == null)
 				prev = s
 				start = i

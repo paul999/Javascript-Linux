@@ -134,14 +134,17 @@ class LinearAddressSpace extends AddressSpace
 
 	executeProtected: (cpu, offset) ->
 
-#		log "executeProtected @linear " + offset
+		log "executeProtected @linear " + offset
 		memory = @getReadMemoryBlockAt(offset)
 
 		try
 			tmp = memory.executeProtected(cpu, offset & @BLOCK_MASK)
 		catch e
+			log "Memory error"
+		log "Memory result: #{tmp}"
 
-		if (!tmp)
+		if (!tmp || tmp == null)
+			log "tmp was false"
 			memory = @validateTLBEntryRead(offset)
 		else
 			return tmp

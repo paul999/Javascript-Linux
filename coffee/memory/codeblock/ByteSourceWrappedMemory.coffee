@@ -30,8 +30,9 @@ class ByteSourceWrappedMemory
 		tmp = @source.getByte(@offset)
 		@offset++
 
-		if (!tmp)
-			throw "getByte has been undefined, source: #{@source}"
+		if (!tmp && tmp != 0)
+			throw new LengthIncorrectError("getByte has been undefined, source: #{@source}, data: #{tmp}, source #{@source}")
+
 
 		return tmp
 

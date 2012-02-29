@@ -22,19 +22,30 @@ log = (message) ->
 
 # Copy of the java method Systemarraycopy
 arraycopy = (buf, offset, buffer, address, len) ->
-#	log "Buf: #{buf} offset: #{offset} buffer: #{buffer} address: #{address} len #{len} old length: #{buffer.length}"
+	log "Buf:  offset: #{offset} buffer: #{buffer} address: #{address} len #{len} old length: #{buffer.length}"
+
+	log "Buf check: " + parseInt(buf.charCodeAt(offset))
 
 	if (typeof buf == "string")
-		j = 0
-		for i in [offset...len]
-			buffer[address + j] = buf.charCodeAt(i)
-			j++
+		for i in [0...len]
+			rw = i + offset
+			rs = parseInt(buf.charCodeAt(rw))
+
+			if (isNaN(rs))
+				rs = null
+
+#			log "Going to write to buffer[#{address}] #{rs}"
+
+
+			buffer[address] = rs
+			address++
 	else
-		j = 0
-		for i in [offset...len]
-			buffer[address + j] = buf[i]
-			j++
-#	log "New length: " + buffer.length
+#		j = 0
+#		for i in [0...len]
+#			buffer[address + j] = buf[i + offset]
+#			j++
+		throw "Array"
+	log "New length: " + buffer.length
 
 	return buffer
 

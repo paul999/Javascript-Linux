@@ -20,8 +20,9 @@ class LazyCodeBlockMemory extends AbstractMemory
 		@realCodeBuffer = new Array()
 		@protectedCodeBuffer = new Array()
 		@ALLOCATION_THRESHOLD = 10
-		@buffer = new Array(4096)#new Int32Array(4096)
+		@buffer = new Array()#new Int32Array(4096)
 		@nullReadCount = 0
+		@start = null
 
 
 	toString: () ->
@@ -34,26 +35,24 @@ class LazyCodeBlockMemory extends AbstractMemory
 
 	copyArrayIntoContents: (address, buf, offset, len) ->
 
-
+#@copyArrayIntoContents(base, data, offset, length)
 
 		try
-			#@buffer = arraycopy(buf, offset, @buffer, address, len)
-
-			if (@buffer.length > 4096)
-				throw new LengthIncorrectError("Length: #{@buffer.length} max 4096")
-#			if typeof buf == "string"
-#				for i in [0...buf.length]
-#					@buffer[i] = buf.charCodeAt(i)
-#					address++
+			@start = address
+			@buffer = arraycopy(buf, offset, @buffer, 0, len)
+			log typeof @buffer
 		catch e
 			throw e
-			@allocateBuffer()
-			@buffer = arraycopy(buf, offset, @buffer, address, len)
+#			@allocateBuffer()
+#			@buffer = arraycopy(buf, offset, @buffer, address, len)
 		@regionAltered(address, address + len - 1)
 
+		if (@buffer.length > 4096)
+			throw "Max size of buffer is 4096"
+
 		# Dump saved contents...
-#		log "Dump saved value: Length: " + @buffer.length
-#		log "Data result: " + arraycopy(buf, offset, @buffer, address, len).length
+		log "Dump saved value: Length: " + @buffer.length
+		log "Data result: " + @buffer.length
 #		for i in [0...@buffer.length]
 #			log "@buffer[#{i}]=#{@buffer[i]}"
 #		throw "Die"
@@ -62,6 +61,8 @@ class LazyCodeBlockMemory extends AbstractMemory
 		throw "This should not happen at all..."
 
 	regionAltered: (start, end) ->
+		start -= @start
+		end -= @end
 		for i in [end...start]
 			b = @protectedCodeBuffer[i]
 
@@ -73,29 +74,35 @@ class LazyCodeBlockMemory extends AbstractMemory
 			if (b == @PLACEHOLDER)
 				continue
 
-			if (b.handleMemoryRegionChange(start, end))
+			if (b.handleMemoryRegionChange(start + @start, end + @start))
 				@removeProtectedCodeBlockAt(i)
 	setByte: (offset, data) ->
 		if (@getByte(offset) == data)
 			return
 
+		offset -= @start
 		try
 			@buffer[offset] = data
 		catch e
-#			throw e
+			throw e
 			@allocateBuffer()
 			@buffer[offset] = data
-		@regionAltered(offset, offset)
+		@regionAltered(offset + @start, offset + @start)
 
 	getByte: (offset) ->
 		try
-			return @buffer[offset]
+			offs = offset - @start
+			log "lazy getByte(#{offset} = #{offs}) = #{@buffer[offset]}"
+			log @buffer
+			return @buffer[offs]
+			return
 		catch e
+			log "lazy @ getByte(#{offset}) error: " + e
 			@nullReadCount++
 
 			if (@nullReadCount == @ALLOCATION_THRESHOLD)
 				@allocateBuffer()
-				return @buffer[offset]
+				return @buffer[offs]
 			else
 				return 0
 
@@ -103,16 +110,20 @@ class LazyCodeBlockMemory extends AbstractMemory
 		x86Count = 0
 		ip = proc.getInstructionPointer()
 
+		log "ip: #{ip} block_mask: #{pas.BLOCK_MASK}"
+
 		offset = ip & pas.BLOCK_MASK
 
 		log "Offset: #{offset}"
 		block = @getProtectedModeCodeBlockAt(offset)
-		log "BLock result: #{block}"
+		log "BLock result: #{block} offset #{offset}"
 
 		try
 			try
 				x86Count += block.execute()
 			catch e
+				log "executeProtected @ Lazy error:" + e
+#				throw new LengthIncorrectError()
 				block = manager.getProtectedModeCodeBlockAt(@, offset, proc.cs.getDefaultSizeFlag())
 				log "Replacement block: #{block}"
 				@setProtectedCodeBlockAt(offset, block)
@@ -128,6 +139,7 @@ class LazyCodeBlockMemory extends AbstractMemory
 
 	getProtectedModeCodeBlockAt: (offset) ->
 		try
+			offset -= @start
 			return @protectedCodeBuffer[offset]
 		catch e
 			@constructProtectedCodeBlocksArray()
@@ -139,6 +151,7 @@ class LazyCodeBlockMemory extends AbstractMemory
 		if (block == null)
 			return
 
+		offset -= @start
 		@protectedCodeBuffer[offset] = block
 
 		len = block.getX86Length()
@@ -148,6 +161,7 @@ class LazyCodeBlockMemory extends AbstractMemory
 				@protectedCodeBuffer[i] = @PLACEHOLDER
 
 	removeProtectedCodeBlockAt: (offset) ->
+		offset -= @start
 
 		b = @protectedCodeBuffer[offset]
 
