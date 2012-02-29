@@ -228,7 +228,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 		while true
 			read = @source.getByte()
 
-			if (!read)
+			if (!read && read != 0 )
 				throw new LengthIncorrectError("Read has been undefined, source: #{@source}")
 
 			log "DecodeOpcode read: " + read
@@ -236,20 +236,73 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			bytesRead += 1
 
 			switch (opcode)
-				when -1
-					log "-1"
-				else
-					if (opcode != 0)
-						throw "Opcode found (int): " + opcode
+				when 0x0f
+					opcodePrefix = (opcodePrefix << 8) | opcode
+					opcode = 0xff & @source.getByte()
+					bytesRead += 1
+					modrm = opcode
+				when 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf
+					opcodePrefix = (opcodePrefix << 8) | opcode
+					opcode = 0
+					modrm = 0xff & @source.getByte()
+					bytesRead += 1
+				when 0x2e
+					prefices &= ~@PREFICES_SG
+					prefices |= @PREFICES_CS
+					continue
+				when 0x3e
+					prefices &= ~@PREFICES_SG
+					prefices |= @PREFICES_DS
+					continue
+				when 0x26
+					prefices &= ~@PREFICES_SG
+					prefices |= @PREFICES_ES
+					continue
+				when 0x36
+					prefices &= ~@PREFICES_SG
+					prefices |= @PREFICES_SS
+					continue
+				when 0x64
+					prefices &= ~@PREFICES_SG
+					prefices |= @PREFICES_FS
+					continue
+				when 0x65
+					prefices &= ~@PREFICES_SG
+					prefices |= @PREFICS_GS
+					continue
+				when 0x66
+					if @operandSizeIs32Bit
+						prefices = prefices & ~@PREFICES_OPERAND
 					else
-						break
+						prefices = prefices | @PREFICES_OPERAND
+					continue
+				when 0x67
+					if @operandSizeIs32Bit
+						prefices = prefices & ~@PREFICES_ADDRESS
+					else
+						prefices = prefices | @PREFICES_ADDRESS
+					continue
+				when 0xf2
+					prefices |= @PREFICES_REPNE
+					continue
+				when 0xf3
+					prefices |= @PREFICES_REPE
+					continue
+				when 0xf0
+					lock = true
+					prefices |= @PREFICES_LOCK
+					continue
 			break
 
 
+
 		opcode = (opcodePrefix << 8) | opcode;
+		log "Execute opcode: #{opcode}"
+		log "Opcodeprefix: #{opcodePrefix}"
 
 		switch opcodePrefix
 			when 0x00
+				log "modrmArray: " + @modrmArray[opcode]
 				if (@modrmArray[opcode])
 					modrm = 0xff & @source.getByte()
 					bytesRead += 1
@@ -288,6 +341,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			else
 				modrm = -1
 				sib = -1
+		console.log "modrm: #{modrm} sib: #{sib}"
 		if (@isJump(opcode, modrm))
 			@working.write(@EIP_UPDATE)
 
@@ -644,12 +698,12 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			when 0xc8
 				return 3
 			when 0x05, 0x0d, 0x15, 0x1d, 0x25, 0x2d, 0x35, 0x3d, 0x68, 0x69, 0x81, 0xa9, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf, 0xc7, 0xe8, 0xe9, 0xf80, 0xf81, 0xf82, 0xf83, 0xf84, 0xf85, 0xf86, 0xf87, 0xf88, 0xf89, 0xf8a, 0xf8b, 0xf8c, 0xf8d, 0xf8e, 0xf8f
-				 if ((prefices & PREFICES_OPERAND) != 0)
+				 if ((prefices & @PREFICES_OPERAND) != 0)
 				 	return 4
 				 else
 				 	return 2
 			when 0x9a, 0xea
-				if ((prefices & PREFICES_OPERAND) != 0)
+				if ((prefices & @PREFICES_OPERAND) != 0)
 					return 6
 				else
 					return 4
@@ -670,26 +724,55 @@ class ProtectedModeUDecoder extends MicrocodeSet
 						return 0
 		return 0
 
-	# 0x00: //ADD  Eb, Gb
-	# 0x08: //OR   Eb, Gb
-	# 0x10: //ADC  Eb, Gb
-	# 0x18: //SBB  Eb, Gb
-	# 0x20: //AND  Eb, Gb
-	# 0x28: //SUB  Eb, Gb
-	# 0x30: //XOR  Eb, Gb
-	# 0x38: //CMP  Eb, Gb
-	# 0x84: //TEST Eb, Gb
-	# 0x86: //XCHG Eb, Gb
 	writeInputOperands: (prefices, opcode, modrm, sib, displacement, immediate) ->
 #		log "WriteInputOperands(#{opcode})"
 		switch (opcode)
+
 			when 0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38, 0x84, 0x86
 				@load0_Eb(prefices, modrm, sib, displacement)
 				@load1_Gb(modrm)
+			when 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf
+				if ((prefices & @PREFICES_OPERAND))
+					@working.write(@LOAD0_ID)
+					@working.write(immediate)
+				else
+					@working.write(@LOAD0_IW)
+					@working.write(immediate)
+			when 0x01, 0x09, 0x11, 0x19, 0x21, 0x29, 0x31, 0x39, 0x85, 0x87
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Ed(prefices, modrm, sib, displacement)
+					@load1_Gd(modrm)
+				else
+					@load0_Ew(prefices, modrm, sib, displacement)
+					@load1_Gw(modrm)
+
+			when 0x41, 0x49, 0x51
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_ECX)
+				else
+					@working.write(@LOAD0_CX)
+			when 0x43, 0x4b, 0x53
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EBX)
+				else
+					@working.write(@LOAD0_BX)
+			when 0x40, 0x48, 0x50
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EAX)
+				else
+					@working.write(@LOAD0_AX)
+			when 0xc7, 0x68, 0x6a, 0xe8, 0xe9, 0xf80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x86, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_ID)
+					@working.write(immediate)
+				else
+					@working.write(@LOAD0_IW)
+					@working.write(immediate)
+
 			when -1
 				log "-1"
 			else
-				throw "Non supported opcode, Got opcode #{opcode}"
+				throw "ProtectedModeUdecoded, writeInputOperands, Non supported opcode, Got opcode #{opcode}"
 
 
 	# 0x00: ADD Eb, Gb
@@ -700,24 +783,111 @@ class ProtectedModeUDecoder extends MicrocodeSet
 	# 0x05: ADD eAX, Iv
 	# 0xfc0: XADD Eb, Gb
 	# 0xfc1: XADD Ev, Gv
+
+	# 0x86: //XCHG Eb, Gb
+	# 0x87: //XCHG Ev, Gv
+	# 0x88: //MOV Eb, Gb
+	# 0x89: //MOV Ev, Gv
+	# 0x8a: //MOV Gb, Eb
+	# 0x8b: //MOV Gv, Ev
+	# 0x8c: //MOV Ew, Sw
+	# 0x8d: //LEA Gv, M
+	# 0x8e: //MOV Sw, Ew
+
+	# 0x91: //XCHG eAX, eCX
+	# 0x92: //XCHG eAX, eCX
+	# 0x93: //XCHG eAX, eCX
+	# 0x94: //XCHG eAX, eCX
+	# 0x95: //XCHG eAX, eCX
+	# 0x96: //XCHG eAX, eCX
+	# 0x97: //XCHG eAX, eCX
+
+	# 0xa0: //MOV AL, Ob
+	# 0xa1: //MOV eAX, Ov
+	# 0xa2: //MOV Ob, AL
+	# 0xa3: //MOV Ov, eAX
+
+	# 0xb0: //MOV AL, Ib
+	# 0xb1: //MOV CL, Ib
+	# 0xb2: //MOV DL, Ib
+	# 0xb3: //MOV BL, Ib
+	# 0xb4: //MOV AH, Ib
+	# 0xb5: //MOV CH, Ib
+	# 0xb6: //MOV DH, Ib
+	# 0xb7: //MOV BH, Ib
+
+	# 0xb8: //MOV eAX, Iv
+	# 0xb9: //MOV eCX, Iv
+	# 0xba: //MOV eDX, Iv
+	# 0xbb: //MOV eBX, Iv
+	# 0xbc: //MOV eSP, Iv
+	# 0xbd: //MOV eBP, Iv
+	# 0xbe: //MOV eSI, Iv
+	# 0xbf: //MOV eDI, Iv
+
+	# 0xc4: //LES
+	# 0xc5: //LDS
+	# 0xc6: //MOV GP11 Eb, Gb
+	# 0xc7: //MOV GP11 Ev, Gv
+
+	# 0xd7: //XLAT
 	writeOperation: (prefices, opcode, modrm) ->
 #		log "WriteOperation(#{opcode})"
 		switch opcode
 			when 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0xfc0, 0xfc1
 				@working.write(@ADD)
+
+			when 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0xa0, 0xa1, 0xa2, 0xa3, 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf, 0xc4, 0xc5, 0xc6, 0xc7, 0xd7
+				break
+
+			when 0x06, 0x0e, 0x16, 0x1e, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x68, 0x6a, 0xfa0, 0xfa8
+
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@PUSH_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@PUSH_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@PUSH_O16_A31)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@PUSH_O32_A32)
+			when 0xe8
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@CALL_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@CALL_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@CALL_O16_A31)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@CALL_O32_A32)
+
 			when -1
 
-			else throw "Got non supported opcode @writeOperation #{opcode}"
+			else throw "ProtectedModeUdecoded, Got non supported opcode @writeOperation #{opcode}"
 
 	writeOutputOperands: (prefices, opcode, modrm, sib, displacement) ->
 		switch opcode
 			# One byte operation
 			when 0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x88, 0xc0, 0xc6, 0xfe, 0xf90, 0xf91, 0xf92, 0xf93, 0xf94, 0xf95, 0xf96, 0xf97, 0xf98, 0xf99, 0xf9a, 0xf9b, 0xf9c, 0xf9d, 0xf9e, 0x9f
 				@store0_Eb(prefices, modrm, sib, displacement)
+			when 0x44, 0x4c, 0x5c, 0xbc
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE_ESP)
+				else
+					@working.write(@STORE0_SP)
+			when 0x01, 0x09, 0x11, 0x19, 0x21, 0x29, 0x31, 0x89, 0xc7, 0xc1, 0x8f, 0xd1, 0xd3
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Ed(prefices, modrm, sib, displacement)
+				else
+					@store0_Ew(prefices, modrm, sib, displacement)
+
+			when 0x51, 0x53, 0x50, 0xe8
+				log "No action?"
 			when -1
 
 			else
-				throw "Got not supported opcode @writeOutputOperands #{opcode}"
+				throw "ProtectedModeUdecoded, Got not supported opcode @writeOutputOperands #{opcode}"
 
 
 
@@ -764,7 +934,27 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				@working.write(@LOAD1_BH)
 			else
 				throw "Unknown Byte Register Operand #{val}"
-
+	load0_Ew: (prefices, modrm, sib, displacement) ->
+		switch (modrm & 0xc7)
+			when 0xc0
+				@working.write(@LOAD0_AX)
+			when 0xc1
+				@working.write(@LOAD0_CX)
+			when 0xc2
+				@working.write(@LOAD0_DX)
+			when 0xc3
+				@working.write(@LOAD0_BX)
+			when 0xc4
+				@working.write(@LOAD0_SP)
+			when 0xc5
+				@working.write(@LOAD0_BP)
+			when 0xc6
+				@working.write(@LOAD0_SI)
+			when 0xc7
+				@working.write(@LOAD0_DI)
+			else
+				@decodeM(prefices, modrm, sib, displacement)
+				@working.write(@LOAD0_MEM_WORD)
 
 	store0_Eb: (prefices, modrm, sib, displacement)	->
 		switch (modrm & 0xc7)
@@ -787,7 +977,47 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			else
 				@decodeM(prefices, modrm, sib, displacement)
 				@working.write(@STORE0_MEM_BYTE)
-
+	load1_Gw: (modrm) ->
+		switch (modrm & 0x38)
+			when 0x00
+				@working.write(@LOAD1_AX)
+			when 0x08
+				@working.write(@LOAD1_CX)
+			when 0x10
+				@working.write(@LOAD1_DX)
+			when 0x18
+				@working.write(@LOAD1_BX)
+			when 0x20
+				@working.write(@LOAD1_SP)
+			when 0x28
+				@working.write(@LOAD1_BP)
+			when 0x30
+				@working.write(@LOAD1_SI)
+			when 0x38
+				@working.write(@LOAD1_DI)
+			else
+				throw new IllegalStateException("Unknown Word Register Operand")
+	store0_Ew: (prefices, modrm, sib, displacement) ->
+		switch (modrm & 0xc7)
+			when 0xc0
+				@working.write(@STORE0_AX)
+			when 0xc1
+				@working.write(@STORE0_CX)
+			when 0xc2
+				@working.write(@STORE0_DX)
+			when 0xc3
+				@working.write(@STORE0_BX)
+			when 0xc4
+				@working.write(@STORE0_SP)
+			when 0xc5
+				@working.write(@STORE0_BP)
+			when 0xc6
+				@working.write(@STORE0_SI)
+			when 0xc7
+				@working.write(@STORE0_DI)
+			else
+				@decodeM(prefices, modrm, sib, displacement)
+				@working.write(@STORE0_MEM_WORD)
 
 	isJump: (opcode, modrm) ->
 		return @isNearJump(opcode, modrm) || @isFarJump(opcode, modrm) || @isModeSwitch(opcode, modrm) || @isBlockTerminating(opcode, modrm);
@@ -949,6 +1179,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 
 	decodingAddressMode: ->
+		return true
+		#todo, check why
 		if (@addressModeDecoded)
 			return false
 		else

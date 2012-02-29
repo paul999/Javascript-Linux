@@ -164,8 +164,8 @@ class processor
 
 	getInstructionPointer: ->
 		tmp = @cs.translateAddressRead(@eip)
-		log "getInstructionPointer: #{@eip}"
-		return @cs.translateAddressRead(@eip)
+		log "getInstructionPointer: #{@eip} returndata: #{tmp}"
+		return tmp
 
 	reset: ->
 		log "Resetting CPU"
@@ -179,10 +179,9 @@ class processor
 		@interruptFlags = 0
 		@currentPrivilegeLevel = 0
 
-		@linearMemory.reset()
 		@alignmentChecking = false
 
-		@eip = 0x000fff0 # Controle nodig, zie wiki
+		@eip = 0x10000 # Controle nodig, zie wiki
 
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0
@@ -220,7 +219,7 @@ class processor
 	#	@modelSpecificRegisters.clear()
 
 	initialised: ->
-		result = @physicalMemory != undefined && @physicalMemory != null && @linearMemory != undefined && @linearMemory != null && @ioports != undefined && @ioports != null && @interruptController != undefined && @interruptController != null
+		result = @ioports != undefined && @ioports != null && @interruptController != undefined && @interruptController != null
 
 		if (result && !@started)
 			log "Started"
@@ -231,14 +230,6 @@ class processor
 		return result
 	acceptComponent: (component) ->
 		log "Got a " + component + " for proc"
-
-		if (component instanceof LinearAddressSpace && !@linearMemory)
-			@linearMemory = component
-
-#			@alignmentCheckedMemory = new AlignmentCheckedAddressSpace(linearMemory)
-
-		if (component instanceof PhysicalAddressSpace && !@physicalMemory)
-			@physicalMemory = component
 
 		if (component instanceof IOPortHandler && !@ioports)
 			@ioports = component

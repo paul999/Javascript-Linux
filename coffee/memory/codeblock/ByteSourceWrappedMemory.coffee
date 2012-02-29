@@ -15,11 +15,10 @@
 
 class ByteSourceWrappedMemory
 	constructor: ->
-		@source = null
 		@offset = null
 		@startingPosition = null
 
-	set: (@source, @offset) ->
+	set: (@offset) ->
 		@startingPosition = @offset
 
 	getOffset: ->
@@ -27,7 +26,7 @@ class ByteSourceWrappedMemory
 
 	getByte: ->
 
-		tmp = @source.getByte(@offset)
+		tmp = mem8[@offset]
 		@offset++
 
 		if (!tmp && tmp != 0)
@@ -37,7 +36,7 @@ class ByteSourceWrappedMemory
 		return tmp
 
 	skip: (count) ->
-		if (@offset + count >= @source.getSize())
+		if (@offset + count >= mem8.getSize())
 			throw new "Out of bound"
 
 		@offset += count
@@ -46,4 +45,4 @@ class ByteSourceWrappedMemory
 		@offset = @startingPosition
 
 	toString: ->
-		return "ByteSourceWrappedMemory: [" + @source + "] @ 0x" + @startingPosition
+		return "ByteSourceWrappedMemory @ 0x" + @startingPosition

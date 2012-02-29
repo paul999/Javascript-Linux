@@ -293,7 +293,7 @@ class DMAController
 		@dmaChannels[channel].transferDevice = device
 
 	initialised: () ->
-		tmp = ((@memory != null) && @ioportRegistered)
+		tmp = (@ioportRegistered)
 
 		if (tmp == undefined)
 			tmp = false
@@ -307,10 +307,7 @@ class DMAController
 	acceptComponent: (component) ->
 		log "accept component: " + component
 
-		if (component instanceof PhysicalAddressSpace)
-			log "Got PhysicalAddressSpace"
-			@memory = component
-		else if (component instanceof IOPortHandler)
+		if (component instanceof IOPortHandler)
 			component.registerIOPortCapable(this)
 			@ioportRegistered = true
 		return

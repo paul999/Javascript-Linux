@@ -30,7 +30,7 @@ class Segment
 		return @memory.getByte(@translateAddressRead(offset))
 
 	getWord: (offset) ->
-		return @memory.getWord(@translateAddressRead(offset))
+		return mem16[@translateAddressRead(offset)]
 
 	getDoubleWord: (offset) ->
 		return @memory.getDoubleWord(@translateAddressRead(offset))
@@ -47,7 +47,7 @@ class Segment
 		@memory.setByte(@translateAddressWrite(offset), data)
 
 	setWord: (offset, data) ->
-		@memory.setWord(translateAddressWrite(offset), data)
+		mem16[@translateAddressWrite(offset)] = data
 
 	setDoubleWord: (offset, data) ->
 		@memorysetDoubleWord(@translateAddressWrite(offset), data)

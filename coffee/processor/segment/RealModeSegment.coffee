@@ -24,10 +24,13 @@ class RealModeSegment extends Segment
 		@type = @TYPE_DATA_WRITABLE | @TYPE_ACCESSED
 		@defaultSize = false
 
-		log @base
+		log "Base of this: " + @base
 
 	translateAddressRead: (offset) ->
 		return @base + offset
 
 	getDefaultSizeFlag: ->
 		return @defaultSize
+
+	translateAddressWrite: (offset) ->
+		return @base + offset
