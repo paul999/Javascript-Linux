@@ -14,6 +14,6 @@
 # the Free Software Foundation.
 
 
-class NullSegment
+class NullSegment extends Segment
 	constructor: ->
 		log "create NullSegment"

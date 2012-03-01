@@ -181,7 +181,7 @@ class processor
 
 		@alignmentChecking = false
 
-		@eip = 0x10000 # Controle nodig, zie wiki
+		@eip = 0x100000 # Controle nodig, zie wiki
 
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0
@@ -211,10 +211,10 @@ class processor
 		@fs = sgm.createRealModeSegment(@physicalMemory, 0)
 		@gs = sgm.createRealModeSegment(@physicalMemory, 0)
 
-#		@idtr = @SegmentFactory.createDescriptorTableSegment(@physicalMemory, 0, 0xFFFF)
-#		@ldtr = @SegmentFactory.NULL_SEGMENT
-#		@gdtr = @SegmentFactory.createDescriptorTableSegment(@physicalMemory, 0, 0xFFFF)
-#		@tss = @SegmentFactory.NULL_SEGMENT
+		@idtr = sgm.createDescriptorTableSegment(@physicalMemory, 0, 0xFFFF)
+		@ldtr = sgm.NULL_SEGMENT
+		@gdtr = sgm.createDescriptorTableSegment(@physicalMemory, 0, 0xFFFF)
+		@tss = sgm.NULL_SEGMENT
 
 	#	@modelSpecificRegisters.clear()
 
@@ -316,3 +316,27 @@ class processor
 			else
 				log "Invalid gate type for throwing interrupt 0x#{gate.getType()}"
 				throw new ProcessorException(Type.GENERAL_PROTECTION, selector + 2 + EXT, true)
+	createDescriptorTableSegment: (base, limit) ->
+		return sgm.createDescriptorTableSegment(base, limit)
+
+	getSegment: (segmentSelector) ->
+
+		segmentDescriptor = 0
+
+#		if ((segmentSelector & 0x4) != 0)
+#			segmentDescriptor = @ldtr.getQuadWord(segmentSelector & 0xfff8)
+#
+		#else
+		if (segmentSelector < 0x4)
+			return sgm.NULL_SEGMENT
+		segmentDescriptor = @gdtr.getQuadWord(segmentSelector & 0xfff8)
+
+		result = sgm.createProtectedModeSegment(segmentSelector, segmentDescriptor)
+
+		if (@alignmentChecking)
+			if ((result.getType() & 0x18) == 0x10)
+				result.setAddressSpace(alignmentCheckedMemory)
+		return result
+	setCarryFlag: (value) ->
+		@carryCalculated = true
+		@eflagsCarry = value

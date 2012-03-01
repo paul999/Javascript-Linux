@@ -231,7 +231,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			if (!read && read != 0 )
 				throw new LengthIncorrectError("Read has been undefined, source: #{@source}")
 
-			log "DecodeOpcode read: " + read
 			opcode = 0xff & read
 			bytesRead += 1
 
@@ -297,12 +296,9 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 
 		opcode = (opcodePrefix << 8) | opcode;
-		log "Execute opcode: #{opcode}"
-		log "Opcodeprefix: #{opcodePrefix}"
 
 		switch opcodePrefix
 			when 0x00
-				log "modrmArray: " + @modrmArray[opcode]
 				if (@modrmArray[opcode])
 					modrm = 0xff & @source.getByte()
 					bytesRead += 1
@@ -318,7 +314,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					else
 						sib = -1
 			when 0x0f
-				if (@twoByte0f_modrmArray[0xff & opcode])
+				if (@twoByte_0f_modrmArray[0xff & opcode])
 					modrm = 0xff & @source.getByte()
 					bytesRead += 1
 				else
@@ -341,7 +337,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			else
 				modrm = -1
 				sib = -1
-		console.log "modrm: #{modrm} sib: #{sib}"
 		if (@isJump(opcode, modrm))
 			@working.write(@EIP_UPDATE)
 
@@ -727,6 +722,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 	writeInputOperands: (prefices, opcode, modrm, sib, displacement, immediate) ->
 #		log "WriteInputOperands(#{opcode})"
 		switch (opcode)
+			when 0xf9
+				log "no action"
 
 			when 0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38, 0x84, 0x86
 				@load0_Eb(prefices, modrm, sib, displacement)
@@ -768,6 +765,63 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				else
 					@working.write(@LOAD0_IW)
 					@working.write(immediate)
+			when 0x80, 0x82, 0xc0
+				@load0_Eb(prefices, modrm, sib, displacement)
+				@working.write(@LOAD1_IB)
+				@working.write(immediate)
+			when 0x02, 0x0a, 0x12, 0x1a, 0x22, 0x2a, 0x32, 0x3a, 0xfc0
+				@load0_Gb(modrm)
+				@load1_Eb(prefices, modrm, sib, displacement)
+
+			when 0x1e
+				@working.write(@LOAD0_DS)
+
+			when 0x16
+				@working.write(@LOAD0_SS)
+
+			when 0xf01
+				switch modrm & 0x38
+					when 0x10, 0x18
+						@load0_Ew(prefices, modrm, sib, displacement)
+						@working.write(@ADDR_ID)
+						@working.write(2)
+						@working.write(@LOAD0_MEM_DWORD)
+					when 0x30
+						@load0_Ew(prefices, modrm, sib, displacement)
+					when 0x38
+						@decodeM(prefices, modrm, sib, displacement)
+
+			when 0x92
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EAX)
+					@working.write(@LOAD1_EDX)
+				else
+					@working.write(@LOAD0_AX)
+					@working.write(@LOAD1_DX)
+			when 0xc6, 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xe4, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, 0xcd, 0xd4, 0xd5, 0xe0, 0xe1, 0xe2, 0xe3, 0xeb, 0xe5
+				@working.write(@LOAD0_IB)
+				@working.write(immediate)
+			when 0xa4, 0xa5, 0xa6, 0xa7, 0xac, 0xad
+				@decodeSegmentPrefix(prefices)
+			when 0xff
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					switch (modrm & 0x38)
+						when 0x00, 0x08, 0x10, 0x20, 0x30
+							@load0_Ed(prefices, modrm, sib, displacement)
+						when 0x18, 0x28
+							@load0_Ed(prefices, modrm, sib, displacement)
+							@working.write(@ADDR_IB)
+							@working.write(4)
+							@working.write(@LOAD1_MEM_WORD)
+				else
+					switch (modrm & 0x38)
+						when 0x00, 0x08, 0x10, 0x20, 0x30
+							@load0_Ew(prefices, modrm, sib, displacement)
+						when 0x18, 0x28
+							@load0_Ew(prefices, modrm, sib, displacement)
+							@working.write(@ADDR_IB)
+							@working.write(2)
+							@working.write(@LOAD1_MEM_WORD)
 
 			when -1
 				log "-1"
@@ -861,9 +915,124 @@ class ProtectedModeUDecoder extends MicrocodeSet
 						@working.write(@CALL_O16_A31)
 					when @PREFICES_ADDRESS | @PREFICES_OPERAND
 						@working.write(@CALL_O32_A32)
+			when 0x80, 0x81, 0x82, 0x83
+				switch modrm & 0x38
+					when 0x00
+						@working.write(@ADD)
+					when 0x08
+						@working.write(@OR)
+					when 0x10
+						@working.write(@ADC)
+					when 0x18
+						@working.write(@SBB)
+					when 0x20
+						@working.write(@AND)
+					when 0x28, 0x38
+						@working.write(@SUB)
+					when 0x30
+						@working.write(@XOR)
+			when 0xf01
+				switch modrm & 0x38
+					when 0x00
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@SGDT_O32)
+						else
+							@working.write(@SGDT_O16)
+					when 0x08
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@SGDT_O32)
+						else
+							@working.write(@SGDT_O16)
+					when 0x10
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@LGDT_O32)
+						else
+							@working.write(@LGDT_O16)
+					when 0x18
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@LIDT_O32)
+						else
+							@working.write(@LIDT_O16)
+					when 0x20
+						@working.write(@SMSW)
+					when 0x30
+						@working.write(@LMSW)
+					when 0x38
+						@working.write(@INVLPG)
+					else
+						throw new IllegalStateException("Invalid Gp 7 Instruction?")
 
-			when -1
+			when 0xe2
+				if ((prefices & @PREFICES_ADDRESS) != 0)
+					@working.write(@LOOP_ECX)
+				else
+					@working.write(@LOOP_CX)
+			when 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f
+				@working.write(@DEC)
+			when 0xac
+				if (prefices & @PREFICES_REP) != 0
+					if (prefices & PREFICES_ADDRESS) != 0
+						@working.write(@REP_LODSB_A32)
+					else
+						@working.write(@REP_LODSB_A16)
+				else
+					if (prefices & @PREFICES_ADDRESS) != 0
+						@working.write(@LODSB_A32)
+					else
+						@working.write(@LODSB_A16)
+			when 0xf9
+				@working.write(@STC)
 
+			when 0xff
+				tmp = modrm & 0x38
+				log tmp
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@INC)
+					when 0x08
+						@working.write(@DEC)
+					when 0x10
+						switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+							when 0
+								@working.write(@CALL_ABS_O16_A16)
+							when @PREFICES_OPERAND
+								@working.write(@CALL_ABS_O32_A16)
+							when @PREFICES_
+								@working.write(@CALL_ABS_O16_A32)
+							when @PREFICES_ADDRESS | @PREFICES_OPERAND
+								@working.write(@CALL_ABS_O32_A32)
+					when 0x18
+						switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+							when 0
+								@working.write(@CALL_FAR_O16_A16)
+							when @PREFICES_OPERAND
+								@working.write(@CALL_FAR_O32_A16)
+							when @PREFICES_
+								@working.write(@CALL_FAR_O16_A32)
+							when @PREFICES_ADDRESS | @PREFICES_OPERAND
+								@working.write(@CALL_FAR_O32_A32)
+					when 0x20
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@JUMP_ABS_O32)
+						else
+							@working.write(@JUMP_ABS_O16)
+					when 0x28
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@JUMP_FAR_O32)
+						else
+							@working.write(@JUMP_FAR_O16)
+					when 0x30
+						switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+							when 0
+								@working.write(@PUSH_O16_A16)
+							when @PREFICES_OPERAND
+								@working.write(@PUSH_O32_A16)
+							when @PREFICES_
+								@working.write(@PUSH_O16_A32)
+							when @PREFICES_ADDRESS | @PREFICES_OPERAND
+								@working.write(@PUSH_O32_A32)
+					else
+						log IllegalStateException("Invalid Gp 5 Instruction? FF modrm=" + modrm )
 			else throw "ProtectedModeUdecoded, Got non supported opcode @writeOperation #{opcode}"
 
 	writeOutputOperands: (prefices, opcode, modrm, sib, displacement) ->
@@ -881,9 +1050,60 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					@store0_Ed(prefices, modrm, sib, displacement)
 				else
 					@store0_Ew(prefices, modrm, sib, displacement)
+			when 0x03, 0x0b, 0x13, 0x1b, 0x23, 0x2b, 0x33, 0x69, 0x6b, 0x8b, 0x8d, 0xf02, 0xf03, 0xf40, 0xf41, 0xf42, 0xf43, 0xf44, 0xf45, 0xf46, 0xf47, 0xf48, 0xf49, 0xf4a, 0xf4b, 0xf4c, 0xf4d, 0xf4e, 0xf4f, 0xfaf, 0xfb6, 0xfb7, 0xfbc, 0xfbd, 0xfbe, 0xfbf
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Gd(modrm)
+				else
+					@store0_Gw(modrm)
+			when 0x80, 0x82
+				if (modrm & 0x38) == 0x38
+					break
+				@store0_Eb(prefices, modrm, sib, displacement)
+			when 0x86
+				@store0_Gb(modrm)
+				@store1_Eb(prefices, modrm, sib, displacement)
 
-			when 0x51, 0x53, 0x50, 0xe8
+			when 0x02, 0x0a, 0x12, 0x1a, 0x22, 0x2a, 0x32, 0x8a
+				@store0_Gb(modrm)
+			when 0xf01
+				switch (modrm & 0x38)
+					when 0x00, 0x08
+						@store0_Ew(prefices, modrm, sib, displacement)
+						@working.write(@ADDR_ID)
+						@working.write(2)
+						@working.write(@STORE1_MEM_DWORD)
+					when 0x20
+						@store0_Ew(prefices, modrm, sib, displacement)
+			when 0x92
+
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_DEX)
+					@working.write(@STORE1_EAX)
+				else
+					@working.write(@STORE0_DX)
+					@working.write(@STORE1_AX)
+			when 0x8e
+				@store0_Sw(modrm)
+
+			when 0x43, 0x4b, 0x5b, 0xbb
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_EBX)
+				else
+					@working.write(@STORE0_BX)
+
+
+			when 0x51, 0x53, 0x50, 0xe8, 0x16, 0xe2, 0xac, 0xf9
 				log "No action?"
+
+			when 0xff
+				rm = modrm & 0x38
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					if (rm == 0x00 || rm == 0x08)
+						@store0_Ed(prefices, modrm, sib, displacement)
+				else
+					if (rm == 0x00 || rm == 0x08)
+						@store0_Ew(prefices, modrm, sib, displacement)
+
 			when -1
 
 			else
@@ -1018,6 +1238,129 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			else
 				@decodeM(prefices, modrm, sib, displacement)
 				@working.write(@STORE0_MEM_WORD)
+	store0_Gw: (modrm) ->
+		switch modrm & 0x38
+			when 0x00
+				@working.write(@STORE0_AX)
+			when 0x08
+				@working.write(@STORE0_CX)
+			when 0x10
+				@working.write(@STORE0_DX)
+			when 0x18
+				@working.write(@STORE0_BX)
+			when 0x20
+				@working.write(@STORE0_SP)
+			when 0x28
+				@working.write(@STORE0_BP)
+			when 0x30
+				@working.write(@STORE0_SI)
+			when 0x38
+				@working.write(@STORE0_DI)
+			else
+				throw new IllegalStateException("Unknown Word Register Operand")
+	store0_Gb: (modrm) ->
+		switch modrm & 0x38
+			when 0x00
+				@working.write(@STORE0_AL)
+			when 0x08
+				@working.write(@STORE0_CL)
+			when 0x10
+				@working.write(@STORE0_DL)
+			when 0x18
+				@working.write(@STORE0_BL)
+			when 0x20
+				@working.write(@STORE0_AH)
+			when 0x28
+				@working.write(@STORE0_CH)
+			when 0x30
+				@working.write(@STORE0_DH)
+			when 0x38
+				@working.write(@STORE0_BH)
+			else
+				throw new IllegalStateException("Unknown Byte Register Operand")
+
+	load0_Gb: (modrm) ->
+		switch (modrm & 0x38)
+			when 0x00
+				@working.write(@LOAD1_AL)
+			when 0x08
+				@working.write(@LOAD1_CL)
+			when 0x10
+				@working.write(@LOAD1_DL)
+			when 0x18
+				@working.write(@LOAD1_BL)
+			when 0x20
+				@working.write(@LOAD1_AH)
+			when 0x28
+				@working.write(@LOAD1_CH)
+			when 0x30
+				@working.write(@LOAD1_DH)
+			when 0x38
+				@working.write(@LOAD1_BH)
+			else
+				throw new IllegalStateException("Unknown Byte Register Operand")
+
+	store0_Sw: (modrm) ->
+		switch (modrm & 0x38)
+			when 0x00
+				@working.write(@STORE0_ES)
+			when 0x08
+				@working.write(@STORE0_CS)
+			when 0x10
+				@working.write(@STORE0_SS)
+			when 0x18
+				@working.write(@STORE0_DS)
+			when 0x20
+				@working.write(@STORE0_FS)
+			when 0x28
+				@working.write(@STORE0_GS)
+			else
+				throw new IllegalStateException("Unknown Segment Register Operand")
+
+	store1_Eb: (prefices, modrm, sib, displacement) ->
+		switch (modrm & 0xc7)
+			when 0xc0
+				@working.write(@STORE1_AL)
+			when 0xc1
+				@working.write(@STORE1_CL)
+			when 0xc2
+				@working.write(@STORE1_DL)
+			when 0xc3
+				@working.write(@STORE1_BL)
+			when 0xc4
+				@working.write(@STORE1_AH)
+			when 0xc5
+				@working.write(@STORE1_CH)
+			when 0xc6
+				@working.write(@STORE1_DH)
+			when 0xc7
+				@working.write(@STORE1_BH)
+			else
+				@decodeM(prefices, modrm, sib, displacement)
+				@working.write(@STORE1_MEM_BYTE)
+
+	load1_Eb: (prefices, modrm, sib, displacement) ->
+		switch (modrm & 0xc7)
+			when 0xc0
+				@working.write(@LOAD1_AL)
+			when 0xc1
+				@working.write(@LOAD1_CL)
+			when 0xc2
+				@working.write(@LOAD1_DL)
+			when 0xc3
+				@working.write(@LOAD1_BL)
+			when 0xc4
+				@working.write(@LOAD1_AH)
+			when 0xc5
+				@working.write(@LOAD1_CH)
+			when 0xc6
+				@working.write(@LOAD1_DH)
+			when 0xc7
+				@working.write(@LOAD1_BH)
+			else
+				@decodeM(prefices, modrm, sib, displacement)
+				@working.write(@LOAD1_MEM_BYTE)
+
 
 	isJump: (opcode, modrm) ->
 		return @isNearJump(opcode, modrm) || @isFarJump(opcode, modrm) || @isModeSwitch(opcode, modrm) || @isBlockTerminating(opcode, modrm);
@@ -1177,11 +1520,28 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					@working.write(displacement)
 			@working.write(@ADDR_MASK16)
 
+	decodeSegmentPrefix: (prefices) ->
+		switch (prefices & @PREFICES_SG)
+			when @PREFICES_DS
+				@working.write(@LOAD_SEG_DS)
+			when @PREFICES_ES
+				@working.write(@LOAD_SEG_ES)
+			when @PREFICES_SS
+				@working.write(@LOAD_SEG_SS)
+			when @PREFICES_CS
+				@working.write(@LOAD_SEG_CS)
+			when @PREFICES_FS
+				@working.write(@LOAD_SEG_FS)
+			when @PREFICES_GS
+				@working.write(@LOAD_SEG_GS)
+			else
+				@working.write(@LOAD_SEG_DS)
+
 
 	decodingAddressMode: ->
-		return true
+#		return true
 		#todo, check why
-		if (@addressModeDecoded)
+		if (@addressModeDecoded == true)
 			return false
 		else
 			@addressModeDecoded = true

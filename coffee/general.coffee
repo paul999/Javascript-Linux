@@ -49,6 +49,14 @@ arraycopy = (buf, offset, buffer, address, len) ->
 
 	return buffer
 
+getBytes = (x) ->
+	bytes = []
+
+	for i in [4..0]
+		bytes[i] = x & 255
+		x = x >> 8
+	return bytes
+
 
 
 class general

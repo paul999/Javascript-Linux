@@ -23,17 +23,16 @@ class Segment
 		@TYPE_CODE_CONFIRMMING = 0x4
 		log "create segment"
 
-	setAddressSpace: (memory) ->
-		@memory = memory
+	setAddressSpace: () ->
 
 	getByte: (offset) ->
-		return @memory.getByte(@translateAddressRead(offset))
+		return mem8[@translateAddressRead(offset)]
 
 	getWord: (offset) ->
 		return mem16[@translateAddressRead(offset)]
 
 	getDoubleWord: (offset) ->
-		return @memory.getDoubleWord(@translateAddressRead(offset))
+		return mem32[@translateAddressRead(offset)]
 
 	getQuadWord: (offset) ->
 		tmp = @translateAddressRead(offset)
@@ -44,7 +43,7 @@ class Segment
 		return result
 
 	setByte: (offset, data) ->
-		@memory.setByte(@translateAddressWrite(offset), data)
+		mem8[@translateAddressWrite(offset)] = data
 
 	setWord: (offset, data) ->
 		mem16[@translateAddressWrite(offset)] = data

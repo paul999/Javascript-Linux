@@ -58,10 +58,10 @@ class pc
 
 		# Loading the start files
 
-		mem = new ArrayBuffer(SYS_RAM_SIZE);
-		mem8 = new Uint8Array(mem, 0, SYS_RAM_SIZE);
-		mem16 = new Uint16Array(mem, 0, SYS_RAM_SIZE / 2);
-		mem32 = new Int32Array(mem, 0, SYS_RAM_SIZE / 4);
+		mem = new ArrayBuffer(SYS_RAM_SIZE + 16);
+		mem8 = new Uint8Array(mem, 0, SYS_RAM_SIZE + 16);
+		mem16 = new Uint16Array(mem, 0, (SYS_RAM_SIZE + 16) / 2);
+		mem32 = new Int32Array(mem, 0, (SYS_RAM_SIZE + 16) / 4);
 
 		document.getElementById("start").disabled = false
 
@@ -71,13 +71,19 @@ class pc
 			return
 
 			#
-		#loadFile("vmlinux-3.0.4-simpleblock.bin", 0x00100000, window.pc.loadedstart2, window.pc.savememory)
-		window.pc.start2()
+		loadFile("vmlinux-3.0.4-simpleblock.bin", 0x00100000, window.pc.loadedstart2, window.pc.savememory)
+		#window.pc.start2()
 
 	loadedstart2: (result) ->
 		if (!result)
 			log "There had been an error loadeding the files"
 			return
+		st = "console=ttyS0 root=/dev/hda ro init=/sbin/init notsc=1"
+		loc = 0xf800
+		for i in [0...st.length]
+			mem8[loc] = st.charCodeAt(i) & 0xff
+			loc++
+
 		window.pc.start2()
 
 	savememory: (data, len, address) ->
@@ -136,7 +142,7 @@ class pc
 		@create()
 		@configure()
 
-		loadFile("linuxstart.bin", 0x100000, @loadedstart, @savememory)
+		loadFile("linuxstart.bin", 0x10000, @loadedstart, @savememory)
 	start2: ->
 
 		@running = true
@@ -169,7 +175,7 @@ class pc
 
 	updateMHz: () ->
 		log "updateMHz"
-		throw "blargh"
+#		throw "blargh"
 		return
 
 	stop: ->
