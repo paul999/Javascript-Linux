@@ -181,7 +181,7 @@ class processor
 
 		@alignmentChecking = false
 
-		@eip = 0x100000 # Controle nodig, zie wiki
+		@eip = 0x10000 # Controle nodig, zie wiki
 
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0

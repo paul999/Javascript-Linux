@@ -232,7 +232,10 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				throw new LengthIncorrectError("Read has been undefined, source: #{@source}")
 
 			opcode = 0xff & read
+
 			bytesRead += 1
+
+			log "Bytesread: #{bytesRead}"
 
 			switch (opcode)
 				when 0x0f
@@ -296,6 +299,10 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 
 		opcode = (opcodePrefix << 8) | opcode;
+
+		log "Executing opcode: #{opcode}"
+		t = getBytes(opcode)
+		log t[0] + " " +t[1] + " " +t[2] + " " +t[3]
 
 		switch opcodePrefix
 			when 0x00

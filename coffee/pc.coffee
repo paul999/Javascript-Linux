@@ -89,18 +89,15 @@ class pc
 	savememory: (data, len, address) ->
 		log "saving file data at #{address} with length #{data.length}"
 
-		log "Value1: "  + parseInt(rs)
 
 		for i in [0...len]
 			rs = parseInt(data.charCodeAt(i))
 
 			if (isNaN(rs))
 				rs = null
+			adr = address + i
 
-#			log "Going to write to buffer[#{address}] #{rs}"
-
-			mem8[address + i] = parseInt(rs)
-
+			mem8[adr] = parseInt(rs)
 
 #		load = address
 #		endLoadAddress = 0x100000000 - data.length
@@ -142,7 +139,18 @@ class pc
 		@create()
 		@configure()
 
-		loadFile("linuxstart.bin", 0x10000, @loadedstart, @savememory)
+		data = window.start
+		address = 0x10000
+		for i in [0...data.length]
+			rs = parseInt(data[i])
+
+			if (isNaN(rs))
+				rs = null
+			adr = address + i
+
+			mem8[adr] = rs
+
+		@loadedstart true
 	start2: ->
 
 		@running = true
