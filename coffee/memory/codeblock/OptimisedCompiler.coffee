@@ -34,19 +34,15 @@ class OptimisedCompiler
 		@bufferOffset = 0
 		position = 0
 
-		console.log "HIERJA!"
-
 		while (source.getNext())
 
 			uCodeLength = source.getLength()
-			console.log "Length: #{uCodeLength}"
 			uCodeX86Length = source.getX86Length()
 
 			position += uCodeX86Length
 
 			for i in [0...uCodeLength]
 				data = source.getMicrocode()
-				console.log data
 				@bufferMicrocodes[@bufferOffset] = data
 				@bufferPositions[@bufferOffset] = position
 				@bufferOffset++

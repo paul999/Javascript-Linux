@@ -19,3 +19,8 @@ If you want to run the emulator, there is debug information written into the con
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License version 2 as published by
 the Free Software Foundation.
+
+
+Running tests:
+To run the tests included with the emulator you will need to download the QUnit files seperatly, and place them in the src/ directory. Without these files the emulator will not run at all.
+After that, open test.html in a browser (Not file the file:// protocol, the test will fail!)

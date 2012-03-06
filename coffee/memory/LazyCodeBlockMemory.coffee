@@ -112,7 +112,7 @@ class LazyCodeBlockMemory extends AbstractMemory
 
 		log "ip: #{ip} block_mask: #{pas.BLOCK_MASK}"
 
-		offset = ip & pas.BLOCK_MASK
+		offset = ip
 
 		log "Offset: #{offset}"
 		block = @getProtectedModeCodeBlockAt(offset)

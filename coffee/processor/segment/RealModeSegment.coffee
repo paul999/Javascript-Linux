@@ -24,10 +24,21 @@ class RealModeSegment extends Segment
 		@type = @TYPE_DATA_WRITABLE | @TYPE_ACCESSED
 		@defaultSize = false
 
-		log @base
+		log "Base of this: " + @base
 
 	translateAddressRead: (offset) ->
-		return @base + offset
+		#return @base + offset
+		return offset
 
 	getDefaultSizeFlag: ->
 		return @defaultSize
+
+	translateAddressWrite: (offset) ->
+		return @base + offset
+
+	checkAddress: (offset) ->
+		if (0xffffffff & offset) > @limit
+			log "Segment limit exceeded: offset=#{offset}, limit: #{@limit}"
+			throw new ProcessorException(type.GENERAL_PROTECTION, 0, true)
+	getSelector: ->
+		return @selector

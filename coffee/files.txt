@@ -10,6 +10,7 @@ memory/codeblock/BackgroundCompiler
 memory/codeblock/OptimisedCompiler
 memory/codeblock/CodeBlockManager
 memory/codeblock/CodeBlockReplacementException
+memory/AbstractMemory
 memory/AddressSpace
 motherboard/DMAController
 motherboard/InterruptControllerElement
@@ -20,6 +21,7 @@ motherboard/RTC
 processor/segment/Segment
 processor/segment/NullSegment
 processor/segment/RealModeSegment
+processor/segment/DescriptorTableSegment
 processor/segment/factory
 processor/ProcessorException
 processor/processor

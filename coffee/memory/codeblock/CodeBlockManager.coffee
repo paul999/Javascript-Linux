@@ -32,22 +32,21 @@ class CodeBlockManager
 	toString: () ->
 		"CodeBlockManager"
 
-	getProtectedModeCodeBlockAt: (memory, offset, operandSize) ->
+	getProtectedModeCodeBlockAt: (offset, operandSize) ->
 		block = null
-		log "Manager memory: " + memory
-		block = @tryProtectedModeFactory(@compilingProtectedModeChain,memory, offset, operandSize)
+		block = @tryProtectedModeFactory(@compilingProtectedModeChain,offset, operandSize)
 
 		if (!block || block == null)
-			block = @tryProtectedModeFactory(@protectedModeChain, memory, offset, operandSize)
+			block = @tryProtectedModeFactory(@protectedModeChain, offset, operandSize)
 
 			if (!block || block == null)
 				throw "Couldnt find capable block"
 		return block
 
-	tryProtectedModeFactory: (ff, memory, offset, operandSizeFlag) ->
-
+	tryProtectedModeFactory: (ff, offset, operandSizeFlag) ->
 		try
-			@byteSource.set(memory, offset)
+			log "Got offset in try: #{offset}"
+			@byteSource.set(offset)
 			return ff.getProtectedModeCodeBlock(@byteSource, operandSizeFlag)
 		catch e
 			#orignal:

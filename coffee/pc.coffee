@@ -17,9 +17,8 @@
 # of vars kopieert.
 
 SYS_RAM_SIZE = 1024 * 1024 * 5
-# Pas: PhysicalAddressSpace
-# Las: LinearAddressSpace
-proc = pas = manager = las = Clock = sgm = null
+proc = manager = Clock = sgm = null
+mem = mem8 = mem16 = mem32 = null
 
 
 class pc
@@ -42,14 +41,9 @@ class pc
 		Clock = new clock
 		try
 			manager = new CodeBlockManager
-			pas = new PhysicalAddressSpace(manager)
-			las = new LinearAddressSpace
 		catch e
 			@printStackTrace e
 			throw e
-
-		@add(pas)
-		@add(las)
 
 		@add(proc)
 		@add(new IOPortHandler)
@@ -64,7 +58,10 @@ class pc
 
 		# Loading the start files
 
-		window.memory = new Array()
+		mem = new ArrayBuffer(SYS_RAM_SIZE + 16);
+		mem8 = new Uint8Array(mem, 0, SYS_RAM_SIZE + 16);
+		mem16 = new Uint16Array(mem, 0, (SYS_RAM_SIZE + 16) / 2);
+		mem32 = new Int32Array(mem, 0, (SYS_RAM_SIZE + 16) / 4);
 
 		document.getElementById("start").disabled = false
 
@@ -74,30 +71,33 @@ class pc
 			return
 
 			#
-		#loadFile("vmlinux-3.0.4-simpleblock.bin", 0x00100000, window.pc.loadedstart2, window.pc.savememory)
-		window.pc.start2()
+		loadFile("vmlinux-3.0.4-simpleblock.bin", 0x00100000, window.pc.loadedstart2, window.pc.savememory)
+		#window.pc.start2()
 
 	loadedstart2: (result) ->
 		if (!result)
 			log "There had been an error loadeding the files"
 			return
+		st = "console=ttyS0 root=/dev/hda ro init=/sbin/init notsc=1"
+		loc = 0xf800
+		for i in [0...st.length]
+			mem8[loc] = st.charCodeAt(i) & 0xff
+			loc++
+
 		window.pc.start2()
 
 	savememory: (data, len, address) ->
 		log "saving file data at #{address} with length #{data.length}"
 
+
 		for i in [0...len]
-			rs = parseInt(i)
+			rs = parseInt(data.charCodeAt(i))
 
 			if (isNaN(rs))
 				rs = null
+			adr = address + i
 
-#			log "Going to write to buffer[#{address}] #{rs}"
-
-			window.memory[address] = parseInt(rs)
-			address++
-		log memory
-		throw "die"
+			mem8[adr] = parseInt(rs)
 
 #		load = address
 #		endLoadAddress = 0x100000000 - data.length
@@ -136,9 +136,21 @@ class pc
 		@count++
 
 	start: ->
+		@create()
 		@configure()
 
-		loadFile("linuxstart.bin", 0x000fff0, @loadedstart, @savememory)
+		data = window.start
+		address = 0x10000
+		for i in [0...data.length]
+			rs = parseInt(data[i])
+
+			if (isNaN(rs))
+				rs = null
+			adr = address + i
+
+			mem8[adr] = rs
+
+		@loadedstart true
 	start2: ->
 
 		@running = true
@@ -171,7 +183,7 @@ class pc
 
 	updateMHz: () ->
 		log "updateMHz"
-		throw "blargh"
+#		throw "blargh"
 		return
 
 	stop: ->
@@ -241,7 +253,8 @@ class pc
 
 		try
 			for i in [0...100]
-				block = las.executeProtected(proc, proc.getInstructionPointer())
+				block = manager.getProtectedModeCodeBlockAt(proc.getInstructionPointer(), proc.cs.getDefaultSizeFlag())
+				block = block.execute()
 				x86Count += block
 				clockx86Count += block
 
@@ -257,35 +270,9 @@ class pc
 				proc.handleProtectedModeException(e)
 			else
 				@printStackTrace(e)
-				@printMemory()
 				window.pc.stop()
 
 				throw "STOP!"
-	printMemory: () ->
-		#f0000
-		log "Start dumping..."
-		prev = null
-		start = 0
-		for i in [0...0x5000000]
-			t = pas.getMemoryBlockAt(i)
-			s = t.toString()
-
-#			t.dump()
-
-			if (prev == null)
-				prev = s
-				start = i
-				continue
-			if (prev == s)
-				continue
-			if (prev != s)
-				m = i - 1
-				log "Location #{start} to #{m} is #{prev}"
-				prev = s
-				start = i
-				continue
-		log "Location #{start} to #{i} is #{prev}"
-		log "Dumped"
 
 	printStackTrace: (e) ->
 		callstack = new Array()
@@ -315,6 +302,7 @@ class pc
 
 		if (!isCallstackPopulated)
 			log "No call stack?"
+			log e
 			currentFunction = arguments.callee.caller
 			while (currentFunction)
 				fn = currentFunction.toString()
