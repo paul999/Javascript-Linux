@@ -56,15 +56,29 @@
 		});
 		test("Save memory", function()
 		{
-			expect(3)
+			expect(8)
 			setup()
 			window.pc.create()
+
+			equal(window.pc.getMemory(8)[(1024 * 1024 * 5 + 16) + 10], undefined, "Test memory over max size")
 
 			window.pc.savememory(window.start, window.start.length, 0x10000)
 			equal(window.pc.getMemory(8)[0], 0, "Test memory 0")
 			equal(window.pc.getMemory(8)[0x10000], window.start[0], "Test memory 0x00000")
 
 			equal(window.pc.getMemory(8)[0x10000 + 10], window.start[10], "Test memory 0x00000 + 10")
+
+			setup()
+			window.pc.create()
+
+			window.pc.savememory(window.start, window.start.length, (1024 * 1024 * 5 + 16) + 10)
+
+			equal(window.pc.getMemory(8)[0], 0, "Test memory 0")
+			equal(window.pc.getMemory(8)[0x10000], 0, "Test memory 0x00000")
+
+			equal(window.pc.getMemory(8)[0x10000 + 10], 0, "Test memory 0x00000 + 10")
+
+			equal(window.pc.getMemory(8)[(1024 * 1024 * 5 + 16) + 10], undefined, "Test memory over max size with data set")
 
 		});
 	});
