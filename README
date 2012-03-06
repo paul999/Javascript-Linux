@@ -24,3 +24,6 @@ the Free Software Foundation.
 Running tests:
 To run the tests included with the emulator you will need to download the QUnit files seperatly, and place them in the src/ directory. Without these files the emulator will not run at all.
 After that, open test.html in a browser (Not file the file:// protocol, the test will fail!)
+
+Generating start.js:
+wget http://bellard.org/jslinux/linuxstart.bin && php conv.php > src/start.js
