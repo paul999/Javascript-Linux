@@ -51,7 +51,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			opcodeCounter.addBlock(@getMicrocodes())
 
 		seg0 = null
-		seg0 = proc.ecx
+#		seg0 = proc.ecx
 		addr0 = 0
 		reg0 = 0
 		reg1 = 0
@@ -63,15 +63,18 @@ class ProtectedModeUBlock extends MicrocodeSet
 		eipUpdated = false
 		position = 0
 
-#		log "Going to execute the next microcodes: "
+		log "Going to execute the next microcodes: "
 
-#		for i in [position...@microcodes.length]
-#			log @microcodes[i]
+		for i in [position...@microcodes.length]
+			log @microcodes[i]
 
 
 		try
 			while position < @microcodes.length
-				switch @microcodes[position]
+				code = @microcodes[position]
+				log "Microcode: #{code}"
+				position++
+				switch code
 					when @EIP_UPDATE
 						if (!eipUpdated)
 							eipUpdated = true
@@ -106,6 +109,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 						proc.esp = (proc.esp & ~0xffff) | (reg0 & 0xffff)
 
 					when @LOAD0_MEM_WORD
+						log "Segment: " + seg0
 						reg0 = 0xffff & seg0.getWord(addr0)
 					when @LOAD_SEG_DS
 						seg0 = proc.ds
@@ -428,7 +432,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 					else
 						throw "File: ProtectedModeUBlock: Not added opcode yet? #{@microcodes[position]}"
-				position++
+
 		catch e
 			throw e
 

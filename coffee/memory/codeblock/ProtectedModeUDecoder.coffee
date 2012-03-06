@@ -235,8 +235,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 			bytesRead += 1
 
-			log "Bytesread: #{bytesRead}"
-
 			switch (opcode)
 				when 0x0f
 					opcodePrefix = (opcodePrefix << 8) | opcode
@@ -301,8 +299,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 		opcode = (opcodePrefix << 8) | opcode;
 
 		log "Executing opcode: #{opcode}"
-		t = getBytes(opcode)
-		log t[0] + " " +t[1] + " " +t[2] + " " +t[3]
 
 		switch opcodePrefix
 			when 0x00
@@ -389,6 +385,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				immediate |= ((@source.getByte() & 0xff) | ((@source.getByte() << 8) & 0xff00)) << 32
 			else
 				log "Immediate byte invalid"
+
+		log "displacement: #{displacement} immediate: #{immediate}"
 
 		@writeInputOperands(prefices, opcode, modrm, sib, displacement, immediate)
 
@@ -727,7 +725,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 		return 0
 
 	writeInputOperands: (prefices, opcode, modrm, sib, displacement, immediate) ->
-#		log "WriteInputOperands(#{opcode})"
+		log "WriteInputOperands(#{opcode})"
 		switch (opcode)
 			when 0xf9
 				log "no action"
@@ -1559,7 +1557,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 class Operation
 	constructor: ->
 		@microcodes = new Array()
-		@microcodesLength = null
+		@microcodesLength = 0
 		@x86Length = null
 		@readOffset = null
 		@decoded = null
@@ -1570,7 +1568,9 @@ class Operation
 			throw new NotImplementedError("Cant set a undefined/null microcode: " + microcode)
 
 		try
-			@microcodes[@microcodesLength++] = microcode
+			log "Adding microcode #{microcode} to @microcodes[#{@microcodesLength}]"
+			@microcodes[@microcodesLength] = microcode
+			@microcodesLength++
 		catch e
 			throw e
 #		int[] temp = new int[2*microcodes.length];
