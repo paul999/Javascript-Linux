@@ -65,6 +65,8 @@ class pc
 
 		document.getElementById("start").disabled = false
 
+		return true
+
 	loadedstart: (result) ->
 		if (!result)
 			log "There had been an error loadeding the files"
@@ -89,15 +91,24 @@ class pc
 	savememory: (data, len, address) ->
 		log "saving file data at #{address} with length #{data.length}"
 
+		if typeof data == "string"
+			for i in [0...len]
+				rs = parseInt(data.charCodeAt(i))
 
-		for i in [0...len]
-			rs = parseInt(data.charCodeAt(i))
+				if (isNaN(rs))
+					rs = null
+				adr = address + i
 
-			if (isNaN(rs))
-				rs = null
-			adr = address + i
+				mem8[adr] = parseInt(rs)
+		else
+			for i in [0...len]
+				rs = parseInt(data[i])
 
-			mem8[adr] = parseInt(rs)
+				if (isNaN(rs))
+					rs = null
+				adr = address + i
+
+				mem8[adr] = parseInt(rs)
 
 #		load = address
 #		endLoadAddress = 0x100000000 - data.length
@@ -140,15 +151,7 @@ class pc
 		@configure()
 
 		data = window.start
-		address = 0x10000
-		for i in [0...data.length]
-			rs = parseInt(data[i])
-
-			if (isNaN(rs))
-				rs = null
-			adr = address + i
-
-			mem8[adr] = rs
+		@savememory(data, data.length, 0x10000)
 
 		@loadedstart true
 	start2: ->
@@ -273,6 +276,18 @@ class pc
 				window.pc.stop()
 
 				throw "STOP!"
+	getMemory: (type = "") ->
+		switch type
+			when ""
+				return mem
+			when 8
+				return mem8
+			when 16
+				return mem16
+			when 32
+				return mem32
+			else
+				return false
 
 	printStackTrace: (e) ->
 		callstack = new Array()

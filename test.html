@@ -3,33 +3,83 @@
 <html>
   <head>
     <link rel="stylesheet" href="src/qunit.css" type="text/css"/>
-    <script src="http://code.jquery.com/jquery-latest.js"> </script>
-    <script src="http://js-linux.nl/testswarm/js/inject.js"></script>
-    <script type="text/javascript" src="src/qunit.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"> </script>
+    <script type="text/javascript" src="/testswarm/js/inject.js"></script>
+    <script type="text/javascript" src="/qunit.js"></script>
+    <script type="text/javascript" src="src/start.js"></script>
+    <script type="text/javascript" src="src/emulator.js"></script>
     <script type="text/javascript">
      // --- Unittest Code goes here ---
 
-  $(document).ready(function(){
-    module("Basic Unit Test");
-    test("Sample test", function()
-    {
-       expect(1);
-       equal(divide(4,2),
-        2,
-        'Expected 2 as the result, result was: ' + divide(4,2));
-    });
-  });
-    function divide(a,b)
-  {
-    return a / b;
-  }
+	$(document).ready(function(){
+	  	window.copy = window.pc
+
+		module("PC object test");
+		test("PC object exists", function()
+		{
+			expect(3);
+
+			setup()
+
+			notEqual(window.pc, undefined, 'Expect window.pc to be defined.')
+			notEqual(window.pc.start, undefined, 'Required start method in window.pc')
+			notEqual(window.pc.create, undefined, 'Required create method in window.pc')
+		});
+
+
+		test("PC object can be created", function()
+		{
+			expect(6)
+
+			setup()
+
+			equal(window.pc.create(), true, 'PC creation without expections')
+			equal(window.pc.getMemory().byteLength,1024 * 1024 * 5 + 16, 'Memory length')
+			equal(window.pc.getMemory(8).byteLength,1024 * 1024 * 5 + 16, 'Memory length')
+			equal(window.pc.getMemory(16).byteLength,(1024 * 1024 * 5 + 16), 'Memory length')
+			equal(window.pc.getMemory(32).byteLength,(1024 * 1024 * 5 + 16), 'Memory length')
+			equal(window.pc.getMemory(-1), false, 'Memory length')
+		});
+
+		module("Test PC memory")
+		test("Check emptyness", function()
+		{
+			setup()
+			window.pc.create()
+			expect(3)
+			equal(window.pc.getMemory(8)[0], 0, "Test memory 0")
+			equal(window.pc.getMemory(8)[512], 0, "Test memory 512")
+			equal(window.pc.getMemory(8)[0x10000], 0, "Test memory 0x00000")
+		});
+		test("Save memory", function()
+		{
+			expect(3)
+			setup()
+			window.pc.create()
+
+			window.pc.savememory(window.start, window.start.length, 0x10000)
+			equal(window.pc.getMemory(8)[0], 0, "Test memory 0")
+			equal(window.pc.getMemory(8)[0x10000], window.start[0], "Test memory 0x00000")
+
+			equal(window.pc.getMemory(8)[0x10000 + 10], window.start[10], "Test memory 0x00000 + 10")
+
+		});
+	});
+
+	function setup()
+	{
+		window.pc = null
+		window.pc = window.copy
+	}
     </script>
   </head>
   <body>
-    <h1 id="qunit-header">QUnit example</h1>
+    <h1 id="qunit-header">JS Linux emulator</h1>
     <h2 id="qunit-banner"></h2>
     <h2 id="qunit-userAgent"></h2>
     <ol id="qunit-tests">
     </ol>
+
+    <div id="qunit-fixture"><button id="start" /><button id="stop" /><button id="create" /></div>
   </body>
 </html>
