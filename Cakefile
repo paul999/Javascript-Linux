@@ -25,10 +25,13 @@ TargetJsDir      = 'src'
 
 TargetFileName   = 'emulator'
 TargetCoffeeFile = "#{TargetJsDir}/#{TargetFileName}.coffee"
+TargetCoffeeFileDebug = "#{TargetJsDir}/#{TargetFileName}-debug.coffee"
 TargetJsFile     = "#{TargetJsDir}/#{TargetFileName}.js"
+TargetJsFileDebug= "#{TargetJsDir}/#{TargetFileName}-debug.js"
 TargetJsMinFile  = "#{TargetJsDir}/#{TargetFileName}.min.js"
 
 CoffeeOpts = " --output #{TargetJsDir} --compile #{TargetCoffeeFile}"
+CoffeeOptsDebug = "-b --output #{TargetJsDir} --compile #{TargetCoffeeFileDebug}"
 
 header = """
 /**
@@ -138,9 +141,20 @@ task 'build', 'Build a single JavaScript file from src files', ->
 					   , (err) ->
 				handleError(err) if err
 
+				exec "cp #{TargetCoffeeFile} #{TargetCoffeeFileDebug}", (err, stdout, stderr) ->
+					handleError(err) if err
+					util.log "Copied"
+
 				exec "/usr/local/bin/coffee #{CoffeeOpts}", (err, stdout, stderr) ->
 					handleError(err) if err
 					message = "Compiled #{TargetJsFile}"
+					displayNotification message
+					util.log message
+
+
+				exec "/usr/local/bin/coffee #{CoffeeOptsDebug} ", (err, stdout, stderr) ->
+					handleError(err) if err
+					message = "Compiled #{TargetJsFileDebug}"
 					displayNotification message
 					util.log message
 task 'uglify', 'Minify and obfuscate', ->

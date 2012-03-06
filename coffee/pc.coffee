@@ -21,7 +21,7 @@ proc = manager = Clock = sgm = null
 mem = mem8 = mem16 = mem32 = null
 
 
-class pc
+class PC
 	constructor: ->
 		log "pc.construct"
 	create: ->
