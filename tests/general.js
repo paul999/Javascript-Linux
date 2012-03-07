@@ -2,7 +2,7 @@ function setup()
 {
 	console.log("RESET")
 	proc = null
-	console.log(proc)
+	SYS_RAM_SIZE = 1024 * 1024 * 5
 	window.pc = null
 	window.pc = new PC
 }

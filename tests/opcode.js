@@ -7,41 +7,50 @@ test("Simple opcode", function()
 	setup()
 	window.pc.create()
 
-	for (var i = 0; i < window.testOpCodes[0].length; i++)
+	runCode(window.testOpCodes[0], window.resultOpCodes[0])
+});
+
+function runCode(cd, cd2)
+{
+	var oldram = SYS_RAM_SIZE
+	for (var i = 0; i < cd.length; i++)
 	{
 		var bt;
 
+//		SYS_RAM_SIZE = 1024 * 2
+
 		window.pc.resetMemory()
 
-		console.log("saving: " + window.testOpCodes[0][i])
+		console.log("saving: " + cd[i])
 
-		window.pc.saveMemory(window.testOpCodes[0][i], window.testOpCodes[0][i].length, 0x10000)
+		window.pc.saveMemory(cd[i], cd[i].length, 0x10000)
 
 		bt = new ByteSourceWrappedMemory()
 		bt.set(0x10000)
 
 		var p = new ProtectedModeUDecoder()
 
-		p = p.decodeProtected(bt, true, 1000)
+		p = p.decodeProtected(bt, true, 1)
 
 
 
 		console.log("Length: " + p.getLength())
 
-		t = new OptimisedCompiler()
+		var t = new OptimisedCompiler()
 
 		t.buildCodeBlockBuffers(p)
 		t = t.bufferMicrocodes
 
 		ok(t.length != 0, "Testing microcode length for test + " + i)
-		equal(t.length, window.resultOpCodes[0][i].length, "Total microcode length for test + " + i)
+		equal(t.length, cd2[i].length, "Total microcode length for test + " + i)
 
-		for (var j = 0; j < window.resultOpCodes[0][i].length; j++)
+		for (var j = 0; j < t.length; j++)
 		{
-			equal(t[j], window.resultOpCodes[0][i][j], "Testing microcode result for opcode for test + " + i + " set " + j)
+			equal(t[j], cd2[i][j], "Testing microcode result for opcode for test + " + i + " set " + j)
 		}
 	}
-});
+	SYS_RAM_SIZE = oldram
+}
 
 test("Large opcode", function()
 {
@@ -49,6 +58,7 @@ test("Large opcode", function()
 
 	setup()
 	window.pc.create()
-	window.pc.resetMemory()
+
+	runCode(window.testOpCodes[1], window.resultOpCodes[1])
 
 });

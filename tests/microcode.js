@@ -7,5 +7,5 @@ test("Simple microcode", function()
 
 test("Large microcode", function()
 {
-	ok(window.testMicroModes, "Microcodes are required to run the tests for the CPU")
+	ok(window.testMicroCodes, "Microcodes are required to run the tests for the CPU")
 });

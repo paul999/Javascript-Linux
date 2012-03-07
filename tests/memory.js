@@ -2,8 +2,6 @@ module("Test PC memory")
 
 test("Memory Length", function()
 {
-	expect(4)
-
 	setup()
 
 	window.pc.create()
@@ -18,14 +16,13 @@ test("Check emptyness", function()
 {
 	setup()
 	window.pc.create()
-	expect(3)
+
 	equal(window.pc.getMemoryOffset(8, 0), 0, "Test memory 0")
 	equal(window.pc.getMemoryOffset(8, 512), 0, "Test memory 512")
 	equal(window.pc.getMemoryOffset(8, 0x10000), 0, "Test memory 0x00000")
 });
 test("Save memory", function()
 {
-	expect(9)
 	setup()
 	window.pc.create()
 

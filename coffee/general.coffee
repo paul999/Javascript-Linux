@@ -96,7 +96,9 @@ Error.createCustromConstructor = (function() {
                 ? this
                 : Object.create(CustomError.prototype);
             Error.apply(self, arguments);
-            Error.captureStackTrace(self, CustomError);
+
+            if (Error.stacktrace && !Error.stack)
+	            Error.captureStackTrace(self, CustomError);
             if (message != undefined) {
                 define(self, 'message', String(message));
             }
