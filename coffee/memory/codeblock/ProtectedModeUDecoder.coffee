@@ -171,6 +171,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 		else
 			return @getNext()
 	getLength: ->
+		log "Length@decoded: " + @current.getLength()
 		return @current.getLength()
 
 	getX86Length: ->
@@ -186,6 +187,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 		@working.finish(position)
 
 	decode: ->
+		log "Decode"
 		@working.reset()
 
 		if (@blockComplete)
@@ -829,7 +831,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 							@working.write(@LOAD1_MEM_WORD)
 
 			when -1
-				log "-1"
+				throw "Return to test"
 			else
 				throw "ProtectedModeUdecoded, writeInputOperands, Non supported opcode, Got opcode #{opcode}"
 
@@ -1600,10 +1602,10 @@ class Operation
 		return @microcodes[offset]
 
 	getMicrocode: ->
-		if (@readOffset < @microcodesLength)
+		if (@readOffset < @getLength())
 			return @microcodes[@readOffset++]
 		else
-			throw "Illigal state (#{@readOffset}, #{@microcodesLength})"
+			throw new IlligalState("Offset #{@readOffset},length #{@getLength()}")
 	getLength: ->
 		return @microcodesLength
 

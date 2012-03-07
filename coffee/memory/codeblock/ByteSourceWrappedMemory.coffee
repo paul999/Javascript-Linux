@@ -26,7 +26,7 @@ class ByteSourceWrappedMemory
 
 	getByte: ->
 
-		tmp = mem8[@offset]
+		tmp = window.pc.getMemoryOffset(8,@offset)
 		@offset++
 
 		if (!tmp && tmp != 0)
@@ -36,8 +36,8 @@ class ByteSourceWrappedMemory
 		return tmp
 
 	skip: (count) ->
-		if (@offset + count >= mem8.getSize())
-			throw new "Out of bound"
+		if (@offset + count >= window.pc.getMemorySize())
+			throw new MemoryOutOfBound
 
 		@offset += count
 

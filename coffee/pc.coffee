@@ -18,12 +18,12 @@
 
 SYS_RAM_SIZE = 1024 * 1024 * 5
 proc = manager = Clock = sgm = null
-mem = mem8 = mem16 = mem32 = null
-
 
 class PC
 	constructor: ->
 		log "pc.construct"
+		proc = null
+		sgm = null
 	create: ->
 		log "pc.create"
 		@items = new Array()
@@ -58,10 +58,7 @@ class PC
 
 		# Loading the start files
 
-		mem = new ArrayBuffer(SYS_RAM_SIZE + 16);
-		mem8 = new Uint8Array(mem, 0, SYS_RAM_SIZE + 16);
-		mem16 = new Uint16Array(mem, 0, (SYS_RAM_SIZE + 16) / 2);
-		mem32 = new Int32Array(mem, 0, (SYS_RAM_SIZE + 16) / 4);
+		@resetMemory()
 
 		document.getElementById("start").disabled = false
 
@@ -73,8 +70,8 @@ class PC
 			return
 
 			#
-		loadFile("vmlinux-3.0.4-simpleblock.bin", 0x00100000, window.pc.loadedstart2, window.pc.savememory)
-		#window.pc.start2()
+#		loadFile("vmlinux-3.0.4-simpleblock.bin", 0x00100000, window.pc.loadedstart2, window.pc.saveMemory)
+		window.pc.start2()
 
 	loadedstart2: (result) ->
 		if (!result)
@@ -83,12 +80,13 @@ class PC
 		st = "console=ttyS0 root=/dev/hda ro init=/sbin/init notsc=1"
 		loc = 0xf800
 		for i in [0...st.length]
-			mem8[loc] = st.charCodeAt(i) & 0xff
+			if (!window.pc.setMemory(8, loc+i, (st.charCodeAt(i) & 0xff)))
+				throw new memoryOutOfBound()
 			loc++
 
 		window.pc.start2()
 
-	savememory: (data, len, address) ->
+	saveMemory: (data, len, address) ->
 		log "saving file data at #{address} with length #{data.length}"
 
 		if typeof data == "string"
@@ -97,49 +95,21 @@ class PC
 
 				if (isNaN(rs))
 					rs = null
-				adr = address + i
+				addr = address + i
 
-				mem8[adr] = parseInt(rs)
+				if (!window.pc.setMemory(8, addr, parseInt(rs)))
+					throw new MemoryOutOfBound()
 		else
 			for i in [0...len]
 				rs = parseInt(data[i])
 
 				if (isNaN(rs))
 					rs = null
-				adr = address + i
+				addr = address + i
 
-				mem8[adr] = parseInt(rs)
+				if (!window.pc.setMemory(8, addr, parseInt(rs)))
+					throw new MemoryOutOfBound()
 
-#		load = address
-#		endLoadAddress = 0x100000000 - data.length
-#		nextBlockStart = (load & pas.INDEX_MASK);
-#		nulldata = address - nextBlockStart
-#		log "nextBlockStart: #{nextBlockStart} number: #{nulldata}"
-
-#		for i in [0...nulldata]
-#			data = "0#{data}"
-#		ep = new EPROMMemory(pas.BLOCK_SIZE, manager)
-#		ep.load(load & pas.BLOCK_MASK, data, 0, nextBlockStart - load)
-
-#		pas.mapMemory(load & pas.INDEX_MASK, ep);
-
-#		pas.copyArrayIntoContents(endLoadAddress, data, 0, data.length)
-
-#		imageOffset = 0
-#		epromOffset = nextBlockStart
-#		log "Writing to #{epromOffset}"
-#		written = 0
-
-#		while (written) <= data.length
-#			ep = new EPROMMemory(pas.BLOCK_SIZE, manager)
-#			ep.load2(data, imageOffset, pas.BLOCK_SIZE)
-#			log "Writing #{ep} to #{epromOffset}"
-#			pas.mapMemory(epromOffset, ep)
-#			epromOffset += pas.BLOCK_SIZE
-#			imageOffset += pas.BLOCK_SIZE
-#			written += pas.BLOCK_SIZE
-
-#		throw "die"
 		return true
 
 	add: (itm) ->
@@ -151,7 +121,7 @@ class PC
 		@configure()
 
 		data = window.start
-		@savememory(data, data.length, 0x10000)
+		@saveMemory(data, data.length, 0x10000)
 
 		@loadedstart true
 	start2: ->
@@ -186,7 +156,6 @@ class PC
 
 	updateMHz: () ->
 		log "updateMHz"
-#		throw "blargh"
 		return
 
 	stop: ->
@@ -276,18 +245,56 @@ class PC
 				window.pc.stop()
 
 				throw "STOP!"
-	getMemory: (type = "") ->
+	getMemoryLength: (type = "") ->
+		return @mem.byteLength
+
+	getMemoryOffset: (type = "", offset = null) ->
+		if !offset || offset == null
+			return false
 		switch type
 			when ""
-				return mem
+				return @mem[offset]
 			when 8
-				return mem8
+				return @mem8[offset]
 			when 16
-				return mem16
+				return @mem16[offset]
 			when 32
-				return mem32
+				return @mem32[offset]
 			else
 				return false
+
+	setMemory: (type = "", offset, data) ->
+		if !(@ instanceof PC)
+			log "Running setMemory from window?"
+			return window.pc.setMemory(type, offset, data)
+
+		if ((!offset && offset != 0) || (!data && data != 0))
+			log "Set memory missing offset/data: #{offset} #{data}"
+			return false
+
+		len = @getMemoryLength(type, offset)
+		if (!len || offset > len)
+			log "Set memory length error: len: #{len} offset: #{offset} result: " + (offset > len)
+			return false
+
+		switch type
+			when ""
+				return false
+			when 8
+				@mem8[offset] = data
+			when 16
+				@mem16[offset] = data
+			when 32
+				@mem32[offset] = data
+			else
+				return false
+		return true
+	resetMemory: ->
+		@mem = new ArrayBuffer(SYS_RAM_SIZE + 16);
+		@mem8 = new Uint8Array(@mem, 0, SYS_RAM_SIZE + 16);
+		@mem16 = new Uint16Array(@mem, 0, (SYS_RAM_SIZE + 16) / 2);
+		@mem32 = new Int32Array(@mem, 0, (SYS_RAM_SIZE + 16) / 4);
+
 
 	printStackTrace: (e) ->
 		callstack = new Array()

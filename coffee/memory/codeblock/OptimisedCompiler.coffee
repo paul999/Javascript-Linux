@@ -22,9 +22,6 @@ class OptimisedCompiler
 	getProtectedModeCodeBlock: (source) ->
 		@buildCodeBlockBuffers(source)
 
-		newMicrocodes = new Array(@bufferOffset)
-		newPositions = new Array(@bufferOffset)
-
 #		arraycopy(@bufferMicrocodes, 0, newMicrocodes, 0, @bufferOffset)
 #		arraycopy(@bufferPositions, 0, newPositions, 0, @bufferOffset)
 
