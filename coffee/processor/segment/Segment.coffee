@@ -26,13 +26,13 @@ class Segment
 	setAddressSpace: () ->
 
 	getByte: (offset) ->
-		return mem8[@translateAddressRead(offset)]
+		return pc.getMemoryOffset(8, @translateAddressRead(offset))
 
 	getWord: (offset) ->
-		return mem16[@translateAddressRead(offset)]
+		return pc.getMemoryOffset(16, @translateAddressRead(offset))
 
 	getDoubleWord: (offset) ->
-		return mem32[@translateAddressRead(offset)]
+		return pc.getMemoryOffset(32, @translateAddressRead(offset))
 
 	getQuadWord: (offset) ->
 		tmp = @translateAddressRead(offset)
@@ -43,16 +43,16 @@ class Segment
 		return result
 
 	setByte: (offset, data) ->
-		mem8[@translateAddressWrite(offset)] = data
+		pc.setMemory(8, @translateAddressRead(offset), data)
 
 	setWord: (offset, data) ->
-		mem16[@translateAddressWrite(offset)] = data
+		pc.setMemory(16, @translateAddressRead(offset), data)
 
 	setDoubleWord: (offset, data) ->
-		@memorysetDoubleWord(@translateAddressWrite(offset), data)
+		pc.setMemory(32, @translateAddressRead(offset), data)
 
 	setQuadWord: (offset, data) ->
 		tmp = @translateAddressWrite(offset)
-		@memory.setDoubleWord(tmp, data)
+		@setDoubleWord(tmp, data)
 		tmp = @translateAddressWrite(offset + 4)
-		@memory.setDoubleWord(tmp, (data >>> 32))
+		@setDoubleWord(tmp, (data >>> 32))

@@ -24,7 +24,7 @@ class CodeBlockManager
 		@bgc = null
 
 		@byteSource = new ByteSourceWrappedMemory()
-		@Chain = new DefaultCodeBlockFactory(new ProtectedModeUDecoder(), new OptimisedCompiler(), @BLOCK_LIMIT)
+		@chain = new DefaultCodeBlockFactory(new ProtectedModeUDecoder(), new OptimisedCompiler(), @BLOCK_LIMIT)
 
 		@bgc = new BackgroundCompiler(new OptimisedCompiler(), new CachedCodeBlockCompiler());
 
@@ -34,10 +34,10 @@ class CodeBlockManager
 
 	getCodeBlockAt: (offset, operandSize) ->
 		block = null
-		block = @tryFactory(@ModeChain,offset, operandSize)
+		block = @tryFactory(@compilingChain,offset, operandSize)
 
 		if (!block || block == null)
-			block = @tryFactory(@Chain, offset, operandSize)
+			block = @tryFactory(@chain, offset, operandSize)
 
 			if (!block || block == null)
 				throw "Couldnt find capable block"

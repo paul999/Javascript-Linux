@@ -19,13 +19,16 @@ class OptimisedCompiler
 		@bufferPositions = new Array()
 		@bufferOffset = 0
 
-	getProtectedModeCodeBlock: (source) ->
+	getCodeBlock: (source) ->
 		@buildCodeBlockBuffers(source)
 
 #		arraycopy(@bufferMicrocodes, 0, newMicrocodes, 0, @bufferOffset)
 #		arraycopy(@bufferPositions, 0, newPositions, 0, @bufferOffset)
 
-		return new ProtectedModeUBlock(@bufferMicrocodes, @bufferPositions)
+		if (proc.isProtectedMode())
+			return new ProtectedModeUBlock(@bufferMicrocodes, @bufferPositions)
+		else
+			return new RealModeUBlock(@bufferMicrocodes, @bufferPositions)
 
 	buildCodeBlockBuffers: (source) ->
 		@bufferOffset = 0

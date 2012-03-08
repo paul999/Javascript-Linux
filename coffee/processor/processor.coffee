@@ -9,7 +9,7 @@
 #
 # Javascript version written by Paul Sohier, 2012
 #
-# This program is free software; you can redistribute it and/or modify
+# This program is free software you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
@@ -56,6 +56,80 @@ class processor
 		@SYSENTER_CS_MSR = 0x174
 		@SYSENTER_ESP_MSR = 0x175
 		@SYSENTER_EIP_MSR = 0x176
+
+
+		@AC_XOR = 1
+		@AC_BIT4_NEQ = 2
+		@AC_LNIBBLE_MAX = 3
+		@AC_LNIBBLE_ZERO = 4
+		@AC_LNIBBLE_NZERO = 5
+
+		@OF_NZ = 1
+		@OF_NOT_BYTE = 2
+		@OF_NOT_SHORT = 3
+		@OF_NOT_INT = 4
+
+		@OF_LOW_WORD_NZ = 5
+		@OF_HIGH_BYTE_NZ = 6
+
+		@OF_BIT6_XOR_CARRY = 7
+		@OF_BIT7_XOR_CARRY = 8
+		@OF_BIT14_XOR_CARRY = 9
+		@OF_BIT15_XOR_CARRY = 10
+		@OF_BIT30_XOR_CARRY = 11
+		@OF_BIT31_XOR_CARRY = 12
+
+		@OF_BIT7_DIFFERENT = 13
+		@OF_BIT15_DIFFERENT = 14
+		@OF_BIT31_DIFFERENT = 15
+
+		@OF_MAX_BYTE = 16
+		@OF_MAX_SHORT = 17
+		@OF_MAX_INT = 18
+
+		@OF_MIN_BYTE = 19
+		@OF_MIN_SHORT = 20
+		@OF_MIN_INT = 21
+
+		@OF_ADD_BYTE = 22
+		@OF_ADD_SHORT = 23
+		@OF_ADD_INT = 24
+
+		@OF_SUB_BYTE = 25
+		@OF_SUB_SHORT = 26
+		@OF_SUB_INT = 27
+
+		@CY_NZ = 1
+		@CY_NOT_BYTE = 2
+		@CY_NOT_SHORT = 3
+		@CY_NOT_INT = 4
+
+		@CY_LOW_WORD_NZ = 5
+		@CY_HIGH_BYTE_NZ = 6
+
+		@CY_NTH_BIT_SET = 7
+
+		@CY_GREATER_FF = 8
+
+		@CY_TWIDDLE_FF = 9
+		@CY_TWIDDLE_FFFF = 10
+		@CY_TWIDDLE_FFFFFFFF = 11
+
+		@CY_SHL_OUTBIT_BYTE = 12
+		@CY_SHL_OUTBIT_SHORT = 13
+		@CY_SHL_OUTBIT_INT = 14
+
+		@CY_SHR_OUTBIT = 15
+
+		@CY_LOWBIT = 16
+
+		@CY_HIGHBIT_BYTE = 17
+		@CY_HIGHBIT_SHORT = 18
+		@CY_HIGHBIT_INT = 19
+
+		@CY_OFFENDBIT_BYTE = 20
+		@CY_OFFENDBIT_SHORT = 21
+		@CY_OFFENDBIT_INT = 22
 
 	toString: ->
 		return "Processor"
@@ -155,8 +229,6 @@ class processor
 		@interruptFlags |= @IFLAGS_RESET_REQUEST
 
 	isProtectedMode: ->
-		log "Protected: " + (@cr0 & @CR0_PROTECTION_ENABLE)
-		log "CR0: " + @cr0
 		return (@cr0 & @CR0_PROTECTION_ENABLE) == 1
 
 	isVirtual8086Mode: ->
@@ -165,7 +237,6 @@ class processor
 
 	getInstructionPointer: ->
 		tmp = @cs.translateAddressRead(@eip)
-		log "getInstructionPointer: #{@eip} returndata: #{tmp}"
 		return tmp
 
 	reset: ->
@@ -176,6 +247,7 @@ class processor
 		@edx = 0x00000633 #Pentium II Model 3 Stepping 3
 
 		@ecx = 0xf800 # Command line parameter
+		@ebx = SYS_RAM_SIZE
 
 		@interruptFlags = 0
 		@currentPrivilegeLevel = 0
@@ -305,7 +377,7 @@ class processor
 		try
 			les.setSupervisor(true)
 			descriptor = @idtr.getQuadWord(selector)
-			#gate = SegmentFactory.createProtectedModeSegment(linearMemory, selector, descriptor);
+			#gate = SegmentFactory.createProtectedModeSegment(linearMemory, selector, descriptor)
 			#TODO FIX
 		catch e
 			log "failed to create gate"
@@ -343,3 +415,18 @@ class processor
 	setCarryFlag: (value) ->
 		@carryCalculated = true
 		@eflagsCarry = value
+
+	setZeroFlag: (value) ->
+		@zeroCalculated = true
+		@eflagsZero = value
+
+	setParityFlag: (value) ->
+		@parityCalculated = true
+		@eflagsParity = value
+
+		@parityOne = value
+
+	setSignFlag: (value) ->
+		@signCalculated = true
+		@eflagsSign = value
+		@signOne = value

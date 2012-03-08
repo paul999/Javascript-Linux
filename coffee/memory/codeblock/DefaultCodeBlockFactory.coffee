@@ -16,6 +16,6 @@
 class DefaultCodeBlockFactory
 	constructor: (@decoder, @compiler, @limit) ->
 
-	getProtectedModeCodeBlock: (source, operandSize) ->
+	getCodeBlock: (source, operandSize) ->
 		log "Got source in factory: " + source + " decoded: " + @decoder
-		return @compiler.getProtectedModeCodeBlock(@decoder.decodeProtected(source, operandSize, @limit))
+		return @compiler.getCodeBlock(@decoder.decodeProtected(source, operandSize, @limit))

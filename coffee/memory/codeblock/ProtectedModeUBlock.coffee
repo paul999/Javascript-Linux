@@ -429,7 +429,6 @@ class ProtectedModeUBlock extends MicrocodeSet
 						@lodsb_a16(seg0)
 					when @STC
 						proc.setCarryFlag(true)
-
 					else
 						throw "File: ProtectedModeUBlock: Not added opcode yet? #{@microcodes[position]}"
 

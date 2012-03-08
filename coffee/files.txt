@@ -5,13 +5,12 @@ memory/codeblock/ProtectedModeCodeBlockWrapper
 memory/codeblock/DefaultCodeBlockFactory
 memory/codeblock/ProtectedModeUBlock
 memory/codeblock/ProtectedModeUDecoder
+memory/codeblock/RealModeUBlock
 memory/codeblock/CachedCodeBlockCompiler
 memory/codeblock/BackgroundCompiler
 memory/codeblock/OptimisedCompiler
 memory/codeblock/CodeBlockManager
 memory/codeblock/CodeBlockReplacementException
-memory/AbstractMemory
-memory/AddressSpace
 motherboard/DMAController
 motherboard/InterruptControllerElement
 motherboard/InterruptController

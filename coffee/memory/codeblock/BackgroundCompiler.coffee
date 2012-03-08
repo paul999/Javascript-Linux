@@ -20,8 +20,8 @@ class BackgroundCompiler
 		@compilerQueue = null
 
 		@compilerQueue = new CompilerQueue(@COMPILER_QUEUE_SIZE);
-	getProtectedModeCodeBlock: (source) ->
-		imm = @immediate.getProtectedModeCodeBlock(source)
+	getCodeBlock: (source) ->
+		imm = @immediate.getCodeBlock(source)
 		return new ProtectedModeCodeBlockWrapper(imm)
 
 class CompilerQueue

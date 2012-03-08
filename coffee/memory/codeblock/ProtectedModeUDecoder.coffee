@@ -171,7 +171,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 		else
 			return @getNext()
 	getLength: ->
-		log "Length@decoded: " + @current.getLength()
 		return @current.getLength()
 
 	getX86Length: ->
@@ -187,7 +186,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 		@working.finish(position)
 
 	decode: ->
-		log "Decode"
 		@working.reset()
 
 		if (@blockComplete)
@@ -221,7 +219,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 		opcode = 0
 		opcodePrefix = 0
 		tmp = (@PREFICES_OPERAND | @PREFICES_ADDRESS)
-		prefices = operandSizeIs32Bit ? tmp : 0x00
+		prefices = operandSizeIs32Bit && proc.isProtectedMode() ? tmp : 0x00 # If in real mode it always is 0x00
 		bytesRead = 0
 		modrm = -1
 		sib = -1
@@ -298,9 +296,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 
 
-		opcode = (opcodePrefix << 8) | opcode;
-
-		log "Executing opcode: #{opcode}"
+		opcode = (opcodePrefix << 8) | opcode
 
 		switch opcodePrefix
 			when 0x00
@@ -365,7 +361,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 		immediate = 0
 
-		switch (@operationHasImmediate(prefices, opcode, modrm))
+		dat = @operationHasImmediate(prefices, opcode, modrm)
+		switch (dat)
 			when 0
 				break
 			when 1
@@ -388,13 +385,13 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			else
 				log "Immediate byte invalid"
 
-		log "displacement: #{displacement} immediate: #{immediate}"
-
 		@writeInputOperands(prefices, opcode, modrm, sib, displacement, immediate)
 
 		@writeOperation(prefices, opcode, modrm)
 
 		@writeOutputOperands(prefices, opcode, modrm, sib, displacement)
+
+		@writeFlags(prefices, opcode, modrm)
 
 		if (@isJump(opcode, modrm))
 			return -bytesRead
@@ -727,7 +724,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 		return 0
 
 	writeInputOperands: (prefices, opcode, modrm, sib, displacement, immediate) ->
-		log "WriteInputOperands(#{opcode})"
 		switch (opcode)
 			when 0xf9
 				log "no action"
@@ -1041,6 +1037,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 								@working.write(@PUSH_O32_A32)
 					else
 						log IllegalStateException("Invalid Gp 5 Instruction? FF modrm=" + modrm )
+			when 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d
+				@working.write(@OR)
 			else throw "ProtectedModeUdecoded, Got non supported opcode @writeOperation #{opcode}"
 
 	writeOutputOperands: (prefices, opcode, modrm, sib, displacement) ->
@@ -1117,6 +1115,253 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			else
 				throw "ProtectedModeUdecoded, Got not supported opcode @writeOutputOperands #{opcode}"
 
+	writeFlags: (prefices, opcode, modrm) ->
+		switch (opcode)
+			when 0x00, 0x02, 0x04, 0xfc0
+				@working.write(@ADD_O8_FLAGS)
+			when 0x10, 0x12, 0x14
+				@working.write(@ADC_O8_FLAGS)
+			when 0x18, 0x1a, 0x1c
+				@working.write(@SBB_O8_FLAGS)
+			when 0x28, 0x2a, 0x2c, 0x38, 0x3a, 0x3c
+				@working.write(@SUB_O8_FLAGS)
+			when 0x01, 0x03, 0x05, 0xfc1
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@ADD_O32_FLAGS)
+				else
+					@working.write(@ADD_O16_FLAGS)
+			when 0x11, 0x13, 0x15
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@ADC_O32_FLAGS)
+				else
+					@working.write(@ADC_O16_FLAGS)
+			when 0x19, 0x1b, 0x1d
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@SBB_O32_FLAGS)
+				else
+					@working.write(@SBB_O16_FLAGS)
+			when 0x29, 0x2b, 0x2d, 0x39, 0x3b, 0x3d
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@SUB_O32_FLAGS)
+				else
+					@working.write(@SUB_O16_FLAGS)
+			when 0x08, 0x0a, 0x0c, 0x20, 0x22, 0x24, 0x30, 0x32, 0x34, 0x84, 0xa8
+				@working.write(BITWISE_FLAGS_O8)
+
+			when 0x09, 0x0b, 0x0d, 0x21, 0x23, 0x25, 0x31, 0x33, 0x35, 0x85, 0xa9
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@BITWISE_FLAGS_O32)
+				else
+					@working.write(@BITWISE_FLAGS_O16)
+			when 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@INC_O32_FLAGS)
+				else
+					@working.write(@INC_O16_FLAGS)
+			when 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@DEC_O32_FLAGS)
+				else
+					@working.write(@DEC_O16_FLAGS)
+			when 0x80, 0x82
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@ADD_O8_FLAGS)
+					when 0x08
+						@working.write(@BITWISE_FLAGS_O8)
+					when 0x10
+						@working.write(@ADC_O8_FLAGS)
+					when 0x18
+						@working.write(@SBB_O8_FLAGS)
+					when 0x20
+						@working.write(@BITWISE_FLAGS_O8)
+					when 0x28, 0x38
+						@working.write(@SUB_O8_FLAGS)
+					when 0x30
+						@working.write(@BITWISE_FLAGS_O8)
+			when 0x81, 0x83
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@ADD_O32_FLAGS)
+						when 0x08
+							@working.write(@BITWISE_FLAGS_O32)
+						when 0x10
+							@working.write(@ADC_O32_FLAGS)
+						when 0x18
+							@working.write(@SBB_O32_FLAGS)
+						when 0x20
+							@working.write(@BITWISE_FLAGS_O32)
+						when 0x28, 0x38
+							@working.write(@SUB_O32_FLAGS)
+						when 0x30
+							@working.write(@BITWISE_FLAGS_O32)
+
+				else
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@ADD_O16_FLAGS)
+						when 0x08
+							@working.write(@BITWISE_FLAGS_O16)
+						when 0x10
+							@working.write(@ADC_O16_FLAGS)
+						when 0x18
+							@working.write(@SBB_O16_FLAGS)
+						when 0x20
+							@working.write(@BITWISE_FLAGS_O16)
+						when 0x28, 0x38
+							@working.write(@SUB_O16_FLAGS)
+						when 0x30
+							@working.write(@BITWISE_FLAGS_O16)
+			when 0xc0, 0xd0, 0xd2
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@ROL_O8_FLAGS)
+					when 0x08
+						@working.write(@ROR_O8_FLAGS)
+					when 0x10
+						@working.write(@RCL_O8_FLAGS)
+					when 0x18
+						@working.write(@RCR_O8_FLAGS)
+					when 0x20
+						@working.write(@SHL_O8_FLAGS)
+					when 0x28
+						@working.write(@SHR_O8_FLAGS)
+					when 0x30
+						log "invalid SHL encoding"
+						@working.write(@SHL_O8_FLAGS)
+					when 0x38
+						@working.write(@SAR_O8_FLAGS)
+			when 0xc1, 0xd1, 0xd3
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@ROL_O32_FLAGS)
+						when 0x08
+							@working.write(@ROR_O32_FLAGS)
+						when 0x10
+							@working.write(@RCL_O32_FLAGS)
+						when 0x18
+							@working.write(@RCR_O32_FLAGS)
+						when 0x20
+							@working.write(@SHL_O32_FLAGS)
+						when 0x28
+							@working.write(@SHR_O32_FLAGS)
+						when 0x30
+							@working.write(@SHL_O32_FLAGS)
+						when 0x38
+							@working.write(@SAR_O32_FLAGS)
+				else
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@ROL_O16_FLAGS)
+						when 0x08
+							@working.write(@ROR_O16_FLAGS)
+						when 0x10
+							@working.write(@RCL_O16_FLAGS)
+						when 0x18
+							@working.write(@RCR_O16_FLAGS)
+						when 0x20
+							@working.write(@SHL_O16_FLAGS)
+						when 0x28
+							@working.write(@SHR_O16_FLAGS)
+						when 0x30
+							@working.write(@SHL_O16_FLAGS)
+						when 0x38
+							@working.write(@SAR_O16_FLAGS)
+			when 0xf6
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@BITWISE_FLAGS_O8)
+					when 0x18
+						@working.write(@NEG_O8_FLAGS)
+			when 0xf7
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@BITWISE_FLAGS_O32)
+						when 0x18
+							@working.write(@NEG_O32_FLAGS)
+				else
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@BITWISE_FLAGS_O16)
+						when 0x18
+							@working.write(@NEG_O16_FLAGS)
+			when 0xfe
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@INC_O8_FLAGS)
+					when 0x08
+						@working.write(@DEC_O8_FLAGS)
+			when 0xff
+				switch (modrm & 0x38)
+					when 0x00
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@INC_O32_FLAGS)
+						else
+							@working.write(@INC_O16_FLAGS)
+					when 0x08
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@DEC_O32_FLAGS)
+						else
+							@working.write(@DEC_O16_FLAGS)
+			when 0x07, 0x17, 0x1f, 0x58, 0x59, 0x5a, 0x5b, 0x5d, 0x5e, 0x5f, 0xfa1, 0xfa9
+				@working.write(@STORE1_ESP)
+			#0x8f //POP Ev This is really annoying and not quite correct?
+			#for (int i = 0 i < @working.getLength() i++)
+			#switch (@working.getMicrocodeAt(i))
+			#ADDR_SP
+			#ADDR_ESP
+			#@working.replace(i, ADDR_REG1)
+			#
+			#ADDR_2ESP
+			#@working.replace(i, ADDR_2REG1)
+			#
+			#ADDR_4ESP
+			#@working.replace(i, ADDR_4REG1)
+			#
+			#ADDR_8ESP
+			#@working.replace(i, ADDR_8REG1)
+			#
+			#ADDR_IB
+			#ADDR_IW
+			#ADDR_ID
+			#i++
+
+
+
+			#switch (@working.getMicrocodeAt(@working.getLength() - 1))
+			#when STORE0_ESP
+			#when STORE0_SP
+			#default @working.write(STORE1_ESP)
+			when 0xcf
+				switch (prefices & @PREFICES_OPERAND)
+					when 0
+						@working.write(@STORE0_FLAGS)
+					when @PREFICES_OPERAND
+						@working.write(@STORE0_EFLAGS)
+			when 0xf1f, 0xfa4, 0xfa5
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@SHL_O32_FLAGS)
+				else
+					@working.write(@SHL_O16_FLAGS)
+			when 0xfac, 0xfad
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@SHR_O32_FLAGS)
+				else
+					@working.write(@SHR_O16_FLAGS)
+			when 0xfb0
+				@working.write(@CMPXCHG_O8_FLAGS)
+			when 0xfb1
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@CMPXCHG_O32_FLAGS)
+				else
+					@working.write(@CMPXCHG_O16_FLAGS)
+			when 0x06, 0x0e, 0x16, 0x1e, 0x27, 0x2f, 0x37, 0x3f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x5c, 0x60, 0x61, 0x62, 0x63, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f, 0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf, 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xd4, 0xd5, 0xd6, 0xd7, 0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf4, 0xf5, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xf00, 0xf01, 0xf02, 0xf03, 0xf06, 0xf09, 0xf0b, 0xf20, 0xf21, 0xf22, 0xf23, 0xf30, 0xf31, 0xf32, 0xf34, 0xf35, 0xf40, 0xf41, 0xf42, 0xf43, 0xf44, 0xf45, 0xf46, 0xf47, 0xf48, 0xf49, 0xf4a, 0xf4b, 0xf4c, 0xf4d, 0xf4e, 0xf4f, 0xf80, 0xf81, 0xf82, 0xf83, 0xf84, 0xf85, 0xf86, 0xf87, 0xf88, 0xf89, 0xf8a, 0xf8b, 0xf8c, 0xf8d, 0xf8e, 0xf8f, 0xf90, 0xf91, 0xf92, 0xf93, 0xf94, 0xf95, 0xf96, 0xf97, 0xf98, 0xf99, 0xf9a, 0xf9b, 0xf9c, 0xf9d, 0xf9e, 0xf9f, 0xfa0, 0xfa2, 0xfa8, 0xfaf, 0xfa3, 0xfab, 0xfb3, 0xfbb, 0xfb2, 0xfb4, 0xfb5, 0xfb6, 0xfb7, 0xfba, 0xfbc, 0xfbd, 0xfbe, 0xfbf, 0xfc7, 0xfc8, 0xfc9, 0xfca, 0xfcb, 0xfcc, 0xfcd, 0xfce, 0xfcf, 0xd800, 0xd900, 0xda00, 0xdb00, 0xdc00, 0xdd00, 0xde00, 0xdf00, 0x0fff
+				return
+			else
+				throw new IllegalStateException("Missing Flags 0x" + opcode)
 
 
 	load0_Eb: (prefices, modrm, sib, displacement) ->
@@ -1417,8 +1662,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				return false
 
 	decodeM: (prefices, modrm, sib, displacement) ->
-		if (!@decodingAddressMode())
-			return
+#		if (!@decodingAddressMode())
+#			return
 
 		if ((prefices & @PREFICES_ADDRESS) != 0)
 			# 32 bit address
@@ -1571,7 +1816,7 @@ class Operation
 			throw new NotImplementedError("Cant set a undefined/null microcode: " + microcode)
 
 		try
-			log "Adding microcode #{microcode} to @microcodes[#{@microcodesLength}]"
+#			log "Adding microcode #{microcode} to @microcodes[#{@microcodesLength}]"
 			@microcodes[@microcodesLength] = microcode
 			@microcodesLength++
 		catch e
