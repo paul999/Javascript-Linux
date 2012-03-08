@@ -208,8 +208,6 @@ class PC
 
 	execute: ->
 #		log "PC execute"
-		if (!proc.isProtectedMode())
-			throw "Only protected Mode is supported."
 		if (proc.isVirtual8086Mode())
 			throw "Virtual8086 Mode is not supported."
 
@@ -224,15 +222,22 @@ class PC
 		nextClockCheck = @INSTRUCTIONS_BETWEEN_INTERRUPTS
 
 		try
+			prot = proc.isProtectedMode()
 			for i in [0...100]
-				block = manager.getProtectedModeCodeBlockAt(proc.getInstructionPointer(), proc.cs.getDefaultSizeFlag())
+
+				block = manager.getCodeBlockAt(proc.getInstructionPointer(), proc.cs.getDefaultSizeFlag())
+
 				block = block.execute()
 				x86Count += block
 				clockx86Count += block
 
 				if (x86Count > nextClockCheck)
 					nextClockCheck = x86Count + @INSTRUCTIONS_BETWEEN_INTERRUPTS
-					proc.processProtectedModeInterrupts(clockx86Count)
+
+					if (prot)
+						proc.processProtectedModeInterrupts(clockx86Count)
+					else
+						proc.processRealModeInterrupts(clockx86Count)
 					clockx86Count = 0
 
 
@@ -244,7 +249,7 @@ class PC
 				@printStackTrace(e)
 				window.pc.stop()
 
-				throw "STOP!"
+				throw e
 	getMemoryLength: (type = "") ->
 		return @mem.byteLength
 

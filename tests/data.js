@@ -20,7 +20,7 @@ window.resultOpCodes[0][3] = [25, 4, 2]
 window.testOpCodes[0][4] = [0x50]
 window.resultOpCodes[0][4] = [6, 4, 2]
 
-window.testOpCodes[0][5] = [0xe8, 0xf3, 0x2f]
+window.testOpCodes[0][5] = [0xe8, 0xf3, 0x2f] // Emulator geeft error op deze fout (seg0 niet opgeslagen)
 window.resultOpCodes[0][5] = [2, 13, 12275, 28] // Derde/vierde waarde fout?
 
 window.testOpCodes[0][6] = [0x00, 0x00]
@@ -39,6 +39,32 @@ window.resultOpCodes[0][9] = [22, 73, 20, 66, 0, 2]
 window.testOpCodes[0][10] = []//[0xea, 0x00, 0x00, 0x10, 0x00]
 window.resultOpCodes[0][10] = [22, 73, 20, 66, 0, 2]
 
+window.testOpCodes[0][11] = []//[0x55]
+window.resultOpCodes[0][11] = [22, 73, 20, 66, 0, 2]
+
+window.testOpCodes[0][12] = [0x89, 0xe5]
+window.resultOpCodes[0][12] = [13, 0, 17, 2]
+
+window.testOpCodes[0][13] = []//[0x56]
+window.resultOpCodes[0][13] = [22, 73, 20, 66, 0, 2]
+
+window.testOpCodes[0][14] = [0x53]
+window.resultOpCodes[0][14] = [25, 4, 2]
+
+window.testOpCodes[0][15] = []//[0x83, 0xec, 0x20]
+window.resultOpCodes[0][15] = [22, 73, 20, 66, 0, 2]
+
+window.testOpCodes[0][16] = [0x8b, 0x5d, 0x08]
+window.resultOpCodes[0][16] = [13, 0, 15, 2]
+
+window.testOpCodes[0][17] = [0x8b, 0x75, 0x0c]
+window.resultOpCodes[0][17] = [13, 0, 40, 2]
+
+window.testOpCodes[0][18] = [0xc7, 0x04, 0x24, 0xa4]
+window.resultOpCodes[0][18] = [13, 42020, 21, 0, 2]
+
+window.testOpCodes[0][19] = []//[0x90] //nop
+window.resultOpCodes[0][19] = [22, 73, 20, 66, 0, 2]
 
 /*
 window.testOpCodes[0][] = []

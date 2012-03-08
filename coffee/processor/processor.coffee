@@ -186,7 +186,7 @@ class processor
 
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0
-		@cr0 = @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH | @CR0_PROTECTION_ENABLE | 0x10
+		@cr0 = @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH |  0x10
 		log "@CR0_CACHE_DISABLE" + @CR0_CACHE_DISABLE
 		log "cr0: " + @cr0
 		@cr2 = @cr3 = @cr4 = 0x0

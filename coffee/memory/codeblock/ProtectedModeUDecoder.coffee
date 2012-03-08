@@ -772,6 +772,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				else
 					@working.write(@LOAD0_IW)
 					@working.write(immediate)
+
 			when 0x80, 0x82, 0xc0
 				@load0_Eb(prefices, modrm, sib, displacement)
 				@working.write(@LOAD1_IB)
