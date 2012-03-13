@@ -45,7 +45,6 @@ class CodeBlockManager
 
 	tryFactory: (ff, offset, operandSizeFlag) ->
 		try
-			log "Got offset in try: #{offset}"
 			@byteSource.set(offset)
 			return ff.getCodeBlock(@byteSource, operandSizeFlag)
 		catch e

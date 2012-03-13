@@ -46,7 +46,7 @@ class InterruptControllerElement
 			elcrMask = 0xde
 
 	ioPortsRequested: ->
-		return @opPorts
+		return @ioPorts
 
 	ioPortRead: (address) ->
 		if (@poll)

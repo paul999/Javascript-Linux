@@ -98,18 +98,24 @@ class InterruptController
 			masterIRQ = 7
 			@updateIRQ()
 			return @master.irqBase + masterIRQ
-# Ik heb geen System?
-#    public int[] ioPortsRequested()
-#    {
-#	int[] masterIOPorts = master.ioPortsRequested();
-#	int[] slaveIOPorts = slave.ioPortsRequested();
 
-#	int[] temp = new int[masterIOPorts.length + slaveIOPorts.length];
-#	System.arraycopy(masterIOPorts, 0, temp, 0, masterIOPorts.length);
-#	System.arraycopy(slaveIOPorts, 0, temp, masterIOPorts.length, slaveIOPorts.length);
+	ioPortsRequested: () ->
+		data = new Array()
 
-#	return temp;
-#    }
+		tmp = @master.ioPortsRequested()
+		index = 0
+
+		for i in [0...tmp.length]
+			data[index] = tmp[i]
+			index++
+
+		tmp = @slave.ioPortsRequested()
+
+		for i in [0...tmp.length]
+			data[index] = tmp[i]
+			index++
+		return data
+
 	ioPortReadByte: (address) ->
 		switch address
 			when 0x20, 0x20

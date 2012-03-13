@@ -210,21 +210,23 @@ class DMAController
 
 
 		if (@pageHighBase >= 0)
-			temp = new Int32Array(16 + (2 * pagePortList.length))
+			temp = new Array(16 + (2 * @pagePortList.length))
 		else
-			temp = new Int32Array(16 + pagePortList.length)
+			temp = new Array(16 + @pagePortList.length)
 		j = 0
-		for k in [0...8]
+
+		for i in [0...8]
 			temp[j++] = @ioBase + (i << @dShift)
 
-		for k in [0...pagePortList.length]
-			temp[j++] = pageLowBase + pagePortList[i]
-			if (pageHighBase >= 0)
-				temp[j++] = pageHighBase + pagePortList[i]
+		for i in [0...@pagePortList.length]
+			temp[j++] = @pageLowBase + @pagePortList[i]
+			if (@pageHighBase >= 0)
+				temp[j++] = @pageHighBase + @pagePortList[i]
 
-		for k in [0...8]
+		for i in [0...8]
 			temp[j++] = @ioBase + ((i+8) << @dShift)
-		temp
+
+		return temp
 
 	getFlipFlop: () ->
 		ff = @flipFlop

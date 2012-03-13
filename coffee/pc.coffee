@@ -64,28 +64,6 @@ class PC
 
 		return true
 
-	loadedstart: (result) ->
-		if (!result)
-			log "There had been an error loadeding the files"
-			return
-
-			#
-#		loadFile("vmlinux-3.0.4-simpleblock.bin", 0x00100000, window.pc.loadedstart2, window.pc.saveMemory)
-		window.pc.start2()
-
-	loadedstart2: (result) ->
-		if (!result)
-			log "There had been an error loadeding the files"
-			return
-		st = "console=ttyS0 root=/dev/hda ro init=/sbin/init notsc=1"
-		loc = 0xf800
-		for i in [0...st.length]
-			if (!window.pc.setMemory(8, loc+i, (st.charCodeAt(i) & 0xff)))
-				throw new memoryOutOfBound()
-			loc++
-
-		window.pc.start2()
-
 	saveMemory: (data, len, address) ->
 		log "saving file data at #{address} with length #{data.length}"
 
@@ -122,9 +100,15 @@ class PC
 
 		data = window.start
 		@saveMemory(data, data.length, 0x10000)
+		data = window.kernel
+		@saveMemory(data, data.length, 0x00100000)
 
-		@loadedstart true
-	start2: ->
+		st = "console=ttyS0 root=/dev/hda ro init=/sbin/init notsc=1"
+		loc = 0xf800
+		for i in [0...st.length]
+			if (!window.pc.setMemory(8, loc+i, (st.charCodeAt(i) & 0xff)))
+				throw new memoryOutOfBound()
+			loc++
 
 		@running = true
 
@@ -134,10 +118,11 @@ class PC
 		markTime = 0#System.currentTimeMillis()
 		execCount = COUNTDOWN
 		totalExec = 0
+
 		while @running
 			if (@stp)
 				log "stop"
-				return
+				break
 
 			execCount -= @execute()
 			execCount -= 1
@@ -149,7 +134,7 @@ class PC
 			if (@updateMHz(markTime, totalExec))
 				markTime = 0 #System.currentTimeMillis()
 				totalExec = 0
-				return
+#				return
 
 		@stop()
 		log "PC stopped"

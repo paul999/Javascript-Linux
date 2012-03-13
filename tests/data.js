@@ -26,33 +26,33 @@ window.resultOpCodes[0][5] = [2, 13, 12275, 28] // Derde/vierde waarde fout?
 window.testOpCodes[0][6] = [0x00, 0x00]
 window.resultOpCodes[0][6] = [14,18,43,1,22,73,20,14,18,43,1,66,62,2] // Mogelijk fout?
 
-window.testOpCodes[0][7] = []//[0x83, 0xc4, 0x0c] //83C40C
-window.resultOpCodes[0][7] = [14,18,43,1,22,73,20,14,18,43,1,66,62,2]
+window.testOpCodes[0][7] = [0x83, 0xc4, 0x0c] //83C40C
+window.resultOpCodes[0][7] = []
 
-window.testOpCodes[0][8] = []//[0xbe, 0x00, 0x00]
-window.resultOpCodes[0][8] = [14,18,43,1,22,73,20,14,18,43,1,66,62,2]
+window.testOpCodes[0][8] = [0xbe, 0x00, 0x00]
+window.resultOpCodes[0][8] = []
 
 
-window.testOpCodes[0][9] = []//[0x09, 0x00]
-window.resultOpCodes[0][9] = [14,18,43,1,22,73,20,14,18,43,1,66,62,2]
+window.testOpCodes[0][9] = [0x09, 0x00]
+window.resultOpCodes[0][9] = [14,18,43,1,9,63,84,14,18,43,1,21,50,2]
 
-window.testOpCodes[0][10] = []//[0xea, 0x00, 0x00, 0x10, 0x00]
-window.resultOpCodes[0][10] = [14,18,43,1,22,73,20,14,18,43,1,66,62,2]
+window.testOpCodes[0][10] = [0xea, 0x00, 0x00, 0x10, 0x00]
+window.resultOpCodes[0][10] = []
 
-window.testOpCodes[0][11] = []//[0x55]
-window.resultOpCodes[0][11] = [14,18,43,1,22,73,20,14,18,43,1,66,62,2]
+window.testOpCodes[0][11] = [0x55]
+window.resultOpCodes[0][11] = []
 
 window.testOpCodes[0][12] = [0x89, 0xe5]
 window.resultOpCodes[0][12] = [13, 0, 17, 2]
 
-window.testOpCodes[0][13] = []//[0x56]
-window.resultOpCodes[0][13] = [14,18,43,1,22,73,20,14,18,43,1,66,62,2]
+window.testOpCodes[0][13] = [0x56]
+window.resultOpCodes[0][13] = []
 
 window.testOpCodes[0][14] = [0x53]
 window.resultOpCodes[0][14] = [25, 4, 2]
 
-window.testOpCodes[0][15] = []//[0x83, 0xec, 0x20]
-window.resultOpCodes[0][15] = [14,18,43,1,22,73,20,14,18,43,1,66,62,2]
+window.testOpCodes[0][15] = [0x83, 0xec, 0x20]
+window.resultOpCodes[0][15] = []
 
 window.testOpCodes[0][16] = [0x8b, 0x5d, 0x08]
 window.resultOpCodes[0][16] = [13, 0, 15, 2]
@@ -63,8 +63,8 @@ window.resultOpCodes[0][17] = [13, 0, 40, 2]
 window.testOpCodes[0][18] = [0xc7, 0x04, 0x24, 0xa4]
 window.resultOpCodes[0][18] = [13, 42020, 14, 43, 1, 21, 2]
 
-window.testOpCodes[0][19] = []//[0x90] //nop
-window.resultOpCodes[0][19] = [14,18,43,1,22,73,20,14,18,43,1,66,62,2]
+window.testOpCodes[0][19] = [0x90] //nop
+window.resultOpCodes[0][19] = []
 
 /*
 window.testOpCodes[0][] = []

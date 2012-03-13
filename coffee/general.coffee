@@ -52,16 +52,10 @@ arraycopy = (buf, offset, buffer, address, len) ->
 getBytes = (x) ->
 	bytes = []
 
-	log "Get bytes(#{x})"
-
 	for i in [3..0]
-		log "i: #{i}"
 		bytes[i] = x & 255
 		x = x >> 8
-	log bytes
 	return bytes
-
-
 
 class general
 	scale64: (input,multiply,devide) ->

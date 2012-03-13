@@ -430,3 +430,104 @@ class processor
 		@signCalculated = true
 		@eflagsSign = value
 		@signOne = value
+
+	setAuxiliaryCarryFlag: () ->
+#		log "I need to be created..."
+
+	setOverflowFlag: ->
+#		log "I need to be created..."
+
+	getCarryFlag: ->
+		if (@carryCalculated)
+			return @eflagsCarrry
+		else
+			@carryCalculated = true
+
+			if (@carryMethod == @CY_TWIDDLE_FFFF)
+				@eflagsCarry = ((@carryOne & (~0xffff)) != 0)
+			else if (@carryMethod == @CY_TWIDDLE_FF)
+				@eflagsCarry = ((@carryOne & (~0xff)) != 0)
+			else if (@carryMethod == @CY_SHR_OUTBIT)
+				@eflagsCarry = (((@carryOne >>> (@carryTwo - 1)) & 0x1) != 0)
+			else if (@carryMethod == @CY_TWIDDLE_FFFFFFFF)
+				@eflagsCarry = ((@carryLong & (~0xffffffff)) != 0)
+			else if (@carryMethod == @CY_SHL_OUTBIT_SHORT)
+				@eflagsCarry = (((@carryOne << (carryTwo - 1)) & 0x8000) != 0)
+
+			else
+				switch (@carryMethod)
+					when @CY_NZ
+						@eflagsCarry = @carryOne != 0
+					when @CY_NOT_BYTE
+						@eflagsCarry = -1
+					when @CY_NOT_SHORT
+						@eflagsCarry = -1
+					when @CY_NOT_INT
+						@eflagsCarry = -1
+#	    case CY_NOT_BYTE: return (eflagsCarry = (carryOne != (byte)carryOne));
+#	    case CY_NOT_SHORT: return (eflagsCarry = (carryOne != (short)carryOne));
+#	    case CY_NOT_INT: return (eflagsCarry = (carryLong != (int)carryLong));
+					when @CY_LOW_WORD_NZ
+						@eflagsCarry = ((@carryOne & 0xffff) != 0)
+					when @CY_HIGH_BYTE_NZ
+						@eflagsCarry = ((@carryOne & 0xff00) != 0)
+					when @CY_NTH_BIT_SIT
+						@eflagsCarry = ((@carryOne & (1 << carryTwo)) != 0)
+					when @CY_GREATER_FF
+						@eflagsCarry = (@carryOne > 0xff)
+					when @CY_SHL_OUTBIT_BYTE
+						@eflagsCarry = (((@carryOne << (@carryTwo - 1)) & 0x80) != 0)
+					when @CY_SHL_OUTBIT_INT
+						@eflagsCarry = (((@carryOne << (@carryTwo - 1)) & 0x80000000) != 0)
+					when @CY_LOWBIT
+						@eflagsCarry = ((@carryOne & 0x1) != 0)
+					when @CY_HIGHBIT_BYTE
+						@eflagsCarry = ((@carryOne & 0x80) != 0)
+					when @CY_HIGHBIT_SHORT
+						@eflagsCarry = ((@carryOne & 0x8000) != 0)
+					when @CY_HIGHBIT_INT
+						@eflagsCarry = ((@carryOne & 0x80000000) != 0)
+					when @CY_OFFENDBIT_BYTE
+						@eflagsCarry = ((@carryOne & 0x100) != 0)
+					when @CY_OFFENDBIT_SHORT
+						@eflagsCarry = ((@carryOne & 0x10000) != 0)
+
+					when @CY_OFFENDBIT_INT
+						@eflagsCarry = ((@carryLong & 0x100000000) != 0)
+					else
+						log "Missing carry flag calcuation method"
+			return @eflagsCarry
+	getZeroFlag:  ->
+		if (@zeroCalculated)
+			return @eflagsZero
+		else
+			@zeroCalculated = true
+			@eflagsZero = (@zeroOne == 0)
+			return @eflagsZero
+	getSignFlag: ->
+		if (@signCalculated)
+			return @flagsSign
+		else
+			@signCalculated = true
+			@eflagsSign = (signOne < 0)
+			return @eflagsSign
+	getAuxiliaryCarryFlag: ->
+		if (@auxiliaryCarryCalculated)
+			return @eflagsAuxiliaryCarry
+		else
+			@auxiliaryCarryCalculated = true
+
+			switch @AuxiliaryCarryMethod
+				when @AC_XOR
+					@eflagsAuxiliaryCarry = ((((@auxiliaryCarryOne ^ @auxiliaryCarryTwo) ^ @auxiliaryCarryThree) & 0x10) != 0)
+				when @AC_LNIBBLE_MAX
+					@eflagsAuxiliaryCarry = ((@auxiliaryCarryOne & 0xf) == 0xf)
+				when @AC_LNIBBLE_ZERO
+					@eflagsAuxiliaryCarry = ((@auxiliaryCarryOne & 0xf) == 0x0)
+				when @AC_BIT4_NEQ
+					@eflagsAuxiliaryCarry = ((@auxiliaryCarryOne & 0x08) != (@auxiliaryCarryTwo & 0x08))
+				when @AC_LNIBBLE_NZERO
+					@eflagsAuxiliaryCarry = ((@auxiliaryCarryOne & 0xf) != 0x0)
+				else
+					log "Missing auxiliary carry flag."
+			return @eflagsAuxiliaryCarry

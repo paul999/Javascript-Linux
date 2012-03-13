@@ -59,7 +59,7 @@ class RealModeUBlock extends MicrocodeSet
 		freg1 = 0
 
 		executeCount = @getX86Count()
-		eipUpdated = false
+		@eipUpdated = false
 
 		position = 0
 
@@ -106,14 +106,16 @@ class RealModeUBlock extends MicrocodeSet
 						try
 							reg0 = 0xff & seg0.getByte(addr0)
 						catch e
-							log "Geen seg0?"
+							log "Load, Geen seg0?"
+							log e
 					when @LOAD1_AL
 						reg1 = proc.eax & 0xff
 					when @STORE0_MEM_BYTE
 						try
 							seg0.setByte(addr0, reg0) #check.
 						catch e
-							log "Geen seg0?"
+							log "Store, Geen seg0?"
+							log e
 					when @ADC_O16_FLAGS
 						@adc_o16_flags(reg0, reg2, reg1)
 					when @LOAD_SEG_DS
@@ -126,9 +128,84 @@ class RealModeUBlock extends MicrocodeSet
 						addr0 &= 0xffff
 					when @ADD_O16_FLAGS
 						@add_o16_flags(reg0, reg2, reg1)
+					when @ADD_O8_FLAGS
+						@add_o8_flags(reg0, reg2, reg1)
+					when @OR
+						reg0 |= reg1
+					when @STORE0_AX
+						proc.eax = (proc.eax & ~0xffff) | (reg0 & 0xffff)
+					when @BITWISE_FLAGS_O16
+						@bitwise_flags(reg0) #check was short
+					when @LOAD0_AL
+						reg0 = proc.eax & 0xff
+					when @LOAD1_BH
+						reg1 = (proc.ebx >> 8) & 0xff
+					when @STORE0_AL
+						proc.eax = (proc.eax & ~0xff) | (reg0 & 0xff)
+					when @LOAD0_DX
+						reg0 = proc.edx & 0xffff
+
+					when @OUTSW_A16
+						@outsw_a16(reg0, seg0)
+					when @LOAD_SEG_SS
+						seg0 = proc.ss
+					when @ADDR_BP
+						addr0 += (proc.ebp) #check, was short.
+					when @ADDR_IB
+						bt = getBytes(@microcodes[position++])
+						addr0 += bt[0] #check.
+					when @LOAD1_CH
+						reg1 = (proc.ecx >> 8) & 0xff
+					when @LOAD0_IB
+						reg0 = @microcodes[position++] & 0xff
+					when @JNC_O8
+						bt = getBytes(reg0)
+						@jnc_o8(bt[0]) #check
+					when @ADDR_DI
+						addr0 += (proc.edi) #short
+					when @LOAD1_DH
+						reg1 = (proc.edx >> 8) & 0xff
+					when @JZ_O8
+						bt = getBytes(reg0)
+						@jz_o8(bt[0]) #byte
+					when @JNS_O8
+						bt = getBytes(reg0)
+						@jns_o8(bt[0])
+					when @JC_O8
+						bt = getBytes(reg0)
+						@jc_o8(bt[0])
+					when @LOAD1_AH
+						reg1 = (proc.eax >> 8) & 0xff
+					when @LOAD1_IW
+						reg1 = @microcodes[position++] & 0xffff
+					when @SUB
+						reg2 = reg0
+						reg0 = reg2 - reg1
+					when @SUB_O16_FLAGS
+						@sub_o16_flags(reg0, reg2, reg1)
+					when @DAS
+						@das()
+					when @LOAD_SEG_FS
+						seg0 = proc.fs
+					when @AND
+						reg0 &= reg1
+					when @BITWISE_FLAGS_O8
+						bt = getBytes(reg0)
+						@bitwise_flags(bt[0])
+					when @OUTSB_A16
+						@outsb_a16(reg0, seg0)
+					when @LOAD0_MEM_DWORD
+						reg0 = seg0.getDoubleWord(addr0)
+					when @BOUND_O16
+						#geen idee nog...
+#		short lower = (short)reg0;
+#		short upper = (short)(reg0 >> 16);
+#		short index = (short)reg1;
+#		if ((index < lower) || (index > (upper + 2)))
+#		    throw ProcessorException.BOUND_RANGE;
+						log "BOUND"
 					else
-						log "Possible missing microcode: #{mc}"
-						@executefull()
+						throw "Possible missing microcode: #{mc}"
 		catch e
 			if (e instanceof ProcessorException)
 
@@ -151,7 +228,10 @@ class RealModeUBlock extends MicrocodeSet
 
 		proc.ss.setWord(offset, proc.eip)
 		proc.esp = (proc.esp & 0xffff0000) | offset
-		proc.eip = (proc.eip + target) & 0xffff #?
+		tmp = proc.eip + target
+		proc.eip = tmp & 0xffff #?
+
+		log "Target: #{target} new EIP: #{proc.eip}"
 
 	adc_o16_flags: (result, operand1, operand2) ->
 		if (proc.getCarryFlag() && (operand2 = 0xffff))
@@ -172,3 +252,93 @@ class RealModeUBlock extends MicrocodeSet
 
 		proc.setCarryFlag(result, PC.CY_TWIDDLE_FFFF)
 		proc.setAuxiliaryCarryFlag(operand1, operand2, result, PC.AC_XOR)
+
+	add_o8_flags: (result, operand1, operand2) ->
+		@arithmetic_flags_o8(result, operand1, operand2)
+		proc.setOverflowFlag(result, operand1, operand2, PC.OF_ADD_BYTE)
+
+	arithmetic_flags_o8: (result, operand1, operand2) ->
+		proc.setZeroFlag(result)
+		proc.setParityFlag(result)
+		proc.setSignFlag(result)
+
+		proc.setCarryFlag(result, PC.CY_TWIDDLE_FF)
+		proc.setAuxiliaryCarryFlag(operand1, operand2, result, PC.AC_XOR)
+
+	bitwise_flags: (result) ->
+		proc.setOverflowFlag(false)
+		proc.setCarryFlag(false)
+		proc.setZeroFlag(result)
+		proc.setParityFlag(result)
+		proc.setSignFlag(result)
+	outsw_a16: (port, storeSegment) ->
+		addr = proc.esi & 0xffff
+
+		if (!port)
+			throw "Port is undefined: #{port}"
+
+		proc.ioports.ioPortWriteWord(port, 0xffff & storeSegment.getWord(addr))
+
+		if (proc.eflagsDirection)
+			addr -= 2
+		else
+			addr += 2
+
+		proc.esi = (proc.esi & ~0xffff) | (addr & 0xffff)
+	jnc_o8: (offset) ->
+		if (!proc.getCarryFlag())
+			@jump_o8(offset)
+
+	jump_o8: (offset) ->
+		proc.eip += offset
+
+		if (proc.eip & 0xffff0000) != 0
+			proc.eip -+ offset
+			throw ProcessorException.GENERAL_PROTECTION_0
+
+	jz_o8: (offset) ->
+		if (!proc.getZeroFlag())
+			@jump_o8(offset)
+
+	jns_o8: (offset) ->
+		if (!proc.getSignFlag())
+			@jump_o8(offset)
+
+	sub_o16_flags: (result, operand1, operand2) ->
+		@arithmetic_flags_o16(result, operand1, operand2)
+		proc.setOverflowFlag(result, operand1, operand2, proc.OF_SUB_SHORT)
+
+	das: ->
+		tempCF = false
+
+		tempAL = 0xff & proc.eax
+
+		if (((tempAL & 0xf) > 0x9) || proc.getAuxiliaryCarryFlag())
+			proc.setAuxiliaryCarryFlag(true)
+			proc.eax = (proc.eax & ~0xff) | ((proc.eax - 0x06) & 0xff)
+			tempCF = ( tempAL < 0x06) || proc.getCarryFlag()
+		if (tempAL > 0x99) || proc.getCarryFlag()
+			proc.eax = (prox.eax & ~0xff) | ((proc.eax - 0x60) & 0xff)
+			tempCF = true
+		proc.setOverflowFlag(false)
+		proc.setZeroFlag(proc.eax)
+		proc.setParityFlag(proc.eax)
+		proc.setSignFlag(proc.eax)
+
+		proc.setCarryFlag(tempCF)
+
+	jc_o8: (offset)	 ->
+		if (proc.getCarryFlag())
+			@jump_o8(offset)
+
+	outsb_a16: (port, storeSegment) ->
+		addr = proc.esi & 0xffff
+
+		proc.ioports.ioPortWriteByte(port, 0xff & storeSegment.getByte(addr))
+
+		if (proc.eflagsDirection)
+			addr -= 1
+		else
+			addr += 1
+
+		proc.esi = (proc.esi & ~0xffff) | (addr & 0xffff)
