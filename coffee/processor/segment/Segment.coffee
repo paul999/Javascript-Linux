@@ -14,7 +14,7 @@
 # the Free Software Foundation.
 
 class Segment
-	constructor: (@memory) ->
+	constructor: ->
 		@TYPE_ACCESSED = 0x1
 		@TYPE_CODE = 0x8
 		@TYPE_DATA_WRITABLE = 0x2

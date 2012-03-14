@@ -14,8 +14,8 @@
 # the Free Software Foundation.
 
 class RealModeSegment extends Segment
-	constructor: (@memory, @selector) ->
-		super(@memory)
+	constructor: (@selector) ->
+		super()
 		log "create realmodesegment"
 
 		@base = @selector << 4

@@ -24,7 +24,6 @@ processor/segment/DescriptorTableSegment
 processor/segment/factory
 processor/ProcessorException
 processor/processor
-processor/IllegalStateException
 clock
 general
 pc

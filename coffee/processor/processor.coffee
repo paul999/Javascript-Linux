@@ -277,16 +277,16 @@ class processor
 		@eflagsIOPrivilegeLevel = 0
 		@eflagsInterruptEnableSoon = false
 #TODO: FIXME :(
-		@cs = sgm.createRealModeSegment(@physicalMemory, 0xf000)
-		@ds = sgm.createRealModeSegment(@physicalMemory, 0)
-		@ss = sgm.createRealModeSegment(@physicalMemory, 0)
-		@es = sgm.createRealModeSegment(@physicalMemory, 0)
-		@fs = sgm.createRealModeSegment(@physicalMemory, 0)
-		@gs = sgm.createRealModeSegment(@physicalMemory, 0)
+		@cs = sgm.createRealModeSegment(0xf000)
+		@ds = sgm.createRealModeSegment(0)
+		@ss = sgm.createRealModeSegment(0)
+		@es = sgm.createRealModeSegment(0)
+		@fs = sgm.createRealModeSegment(0)
+		@gs = sgm.createRealModeSegment(0)
 
-		@idtr = sgm.createDescriptorTableSegment(@physicalMemory, 0, 0xFFFF)
+		@idtr = sgm.createDescriptorTableSegment(0, 0xFFFF)
 		@ldtr = sgm.NULL_SEGMENT
-		@gdtr = sgm.createDescriptorTableSegment(@physicalMemory, 0, 0xFFFF)
+		@gdtr = sgm.createDescriptorTableSegment(0, 0xFFFF)
 		@tss = sgm.NULL_SEGMENT
 
 	#	@modelSpecificRegisters.clear()
@@ -398,13 +398,13 @@ class processor
 
 		segmentDescriptor = 0
 
-#		if ((segmentSelector & 0x4) != 0)
-#			segmentDescriptor = @ldtr.getQuadWord(segmentSelector & 0xfff8)
-#
-		#else
-		if (segmentSelector < 0x4)
-			return sgm.NULL_SEGMENT
-		segmentDescriptor = @gdtr.getQuadWord(segmentSelector & 0xfff8)
+		if ((segmentSelector & 0x4) != 0)
+			segmentDescriptor = @ldtr.getQuadWord(segmentSelector & 0xfff8)
+
+		else
+#		if (segmentSelector < 0x4)
+#			return sgm.NULL_SEGMENT
+			segmentDescriptor = @gdtr.getQuadWord(segmentSelector & 0xfff8)
 
 		result = sgm.createProtectedModeSegment(segmentSelector, segmentDescriptor)
 
@@ -412,30 +412,91 @@ class processor
 			if ((result.getType() & 0x18) == 0x10)
 				result.setAddressSpace(alignmentCheckedMemory)
 		return result
-	setCarryFlag: (value) ->
-		@carryCalculated = true
-		@eflagsCarry = value
 
-	setZeroFlag: (value) ->
+
+
+	setZeroFlagBool: (value) ->
 		@zeroCalculated = true
 		@eflagsZero = value
 
-	setParityFlag: (value) ->
-		@parityCalculated = true
+	setZeroFlagInt: (data) ->
+		@zeroCalculated = false
+		@zeroOne = data
+
+	setParityFlagBool: (value) ->
+		@parityCalculcated = true
 		@eflagsParity = value
 
-		@parityOne = value
+	setParityFlagInt: (data) ->
+		@parityCalculated = false
+		@parityOne = data
 
-	setSignFlag: (value) ->
+	setSignFlagBool: (value) ->
 		@signCalculated = true
 		@eflagsSign = value
-		@signOne = value
 
+	setSignFlagInt: (data) ->
+		@signCalculated = false
+		@signOne = data
+
+	setCarryFlagBool: (value) ->
+		@carryCalculated = true
+		@eflagsCarry = value
+
+	setCarryFlagLong: (dataOne, method) ->
+		@carryCalculated = false
+		@carryLong = dataOne
+		@carryMethod = method
+
+	setCarryFlag1: (dataOne, method) ->
+		@carryCalculated = false
+		@carryOne = dataOne
+		@carryMethod = method
+
+	setCarryFlag2: (dataOne, dataTwo, method) ->
+		@carryCalculated = false
+		@carryOne = dataOne
+		@carryTwo = dataTwo
+		@carryMethod = method
+	setAuxiliaryCarryFlag3: (@auxiliaryCarryOne, @auxiliaryCarryTwo, @auxiliaryCarryThree, @AuxiliaryCarryMethod) ->
+		@auxiliaryCarryCalculated = false
+
+	setAuxiliaryCarryFlag2: (@auxiliaryCarryOne, @auxiliaryCarryTwo, @auxiliaryCarryMethod) ->
+		@auxiliaryCarryCalculated = false
+
+	setAuxiliaryCarryFlag1: (@auxiliaryCarryOne, @auxiliaryCarryMethod) ->
+		@auxiliaryCarryCalculated = false
+
+	setAuxiliaryCarryFlagBook: (@eflagsAuxiliaryCarry) ->
+		@auxiliaryCarryCalculated = true
+
+	setOverflowFlagBool: (@eflagsOverflow) ->
+		@overflowCalculated = true
+
+	setOverflowFlagLong: (@overflowLong, @overflowMethod) ->
+		@overflowCalculated = false
+
+	setOverflowFlag1: (@overflowOne, @overflowMethod) ->
+		@overflowCalculated = false
+
+	setOverflowFlag2: (@overflowOne, @overflowTwo, @overflowMethod) ->
+		@overflowCalculated = false
+
+	setOverflowFlag3: (@overflowOne, @overflowTwo, @overflowThree, @overflowMethod) ->
+		@overflowCalculated = false
+
+	setCarryFlag: (value) ->
+		throw new IllegalStateException("Use the type specific functions. (Carry)")
+	setZeroFlag: (value) ->
+		throw new IllegalStateException("Use the type specific functions. (Zero)")
+	setParityFlag: (value) ->
+		throw new IllegalStateException("Use the type specific functions. (Parity)")
+	setSignFlag: (value) ->
+		throw new IllegalStateException("Use the type specific functions. (Sign)")
 	setAuxiliaryCarryFlag: () ->
-#		log "I need to be created..."
-
+		throw new IllegalStateException("Use the type specific functions. (Auxiliary)")
 	setOverflowFlag: ->
-#		log "I need to be created..."
+		throw new IllegalStateException("Use the type specific functions. (Overflow)")
 
 	getCarryFlag: ->
 		if (@carryCalculated)
@@ -452,7 +513,7 @@ class processor
 			else if (@carryMethod == @CY_TWIDDLE_FFFFFFFF)
 				@eflagsCarry = ((@carryLong & (~0xffffffff)) != 0)
 			else if (@carryMethod == @CY_SHL_OUTBIT_SHORT)
-				@eflagsCarry = (((@carryOne << (carryTwo - 1)) & 0x8000) != 0)
+				@eflagsCarry = (((@carryOne << (@carryTwo - 1)) & 0x8000) != 0)
 
 			else
 				switch (@carryMethod)
@@ -472,7 +533,7 @@ class processor
 					when @CY_HIGH_BYTE_NZ
 						@eflagsCarry = ((@carryOne & 0xff00) != 0)
 					when @CY_NTH_BIT_SIT
-						@eflagsCarry = ((@carryOne & (1 << carryTwo)) != 0)
+						@eflagsCarry = ((@carryOne & (1 << @carryTwo)) != 0)
 					when @CY_GREATER_FF
 						@eflagsCarry = (@carryOne > 0xff)
 					when @CY_SHL_OUTBIT_BYTE
@@ -509,7 +570,7 @@ class processor
 			return @flagsSign
 		else
 			@signCalculated = true
-			@eflagsSign = (signOne < 0)
+			@eflagsSign = (@ignOne < 0)
 			return @eflagsSign
 	getAuxiliaryCarryFlag: ->
 		if (@auxiliaryCarryCalculated)
@@ -517,7 +578,7 @@ class processor
 		else
 			@auxiliaryCarryCalculated = true
 
-			switch @AuxiliaryCarryMethod
+			switch @auxiliaryCarryMethod
 				when @AC_XOR
 					@eflagsAuxiliaryCarry = ((((@auxiliaryCarryOne ^ @auxiliaryCarryTwo) ^ @auxiliaryCarryThree) & 0x10) != 0)
 				when @AC_LNIBBLE_MAX
@@ -529,5 +590,5 @@ class processor
 				when @AC_LNIBBLE_NZERO
 					@eflagsAuxiliaryCarry = ((@auxiliaryCarryOne & 0xf) != 0x0)
 				else
-					log "Missing auxiliary carry flag."
+					log "Missing auxiliary carry flag. Value: #{@auxiliaryCarryMethod}"
 			return @eflagsAuxiliaryCarry

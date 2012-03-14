@@ -119,5 +119,5 @@ Error.createCustromConstructor = (function() {
 NotImplementedError = Error.createCustromConstructor('NotImplementedError')
 LengthIncorrectError = Error.createCustromConstructor('LengthIncorrectError')
 MemoryOutOfBound = Error.createCustromConstructor('MemoryOutOfBound')
-IllegalState = Error.createCustromConstructor('IllegalState')
+IllegalStateException = Error.createCustromConstructor('IllegalStateException')
 `

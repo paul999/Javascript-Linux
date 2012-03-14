@@ -20,10 +20,8 @@ class SegmentFactory
 		@SEGMENT_TYPE = 0xf0000000000
 		@NULL_SEGMENT = new NullSegment()
 
-	createRealModeSegment: (memory, selector) ->
-		if (memory == null)
-			throw "Null reference to memory"
+	createRealModeSegment: (selector) ->
+		return new RealModeSegment(selector)
 
-		return new RealModeSegment(memory, selector)
 	createDescriptorTableSegment: (base, limit) ->
 		return new DescriptorTableSegment(base, limit)

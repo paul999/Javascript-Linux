@@ -198,12 +198,16 @@ class RealModeUBlock extends MicrocodeSet
 						reg0 = seg0.getDoubleWord(addr0)
 					when @BOUND_O16
 						#geen idee nog...
+
 #		short lower = (short)reg0;
 #		short upper = (short)(reg0 >> 16);
 #		short index = (short)reg1;
 #		if ((index < lower) || (index > (upper + 2)))
 #		    throw ProcessorException.BOUND_RANGE;
 						log "BOUND"
+
+					when @UNDEFINED
+						break
 					else
 						throw "Possible missing microcode: #{mc}"
 		catch e
@@ -236,41 +240,41 @@ class RealModeUBlock extends MicrocodeSet
 	adc_o16_flags: (result, operand1, operand2) ->
 		if (proc.getCarryFlag() && (operand2 = 0xffff))
 			@arithmetic_flags_o16(result, operand1, operand2)
-			proc.setOverflagFlag(false)
-			proc.setCarryFlag(true)
+			proc.setOverflagFlagBool(false)
+			proc.setCarryFlagBool(true)
 		else
-			proc.setOverflowFlag(result, operand1, operand2, PC.OF_ADD_SHORT)
+			proc.setOverflowFlag3(result, operand1, operand2, PC.OF_ADD_SHORT)
 			@arithmetic_flags_o16(result, operand1, operand2)
 	add_o16_flags: (result, operand1, operand2) ->
 		@arithmetic_flags_o16(result, operand1, operand2)
-		proc.setOverflowFlag(result, operand1, operand2, PC.OF_ADD_SHORT)
+		proc.setOverflowFlag3(result, operand1, operand2, PC.OF_ADD_SHORT)
 
 	arithmetic_flags_o16: (result, operand1, operand2) ->
-		proc.setZeroFlag(result)
-		proc.setParityFlag(result)
-		proc.setSignFlag(result)
+		proc.setZeroFlagInt(result)
+		proc.setParityFlagInt(result)
+		proc.setSignFlagInt(result)
 
-		proc.setCarryFlag(result, PC.CY_TWIDDLE_FFFF)
-		proc.setAuxiliaryCarryFlag(operand1, operand2, result, PC.AC_XOR)
+		proc.setCarryFlag1(result, PC.CY_TWIDDLE_FFFF)
+		proc.setAuxiliaryCarryFlag3(operand1, operand2, result, PC.AC_XOR)
 
 	add_o8_flags: (result, operand1, operand2) ->
 		@arithmetic_flags_o8(result, operand1, operand2)
-		proc.setOverflowFlag(result, operand1, operand2, PC.OF_ADD_BYTE)
+		proc.setOverflowFlag3(result, operand1, operand2, PC.OF_ADD_BYTE)
 
 	arithmetic_flags_o8: (result, operand1, operand2) ->
-		proc.setZeroFlag(result)
-		proc.setParityFlag(result)
-		proc.setSignFlag(result)
+		proc.setZeroFlagInt(result)
+		proc.setParityFlagInt(result)
+		proc.setSignFlagInt(result)
 
-		proc.setCarryFlag(result, PC.CY_TWIDDLE_FF)
-		proc.setAuxiliaryCarryFlag(operand1, operand2, result, PC.AC_XOR)
+		proc.setCarryFlag1(result, PC.CY_TWIDDLE_FF)
+		proc.setAuxiliaryCarryFlag3(operand1, operand2, result, PC.AC_XOR)
 
 	bitwise_flags: (result) ->
-		proc.setOverflowFlag(false)
-		proc.setCarryFlag(false)
-		proc.setZeroFlag(result)
-		proc.setParityFlag(result)
-		proc.setSignFlag(result)
+		proc.setOverflowFlagBool(false)
+		proc.setCarryFlagBool(false)
+		proc.setZeroFlagInt(result)
+		proc.setParityFlagInt(result)
+		proc.setSignFlagInt(result)
 	outsw_a16: (port, storeSegment) ->
 		addr = proc.esi & 0xffff
 
@@ -306,7 +310,7 @@ class RealModeUBlock extends MicrocodeSet
 
 	sub_o16_flags: (result, operand1, operand2) ->
 		@arithmetic_flags_o16(result, operand1, operand2)
-		proc.setOverflowFlag(result, operand1, operand2, proc.OF_SUB_SHORT)
+		proc.setOverflowFlag3(result, operand1, operand2, proc.OF_SUB_SHORT)
 
 	das: ->
 		tempCF = false
@@ -320,12 +324,12 @@ class RealModeUBlock extends MicrocodeSet
 		if (tempAL > 0x99) || proc.getCarryFlag()
 			proc.eax = (prox.eax & ~0xff) | ((proc.eax - 0x60) & 0xff)
 			tempCF = true
-		proc.setOverflowFlag(false)
-		proc.setZeroFlag(proc.eax)
-		proc.setParityFlag(proc.eax)
-		proc.setSignFlag(proc.eax)
+		proc.setOverflowFlagBool(false)
+		proc.setZeroFlagInt(proc.eax)
+		proc.setParityFlagInt(proc.eax)
+		proc.setSignFlagInt(proc.eax)
 
-		proc.setCarryFlag(tempCF)
+		proc.setCarryFlagBool(tempCF)
 
 	jc_o8: (offset)	 ->
 		if (proc.getCarryFlag())

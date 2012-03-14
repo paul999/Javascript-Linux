@@ -911,180 +911,191 @@ class ProtectedModeUDecoder extends MicrocodeSet
 	# 0xd7: //XLAT
 	writeOperation: (prefices, opcode, modrm) ->
 #		log "WriteOperation(#{opcode})"
-		switch opcode
-			when 0x63
-				log "Possible invalid opcode"
+		switch (opcode)
 			when 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0xfc0, 0xfc1
 				@working.write(@ADD)
+			when 0x08, 0x09, 0x0a,0x0b, 0x0c, 0x0d
+				@working.write(@OR )
 
-			when 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0xa0, 0xa1, 0xa2, 0xa3, 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf, 0xc4, 0xc5, 0xc6, 0xc7, 0xd7
-				break
+			when 0x10, 0x11, 0x12, 0x13, 0x14, 0x15
+				@working.write(@ADC)
+
+			when 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d
+				@working.write(@SBB)
+
+			when 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x84, 0x85, 0xa8, 0xa9
+				@working.write(@AND)
+
+			when 0x27
+				@working.write(@DAA)
+
+			when 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d
+				@working.write(@SUB)
+
+			when 0x2f
+				@working.write(@DAS)
+
+			when 0x30, 0x31, 0x32, 0x33, 0x34, 0x35
+				@working.write(@XOR)
+
+			when 0x37
+				@working.write(@AAA)
+			when 0x3f
+				@working.write(@AAS)
+
+			when 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47
+				@working.write(@INC)
+
+			when 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f
+				@working.write(@DEC)
 
 			when 0x06, 0x0e, 0x16, 0x1e, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x68, 0x6a, 0xfa0, 0xfa8
-
 				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
 					when 0
 						@working.write(@PUSH_O16_A16)
 					when @PREFICES_OPERAND
 						@working.write(@PUSH_O32_A16)
 					when @PREFICES_ADDRESS
-						@working.write(@PUSH_O16_A31)
+						@working.write(@PUSH_O16_A32)
 					when @PREFICES_ADDRESS | @PREFICES_OPERAND
 						@working.write(@PUSH_O32_A32)
-			when 0xe8
+			when 0x9c
 				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
 					when 0
-						@working.write(@CALL_O16_A16)
+						@working.write(@PUSHF_O16_A16)
 					when @PREFICES_OPERAND
-						@working.write(@CALL_O32_A16)
+						@working.write(@PUSHF_O32_A16)
 					when @PREFICES_ADDRESS
-						@working.write(@CALL_O16_A31)
+						@working.write(@PUSHF_O16_A32)
 					when @PREFICES_ADDRESS | @PREFICES_OPERAND
-						@working.write(@CALL_O32_A32)
-			when 0x80, 0x81, 0x82, 0x83
-				switch modrm & 0x38
-					when 0x00
-						@working.write(@ADD)
-					when 0x08
-						@working.write(@OR)
-					when 0x10
-						@working.write(@ADC)
-					when 0x18
-						@working.write(@SBB)
-					when 0x20
-						@working.write(@AND)
-					when 0x28, 0x38
-						@working.write(@SUB)
-					when 0x30
-						@working.write(@XOR)
-			when 0xf01
-				switch modrm & 0x38
-					when 0x00
-						if ((prefices & @PREFICES_OPERAND) != 0)
-							@working.write(@SGDT_O32)
-						else
-							@working.write(@SGDT_O16)
-					when 0x08
-						if ((prefices & @PREFICES_OPERAND) != 0)
-							@working.write(@SGDT_O32)
-						else
-							@working.write(@SGDT_O16)
-					when 0x10
-						if ((prefices & @PREFICES_OPERAND) != 0)
-							@working.write(@LGDT_O32)
-						else
-							@working.write(@LGDT_O16)
-					when 0x18
-						if ((prefices & @PREFICES_OPERAND) != 0)
-							@working.write(@LIDT_O32)
-						else
-							@working.write(@LIDT_O16)
-					when 0x20
-						@working.write(@SMSW)
-					when 0x30
-						@working.write(@LMSW)
-					when 0x38
-						@working.write(@INVLPG)
-					else
-						throw new IllegalStateException("Invalid Gp 7 Instruction?")
+						@working.write(@PUSHF_O32_A32)
 
-			when 0xe2
-				if ((prefices & @PREFICES_ADDRESS) != 0)
-					@working.write(@LOOP_ECX)
-				else
-					@working.write(@LOOP_CX)
-			when 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f
-				@working.write(@DEC)
-			when 0xac
-				if (prefices & @PREFICES_REP) != 0
-					if (prefices & PREFICES_ADDRESS) != 0
-						@working.write(@REP_LODSB_A32)
-					else
-						@working.write(@REP_LODSB_A16)
-				else
-					if (prefices & @PREFICES_ADDRESS) != 0
-						@working.write(@LODSB_A32)
-					else
-						@working.write(@LODSB_A16)
-			when 0xf9
-				@working.write(@STC)
+			when 0x07, 0x17, 0x1f, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 0x8f, 0xfa1, 0xfa9
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@POP_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@POP_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(POP_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@POP_O32_A32)
 
-			when 0xff
-				tmp = modrm & 0x38
-				log tmp
-				switch (modrm & 0x38)
-					when 0x00
-						@working.write(@INC)
-					when 0x08
-						@working.write(@DEC)
-					when 0x10
-						switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
-							when 0
-								@working.write(@CALL_ABS_O16_A16)
-							when @PREFICES_OPERAND
-								@working.write(@CALL_ABS_O32_A16)
-							when @PREFICES_
-								@working.write(@CALL_ABS_O16_A32)
-							when @PREFICES_ADDRESS | @PREFICES_OPERAND
-								@working.write(@CALL_ABS_O32_A32)
-					when 0x18
-						switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
-							when 0
-								@working.write(@CALL_FAR_O16_A16)
-							when @PREFICES_OPERAND
-								@working.write(@CALL_FAR_O32_A16)
-							when @PREFICES_
-								@working.write(@CALL_FAR_O16_A32)
-							when @PREFICES_ADDRESS | @PREFICES_OPERAND
-								@working.write(@CALL_FAR_O32_A32)
-					when 0x20
-						if ((prefices & @PREFICES_OPERAND) != 0)
-							@working.write(@JUMP_ABS_O32)
-						else
-							@working.write(@JUMP_ABS_O16)
-					when 0x28
-						if ((prefices & @PREFICES_OPERAND) != 0)
-							@working.write(@JUMP_FAR_O32)
-						else
-							@working.write(@JUMP_FAR_O16)
-					when 0x30
-						switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
-							when 0
-								@working.write(@PUSH_O16_A16)
-							when @PREFICES_OPERAND
-								@working.write(@PUSH_O32_A16)
-							when @PREFICES_
-								@working.write(@PUSH_O16_A32)
-							when @PREFICES_ADDRESS | @PREFICES_OPERAND
-								@working.write(@PUSH_O32_A32)
+			when 0x9d
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@POPF_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@POPF_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@POPF_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@POPF_O32_A32)
+
+			when 0x60
+				switch (prefices & @PREFICES_OPERAND)
+					when 0
+						@working.write(@PUSHAD_A16)
+					when @PREFICES_OPERAND
+						@working.write(@PUSHAD_A32)
+
+
+			when 0x61
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@POPA_A16)
+					when @PREFICES_OPERAND
+						@working.write(@POPAD_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@POPA_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@POPAD_A32)
+
+			when 0x62
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@BOUND_O32)
+				else
+					@working.write(@BOUND_O16)
+
+
+			when 0x69, 0x6b, 0xfaf
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@IMUL_O32)
+				else
+					@working.write(@IMUL_O16)
+
+
+			when 0x6c
+				if ((prefices & @PREFICES_REP) != 0)
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@REP_INSB_A32)
 					else
-						log IllegalStateException("Invalid Gp 5 Instruction? FF modrm=" + modrm )
-			when 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d
-				@working.write(@OR)
+						@working.write(@REP_INSB_A16)
+				else
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@INSB_A32)
+					else
+						@working.write(@INSB_A16)
+			when 0x6d
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					if ((prefices & @PREFICES_REP) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REP_INSD_A32)
+						else
+							@working.write(@REP_INSD_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@INSD_A32)
+						else
+							@working.write(@INSD_A16)
+				else
+					if ((prefices & @PREFICES_REP) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REP_INSW_A32)
+						else
+							@working.write(@REP_INSW_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@INSW_A32)
+						else
+							@working.write(@INSW_A16)
+
+			when 0x6e
+				if ((prefices & @PREFICES_REP) != 0)
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@REP_OUTSB_A32)
+					else
+						@working.write(@REP_OUTSB_A16)
+				else
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@OUTSB_A32)
+					else
+						@working.write(@OUTSB_A16)
 
 			when 0x6f
-				if (prefices & @PREFICES_OPERAND) != 0
-					if (prefices & @PREFICES_REP) != 0
-						if (prefices & @PREFICES_ADDRESS) != 0
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					if ((prefices & @PREFICES_REP) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
 							@working.write(@REP_OUTSD_A32)
 						else
 							@working.write(@REP_OUTSD_A16)
 					else
-						if (prefices & @PREFICES_ADDRESS) != 0
+						if ((prefices & @PREFICES_ADDRESS) != 0)
 							@working.write(@OUTSD_A32)
 						else
 							@working.write(@OUTSD_A16)
 				else
-					if (prefices & @PREFICES_REP) != 0
-						if (prefices & @PREFICES_ADDRESS) != 0
+					if ((prefices & @PREFICES_REP) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
 							@working.write(@REP_OUTSW_A32)
 						else
-							@working.write(@REPOUTSW_A16)
+							@working.write(@REP_OUTSW_A16)
 					else
-						if (prefices & @PREFICES_ADDRESS) != 0
+						if ((prefices & @PREFICES_ADDRESS) != 0)
 							@working.write(@OUTSW_A32)
 						else
 							@working.write(@OUTSW_A16)
+
 			when 0x70
 				@working.write(@JO_O8)
 			when 0x71
@@ -1117,29 +1128,1243 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				@working.write(@JNG_O8)
 			when 0x7f
 				@working.write(@JG_O8)
-			when 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d
-				@working.write(@SUB)
-			when 0x2f
-				@working.write(@DAS)
-			when 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x84, 0x85, 0xa8, 0xa9
-				@working.write(@AND)
-			when 0x6e
+
+			when 0x80, 0x81, 0x8, 0x83
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@ADD)
+					when 0x08
+						@working.write(@OR)
+					when 0x10
+						@working.write(@ADC)
+					when 0x18
+						@working.write(@SBB)
+					when 0x20
+						@working.write(@AND)
+					when 0x28, 0x38
+						@working.write(@SUB)
+					when 0x30
+						@working.write(@XOR)
+
+			when 0x98
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_AX)
+					@working.write(@SIGN_EXTEND_16_32)
+					@working.write(@STORE0_EAX)
+				else
+					@working.write(@LOAD0_AL)
+					@working.write(@SIGN_EXTEND_8_16)
+					@working.write(@STORE0_AX)
+
+
+			when 0x99
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@CDQ)
+				else
+					@working.write(@CWD)
+
+			when 0x9a
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@CALL_FAR_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@CALL_FAR_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@CALL_FAR_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@CALL_FAR_O32_A32)
+
+			when 0x9b
+				@working.write(@FWAIT)
+			when 0x9e
+				@working.write(@SAHF)
+			when 0x9f
+				@working.write(@LAHF)
+
+			when 0xa4
 				if ((prefices & @PREFICES_REP) != 0)
 					if ((prefices & @PREFICES_ADDRESS) != 0)
-						@working.write(@REP_OUTSB_A32)
+						@working.write(@REP_MOVSB_A32)
 					else
-						@working.write(@REP_OUTSB_A16)
+						@working.write(@REP_MOVSB_A16)
 				else
 					if ((prefices & @PREFICES_ADDRESS) != 0)
-						@working.write(@OUTSB_A32)
+						@working.write(@MOVSB_A32)
 					else
-						@working.write(@OUTSB_A16)
-			when 0x62
+						@working.write(@MOVSB_A16)
+
+			when 0xa5
 				if ((prefices & @PREFICES_OPERAND) != 0)
-					@working.write(@BOUND_O32)
+					if ((prefices & @PREFICES_REP) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REP_MOVSD_A32)
+						else
+							@working.write(@REP_MOVSD_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@MOVSD_A32)
+						else
+							@working.write(@MOVSD_A16)
+
 				else
-					@working.write(@BOUND_O16)
-			else throw "ProtectedModeUdecoded, Got non supported opcode @writeOperation #{opcode}"
+					if ((prefices & @PREFICES_REP) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REP_MOVSW_A32)
+						else
+							@working.write(@REP_MOVSW_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@MOVSW_A32)
+						else
+							@working.write(@MOVSW_A16)
+			when 0xa6
+				if ((prefices & @PREFICES_REPE) != 0)
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@REPE_CMPSB_A32)
+					else
+						@working.write(@REPE_CMPSB_A16)
+				else if ((prefices & @PREFICES_REPNE) != 0)
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@REPNE_CMPSB_A32)
+					else
+						@working.write(@REPNE_CMPSB_A16)
+				else
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@CMPSB_A32)
+					else
+						@working.write(@CMPSB_A16)
+
+			when 0xa7
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					if ((prefices & @PREFICES_REPE) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REPE_CMPSD_A32)
+						else
+							@working.write(@REPE_CMPSD_A16)
+					else if ((prefices & @PREFICES_REPNE) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REPNE_CMPSD_A32)
+						else
+							@working.write(@REPNE_CMPSD_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@CMPSD_A32)
+						else
+							@working.write(@CMPSD_A16)
+				else
+					if ((prefices & @PREFICES_REPE) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REPE_CMPSW_A32)
+						else
+							@working.write(@REPE_CMPSW_A16)
+					else if ((prefices & @PREFICES_REPNE) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REPNE_CMPSW_A32)
+						else
+							@working.write(@REPNE_CMPSW_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@CMPSW_A32)
+						else
+							@working.write(@CMPSW_A16)
+
+			when 0xaa
+				if ((prefices & @PREFICES_REP) != 0)
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@REP_STOSB_A32)
+					else
+						@working.write(@REP_STOSB_A16)
+				else
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@STOSB_A32)
+					else
+						@working.write(@STOSB_A16)
+
+			when 0xab
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					if ((prefices & @PREFICES_REP) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REP_STOSD_A32)
+						else
+							@working.write(@REP_STOSD_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@STOSD_A32)
+						else
+							@working.write(@STOSD_A16)
+				else
+					if ((prefices & @PREFICES_REP) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REP_STOSW_A32)
+						else
+							@working.write(@REP_STOSW_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@STOSW_A32)
+						else
+							@working.write(@STOSW_A16)
+
+			when 0xac
+				if ((prefices & @PREFICES_REP) != 0)
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@REP_LODSB_A32)
+					else
+						@working.write(@REP_LODSB_A16)
+				else
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@LODSB_A32)
+					else
+						@working.write(@LODSB_A16)
+
+			when 0xad
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					if ((prefices & @PREFICES_REP) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REP_LODSD_A32)
+						else
+							@working.write(@REP_LODSD_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@LODSD_A32)
+						else
+							@working.write(@LODSD_A16)
+				else
+					if ((prefices & @PREFICES_REP) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REP_LODSW_A32)
+						else
+							@working.write(@REP_LODSW_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@LODSW_A32)
+						else
+							@working.write(@LODSW_A16)
+
+			when 0xae
+				if ((prefices & @PREFICES_REPE) != 0)
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@REPE_SCASB_A32)
+					else
+						@working.write(@REPE_SCASB_A16)
+				else if ((prefices & @PREFICES_REPNE) != 0)
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@REPNE_SCASB_A32)
+					else
+						@working.write(@REPNE_SCASB_A16)
+				else
+					if ((prefices & @PREFICES_ADDRESS) != 0)
+						@working.write(@SCASB_A32)
+					else
+						@working.write(@SCASB_A16)
+
+			when 0xaf
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					if ((prefices & @PREFICES_REPE) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REPE_SCASD_A32)
+						else
+							@working.write(@REPE_SCASD_A16)
+					else if ((prefices & @PREFICES_REPNE) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REPNE_SCASD_A32)
+						else
+							@working.write(@REPNE_SCASD_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@SCASD_A32)
+						else
+							@working.write(@SCASD_A16)
+				else
+					if ((prefices & @PREFICES_REPE) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REPE_SCASW_A32)
+						else
+							@working.write(@REPE_SCASW_A16)
+					else if ((prefices & @PREFICES_REPNE) != 0)
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@REPNE_SCASW_A32)
+						else
+							@working.write(@REPNE_SCASW_A16)
+					else
+						if ((prefices & @PREFICES_ADDRESS) != 0)
+							@working.write(@SCASW_A32)
+						else
+							@working.write(@SCASW_A16)
+
+			when 0xc0, 0xd0, 0xd2
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@ROL_O8)
+					when 0x08
+						@working.write(@ROR_O8)
+					when 0x10
+						@working.write(@RCL_O8)
+					when 0x18
+						@working.write(@RCR_O8)
+					when 0x20
+						@working.write(@SHL)
+					when 0x28
+						@working.write(@SHR)
+					when 0x30
+						log "invalid SHL encoding"
+						@working.write(@SHL)
+					when 0x38
+						@working.write(@SAR_O8)
+
+			when 0xc1, 0xd1, 0xd3
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@ROL_O32)
+						when 0x08
+							@working.write(@ROR_O32)
+						when 0x10
+							@working.write(@RCL_O32)
+						when 0x18
+							@working.write(@RCR_O32)
+						when 0x20
+							@working.write(@SHL)
+						when 0x28
+							@working.write(@SHR)
+						when 0x30
+							log "invalid SHL encoding"
+							@working.write(@SHL)
+						when 0x38
+							@working.write(@SAR_O32)
+				else
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@ROL_O16)
+						when 0x08
+							@working.write(@ROR_O16)
+						when 0x10
+							@working.write(@RCL_O16)
+						when 0x18
+							@working.write(@RCR_O16)
+						when 0x20
+							@working.write(@SHL)
+						when 0x28
+							@working.write(@SHR)
+						when 0x30
+							@working.write(@SHL)
+						when 0x38
+							@working.write(@SAR_O16)
+
+			when 0xc2
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@RET_IW_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@RET_IW_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@RET_IW_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@RET_IW_O32_A32)
+
+			when 0xc3
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@RET_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@RET_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@RET_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@RET_O32_A32)
+
+			when 0xc8
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@ENTER_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@ENTER_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@ENTER_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@ENTER_O32_A32)
+
+			when 0xc9
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@LEAVE_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@LEAVE_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@LEAVE_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@LEAVE_O32_A32)
+
+			when 0xca
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@RET_FAR_IW_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@RET_FAR_IW_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@RET_FAR_IW_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@RET_FAR_IW_O32_A32)
+
+			when 0xcb
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@RET_FAR_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@RET_FAR_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@RET_FAR_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@RET_FAR_O32_A32)
+
+			when 0xcc
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@INT3_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@INT3_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@INT3_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@INT3_O32_A32)
+
+			when 0xcd
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@INT_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@INT_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@INT_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@INT_O32_A32)
+
+			when 0xce
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(INTO_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(INTO_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(INTO_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(INTO_O32_A32)
+
+			when 0xcf
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@IRET_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@IRET_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@IRET_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@IRET_O32_A32)
+
+			when 0xd4
+				@working.write(@AAM)
+			when 0xd5
+				@working.write(@AAD)
+
+			when 0xd6
+				@working.write(@SALC)
+
+			when 0xe0
+				if ((prefices & @PREFICES_ADDRESS) != 0)
+					@working.write(@LOOPNZ_ECX)
+				else
+					@working.write(@LOOPNZ_CX)
+
+			when 0xe1
+				if ((prefices & @PREFICES_ADDRESS) != 0)
+					@working.write(@LOOPZ_ECX)
+				else
+					@working.write(@LOOPZ_CX)
+
+			when 0xe2
+				if ((prefices & @PREFICES_ADDRESS) != 0)
+					@working.write(@LOOP_ECX)
+				else
+					@working.write(@LOOP_CX)
+
+
+			when 0xe3
+				if ((prefices & @PREFICES_ADDRESS) != 0)
+					@working.write(@JECXZ)
+				else
+					@working.write(@JCXZ)
+
+			when 0xe4, 0xec
+				@working.write(@IN_O8)
+
+			when 0xe5, 0xed
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@IN_O32)
+				else
+					@working.write(@IN_O16)
+
+			when 0xe6, 0xee
+				@working.write(@OUT_O8)
+
+			when 0xe7, 0xef
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@OUT_O32)
+				else
+					@working.write(@OUT_O16)
+
+			when 0xe8
+				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+					when 0
+						@working.write(@CALL_O16_A16)
+					when @PREFICES_OPERAND
+						@working.write(@CALL_O32_A16)
+					when @PREFICES_ADDRESS
+						@working.write(@CALL_O16_A32)
+					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						@working.write(@CALL_O32_A32)
+
+			when 0xe9
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JUMP_O32)
+				else
+					@working.write(@JUMP_O16)
+
+			when 0xea
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JUMP_FAR_O32)
+				else
+					@working.write(@JUMP_FAR_O16)
+
+			when 0xeb
+				@working.write(@JUMP_O8)
+
+			when 0xf4
+				@working.write(@HALT)
+
+			when 0xf5
+				@working.write(@CMC)
+
+			when 0xf6
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@AND)
+					when 0x10
+						@working.write(@NOT)
+					when 0x18
+						@working.write(@NEG)
+					when 0x20
+						@working.write(@MUL_O8)
+					when 0x28
+						@working.write(@IMULA_O8)
+					when 0x30
+						@working.write(@DIV_O8)
+					when 0x38
+						@working.write(@IDIV_O8)
+					else
+						throw new IllegalStateException("Invalid Gp 3 Instruction?")
+
+			when 0xf7
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@AND)
+						when 0x10
+							@working.write(@NOT)
+						when 0x18
+							@working.write(@NEG)
+						when 0x20
+							@working.write(@MUL_O32)
+						when 0x28
+							@working.write(@IMULA_O32)
+						when 0x30
+							@working.write(@DIV_O32)
+						when 0x38
+							@working.write(@IDIV_O32)
+						else
+							throw new IllegalStateException("Invalid Gp 3 Instruction?")
+				else
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@AND)
+						when 0x10
+							@working.write(@NOT)
+						when 0x18
+							@working.write(@NEG)
+						when 0x20
+							@working.write(@MUL_O16)
+						when 0x28
+							@working.write(@IMULA_O16)
+						when 0x30
+							@working.write(@DIV_O16)
+						when 0x38
+							@working.write(@IDIV_O16)
+						else
+							throw new IllegalStateException("Invalid Gp 3 Instruction?")
+
+			when 0xf8
+				@working.write(@CLC)
+			when 0xf9
+				@working.write(@STC)
+			when 0xfa
+				@working.write(@CLI)
+			when 0xfb
+				@working.write(@STI)
+				decodeLimit = 2 # let one more instruction be decoded
+			when 0xfc
+				@working.write(@CLD)
+			when 0xfd
+				@working.write(@STD)
+
+			when 0xfe
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@INC)
+					when 0x08
+						@working.write(@DEC)
+					else
+						throw new IllegalStateException("Invalid Gp 4 Instruction?")
+
+			when 0xff
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@INC)
+					when 0x08
+						@working.write(@DEC)
+					when 0x10
+						switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+							when 0
+								@working.write(@CALL_ABS_O16_A16)
+							when @PREFICES_OPERAND
+								@working.write(@CALL_ABS_O32_A16)
+							when @PREFICES_ADDRESS
+								@working.write(@CALL_ABS_O16_A32)
+							when @PREFICES_ADDRESS | @PREFICES_OPERAND
+								@working.write(@CALL_ABS_O32_A32)
+					when 0x18
+						switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+							when 0
+								@working.write(@CALL_FAR_O16_A16)
+							when @PREFICES_OPERAND
+								@working.write(@CALL_FAR_O32_A16)
+							when @PREFICES_ADDRESS
+								@working.write(@CALL_FAR_O16_A32)
+							when @PREFICES_ADDRESS | @PREFICES_OPERAND
+								@working.write(@CALL_FAR_O32_A32)
+					when 0x20
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@JUMP_ABS_O32)
+						else
+							@working.write(@JUMP_ABS_O16)
+
+					when 0x28
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@JUMP_FAR_O32)
+						else
+							@working.write(@JUMP_FAR_O16)
+
+					when 0x30
+						switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
+							when 0
+								@working.write(@PUSH_O16_A16)
+							when @PREFICES_OPERAND
+								@working.write(@PUSH_O32_A16)
+							when @PREFICES_ADDRESS
+								@working.write(@PUSH_O16_A32)
+							when @PREFICES_ADDRESS | @PREFICES_OPERAND
+								@working.write(@PUSH_O32_A32)
+					else
+						throw new IllegalStateException("Invalid Gp 5 Instruction? FF modrm=" + modrm)
+
+			when 0x90
+				@working.write(@MEM_RESET)
+
+			when 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0xa0, 0xa1, 0xa2, 0xa3, 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf, 0xc4, 0xc5, 0xc6, 0xc7, 0xd7
+				break
+			when 0x0fff
+				@working.write(@UNDEFINED)
+
+			when 0xf00
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@SLDT)
+					when 0x08
+						@working.write(@STR)
+					when 0x10
+						@working.write(@LLDT)
+					when 0x18
+						@working.write(@LTR)
+					when 0x20
+						@working.write(@VERR)
+					when 0x28
+						@working.write(@VERW)
+					else
+						throw new IllegalStateException("Invalid Gp 6 Instruction?")
+
+
+			when 0xf01
+				switch (modrm & 0x38)
+					when 0x00
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@SGDT_O32)
+						else
+							@working.write(@SGDT_O16)
+					when 0x08
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@SIDT_O32)
+						else
+							@working.write(@SIDT_O16)
+					when 0x10
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@LGDT_O32)
+						else
+							@working.write(@LGDT_O16)
+					when 0x18
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@LIDT_O32)
+						else
+							@working.write(@LIDT_O16)
+					when 0x20
+						@working.write(@SMSW)
+					when 0x30
+						@working.write(@LMSW)
+					when 0x38
+						@working.write(@INVLPG)
+					else
+						throw new IllegalStateException("Invalid Gp 7 Instruction?")
+
+
+			when 0xf02
+				@working.write(@LAR)
+			when 0xf03
+				@working.write(@LSL)
+			when 0xf06
+				@working.write(@CLTS)
+			when 0xf09
+				@working.write(@CPL_CHECK)
+			when 0xf0b
+				@working.write(@UNDEFINED)
+			when 0xf1f
+				@working.write(@MEM_RESET)
+			when 0xf30
+				@working.write(@WRMSR)
+			when 0xf31
+				@working.write(@RDTSC)
+			when 0xf32
+				@working.write(@RDMSR)
+			when 0xf34
+				@working.write(@SYSENTER)
+			when 0xf35
+				@working.write(@SYSEXIT)
+			when 0xf40
+				@working.write(@CMOVO)
+			when 0xf41
+				@working.write(@CMOVNO)
+			when 0xf42
+				@working.write(@CMOVC)
+			when 0xf43
+				@working.write(@CMOVNC)
+			when 0xf44
+				@working.write(@CMOVZ)
+			when 0xf45
+				@working.write(@CMOVNZ)
+			when 0xf46
+				@working.write(@CMOVNA)
+			when 0xf47
+				@working.write(@CMOVA)
+			when 0xf48
+				@working.write(@CMOVS)
+			when 0xf49
+				@working.write(@CMOVNS)
+			when 0xf4a
+				@working.write(@CMOVP)
+			when 0xf4b
+				@working.write(@CMOVNP)
+			when 0xf4c
+				@working.write(@CMOVL)
+			when 0xf4d
+				@working.write(@CMOVNL)
+			when 0xf4e
+				@working.write(@CMOVNG)
+			when 0xf4f
+				@working.write(@CMOVG)
+
+			when 0xf80
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JO_O32)
+				else
+					@working.write(@JO_O16)
+
+			when 0xf81
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JNO_O32)
+				else
+					@working.write(@JNO_O16)
+
+			when 0xf82
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JC_O32)
+				else
+					@working.write(@JC_O16)
+
+			when 0xf83
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JNC_O32)
+				else
+					@working.write(@JNC_O16)
+
+			when 0xf84
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JZ_O32)
+				else
+					@working.write(@JZ_O16)
+
+			when 0xf85
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JNZ_O32)
+				else
+					@working.write(@JNZ_O16)
+
+			when 0xf86
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JNA_O32)
+				else
+					@working.write(@JNA_O16)
+
+			when 0xf87
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JA_O32)
+				else
+					@working.write(@JA_O16)
+
+			when 0xf88
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JS_O32)
+				else
+					@working.write(@JS_O16)
+
+			when 0xf89
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JNS_O32)
+				else
+					@working.write(@JNS_O16)
+
+			when 0xf8a
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JP_O32)
+				else
+					@working.write(@JP_O16)
+
+			when 0xf8b
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JNP_O32)
+				else
+					@working.write(@JNP_O16)
+
+			when 0xf8c
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					working.write(@JL_O32)
+				else
+					working.write(@JL_O16)
+
+			when 0xf8d
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JNL_O32)
+				else
+					@working.write(@JNL_O16)
+
+			when 0xf8e
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JNG_O32)
+				else
+					@working.write(@JNG_O16)
+
+			when 0xf8f
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@JG_O32)
+				else
+					@working.write(@JG_O16)
+
+			when 0xf90
+				@working.write(@SETO)
+			when 0xf91
+				@working.write(@SETNO)
+			when 0xf92
+				@working.write(@SETC)
+			when 0xf93
+				@working.write(@SETNC)
+			when 0xf94
+				@working.write(@SETZ)
+			when 0xf95
+				@working.write(@SETNZ)
+			when 0xf96
+				@working.write(@SETNA)
+			when 0xf97
+				@working.write(@SETA)
+			when 0xf98
+				@working.write(@SETS)
+			when 0xf99
+				@working.write(@SETNS)
+			when 0xf9a
+				@working.write(@SETP)
+			when 0xf9b
+				@working.write(@SETNP)
+			when 0xf9c
+				@working.write(@SETL)
+			when 0xf9d
+				@working.write(@SETNL)
+			when 0xf9e
+				@working.write(@SETNG)
+			when 0xf9f
+				@working.write(@SETG)
+			when 0xfa2
+				@working.write(@CPUID)
+
+			when 0xfa4, 0xfa5
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@SHLD_O32)
+				else
+					@working.write(@SHLD_O16)
+
+
+			when 0xfac, 0xfad
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@SHRD_O32)
+				else
+					@working.write(@SHRD_O16)
+
+			when 0xfb0, 0xfb1
+				@working.write(@CMPXCHG)
+
+			when 0xfa3
+				switch (modrm & 0xc7)
+					when 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@BT_O32)
+						else
+							@working.write(@BT_O16)
+					else
+						@working.write(BT_MEM)
+
+			when 0xfab
+				switch (modrm & 0xc7)
+					when 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@BTS_O32)
+						else
+							@working.write(@BTS_O16)
+					else
+						@working.write(@BTS_MEM)
+
+			when 0xfb3
+				switch (modrm & 0xc7)
+					when 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@BTR_O32)
+						else
+							@working.write(@BTR_O16)
+					else
+						@working.write(@BTR_MEM)
+
+			when 0xfbb
+				switch (modrm & 0xc7)
+					when 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							@working.write(@BTC_O32)
+						else
+							@working.write(@BTC_O16)
+
+					else
+						@working.write(@BTC_MEM)
+			when 0xfba
+				switch (modrm & 0x38)
+					when 0x20
+						switch (modrm & 0xc7)
+							when 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7
+								if ((prefices & @PREFICES_OPERAND) != 0)
+									@working.write(@BT_O32)
+								else
+									@working.write(@BT_O16)
+							else
+								@working.write(@BT_MEM)
+
+					when 0x28
+						switch (modrm & 0xc7)
+							when 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7
+								if ((prefices & @PREFICES_OPERAND) != 0)
+									@working.write(@BTS_O32)
+								else
+									@working.write(@BTS_O16)
+							else
+								@working.write(@BTS_MEM)
+
+
+					when 0x30
+						switch (modrm & 0xc7)
+							when 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7
+								if ((prefices & @PREFICES_OPERAND) != 0)
+									@working.write(@BTR_O32)
+								else
+									@working.write(@BTR_O16)
+							else
+								@working.write(@BTR_MEM)
+					when 0x38
+						switch (modrm & 0xc7)
+							when 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7
+								if ((prefices & @PREFICES_OPERAND) != 0)
+									@working.write(@BTC_O32)
+								else
+									@working.write(@BTC_O16)
+							else
+								@working.write(@BTC_MEM)
+					else
+						throw new IllegalStateException("Invalid Gp 8 Instruction?")
+
+			when 0xfbc
+				@working.write(@BSF)
+			when 0xfbd
+				@working.write(@BSR)
+
+			when 0xfbe
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@SIGN_EXTEND_8_32)
+				else
+					@working.write(@SIGN_EXTEND_8_16)
+
+			when 0xfbf
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@SIGN_EXTEND_16_32)
+
+
+			when 0xfc7
+				switch (modrm & 0x38)
+					when 0x08
+						@working.write(@CMPXCHG8B)
+					else
+						throw new IllegalStateException("Invalid Gp 6 Instruction?")
+			when 0xfc8, 0xfc9, 0xfca, 0xfcb, 0xfcc, 0xfcd, 0xfce, 0xfcf
+				@working.write(@BSWAP)
+
+			when 0xf20, 0xf21, 0xf22, 0xf23, 0xfb2, 0xfb4, 0xfb5, 0xfb6, 0xfb7
+				break # check
+
+			when 0xd800
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@FADD)
+					when 0x08
+						@working.write(@FMUL)
+					when 0x10, 0x18
+						@working.write(@FCOM)
+					when 0x20, 0x28
+						@working.write(@FSUB)
+					when 0x30, 0x38
+						@working.write(@FDIV)
+
+			when 0xd900
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@FPUSH)
+						when 0x10, 0x18, 0x28, 0x38, 0x20
+							if ((prefices & @PREFICES_OPERAND) != 0)
+								@working.write(@FLDENV_28)
+							else
+								@working.write(@FLDENV_14)
+
+						when 0x30
+							if ((prefices & @PREFICES_OPERAND) != 0)
+								@working.write(@FSTENV_28)
+							else
+								@working.write(@FSTENV_14)
+				else
+					switch (modrm & 0xf8)
+						when 0xc0
+							@working.write(@FPUSH)
+					switch (modrm)
+						when 0xd0, 0xe0
+							@working.write(@FCHS)
+						when 0xe1
+							@working.write(@FABS)
+						when 0xe4
+							@working.write(@FCOM)
+						when 0xe5
+							@working.write(@FXAM)
+						when 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee
+							@working.write(@FPUSH)
+						when 0xf0
+							@working.write(@F2XM1)
+						when 0xf1
+							@working.write(@FYL2X)
+						when 0xf2
+							@working.write(@FPTAN)
+						when 0xf3
+							@working.write(@FPATAN)
+						when 0xf4
+							@working.write(@FXTRACT)
+						when 0xf5
+							@working.write(@FPREM1)
+						when 0xf6
+							@working.write(@FDECSTP)
+						when 0xf7
+							@working.write(@FINCSTP)
+						when 0xf8
+							@working.write(@FPREM)
+						when 0xf9
+							@working.write(@FYL2XP1)
+						when 0xfa
+							@working.write(@FSQRT)
+						when 0xfb
+							@working.write(@FSINCOS)
+						when 0xfc
+							@working.write(@FRNDINT)
+						when 0xfd
+							@working.write(@FSCALE)
+						when 0xfe
+							@working.write(@FSIN)
+						when 0xff
+							@working.write(@FCOS)
+
+			when 0xda00
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@FADD)
+						when 0x08
+							@working.write(@FMUL)
+						when 0x10, 0x18
+							@working.write(@FCOM)
+						when 0x20, 0x28
+							@working.write(@FSUB)
+						when 0x30, 0x38
+							@working.write(@FDIV)
+				else
+					switch (modrm & 0xf8)
+						when 0xc0
+							@working.write(@FCMOVB)
+						when 0xc8
+							@working.write(@FCMOVE)
+						when 0xd0
+							@working.write(@FCMOVBE)
+						when 0xd8
+							@working.write(@FCMOVU)
+
+					switch (modrm)
+						when 0xe9
+							@working.write(@FUCOM)
+
+			when 0xdb00
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@FPUSH)
+						when 0x08
+							@working.write(@FCHOP)
+						when 0x10, 0x18
+							@working.write(@FRNDINT)
+						when 0x28
+							@working.write(@FPUSH)
+				else
+					switch (modrm & 0xf8)
+						when 0xc0
+							@working.write(@FCMOVNB)
+						when 0xc8
+							@working.write(@FCMOVNE)
+						when 0xd0
+							@working.write(@FCMOVNBE)
+						when 0xd8
+							@working.write(@FCMOVNU)
+						when 0xe8
+							@working.write(@FUCOMI)
+						when 0xf0
+							@working.write(@FCOMI)
+
+					switch (modrm)
+						when 0xe2
+							@working.write(@FCLEX)
+						when 0xe3
+							@working.write(@FINIT)
+
+
+			when 0xdc00
+				switch (modrm & 0x38)
+					when 0x00
+						@working.write(@FADD)
+					when 0x08
+						@working.write(@FMUL)
+					when 0x10, 0x18
+						@working.write(@FCOM)
+					when 0x20, 0x28
+						@working.write(@FSUB)
+					when 0x30, 0x38
+						@working.write(@FDIV)
+
+			when 0xdd00
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(FPUSH)
+						when 0x08
+							@working.write(FCHOP)
+						when 0x10, 0x18, 0x38, 0x20
+							if ((prefices & @PREFICES_OPERAND) != 0)
+								@working.write(@FRSTOR_108)
+							else
+								@working.write(@FRSTOR_94)
+
+						when 0x30
+							if ((prefices & @PREFICES_OPERAND) != 0)
+								@working.write(@FSAVE_108)
+							else
+								@working.write(@FSAVE_94)
+				else
+					switch (modrm & 0xf8)
+						when 0xc0
+							@working.write(@FFREE)
+						when 0xd0, 0xd8, 0xe0, 0xe8
+							@working.write(@FUCOM)
+
+			when 0xde00
+				switch (modrm)
+					when 0xd9
+						@working.write(@FCOM)
+					else
+						switch (modrm & 0x38)
+							when 0x00
+								@working.write(@FADD)
+							when 0x08
+								@working.write(@FMUL)
+							when 0x10, 0x18
+								@working.write(@FCOM)
+							when 0x20, 0x28
+								@working.write(@FSUB)
+							when 0x30, 0x38
+								@working.write(@FDIV)
+
+
+			when 0xdf00
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@FPUSH)
+						when 0x08
+							@working.write(@FCHOP)
+						when 0x10, 0x18, 0x38
+							@working.write(@FRNDINT)
+						when 0x20
+							@working.write(@FBCD2F)
+						when 0x28
+							@working.write(@FPUSH)
+						when 0x30
+							@working.write(@FF2BCD)
+				else
+					switch (modrm & 0xf8)
+						when 0xe8
+							@working.write(@FUCOMI)
+						when 0xf0
+							@working.write(@FCOMI)
+			when 0x63
+				break
+			else
+				throw new NotImplementedError("Opcode #{opcode} not supported.")
 
 	writeOutputOperands: (prefices, opcode, modrm, sib, displacement) ->
 		switch opcode
