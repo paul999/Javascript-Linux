@@ -724,19 +724,19 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 	writeInputOperands: (prefices, opcode, modrm, sib, displacement, immediate) ->
 		switch (opcode)
-			when 0xf9, 0x0b, 0x63, 0x2f
-				break
-
 			when 0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38, 0x84, 0x86
 				@load0_Eb(prefices, modrm, sib, displacement)
 				@load1_Gb(modrm)
-			when 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf
-				if ((prefices & @PREFICES_OPERAND))
-					@working.write(@LOAD0_ID)
-					@working.write(immediate)
-				else
-					@working.write(@LOAD0_IW)
-					@working.write(immediate)
+			when 0x88
+				@load0_Gb(modrm)
+
+			when 0x02, 0x0a, 0x12, 0x1a, 0x22, 0x2a, 0x32, 0x3a, 0xfc0
+				@load0_Gb(modrm)
+				@load1_Eb(prefices, modrm, sib, displacement)
+
+			when 0x8a, 0xfb6, 0xfbe
+				@load0_Eb(prefices, modrm, sib, displacement)
+
 			when 0x01, 0x09, 0x11, 0x19, 0x21, 0x29, 0x31, 0x39, 0x85, 0x87
 				if ((prefices & @PREFICES_OPERAND) != 0)
 					@load0_Ed(prefices, modrm, sib, displacement)
@@ -745,67 +745,445 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					@load0_Ew(prefices, modrm, sib, displacement)
 					@load1_Gw(modrm)
 
-			when 0x41, 0x49, 0x51
+			when 0x89
 				if ((prefices & @PREFICES_OPERAND) != 0)
-					@working.write(@LOAD0_ECX)
+					@load0_Gd(modrm)
 				else
-					@working.write(@LOAD0_CX)
-			when 0x43, 0x4b, 0x53
+					@load0_Gw(modrm)
+
+			when 0x03, 0x0b, 0x13, 0x1b, 0x23, 0x2b, 0x33, 0x3b, 0xfaf, 0xfbc, 0xfbd, 0xfc1
 				if ((prefices & @PREFICES_OPERAND) != 0)
-					@working.write(@LOAD0_EBX)
+					@load0_Gd(modrm)
+					@load1_Ed(prefices, modrm, sib, displacement)
 				else
-					@working.write(@LOAD0_BX)
+					@load0_Gw(modrm)
+					@load1_Ew(prefices, modrm, sib, displacement)
+
+			when 0x8b
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Ed(prefices, modrm, sib, displacement)
+				else
+					@load0_Ew(prefices, modrm, sib, displacement)
+
+			when 0xf02, 0xf03
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Ew(prefices, modrm, sib, displacement)
+					@load1_Gd(modrm)
+				else
+					@load0_Ew(prefices, modrm, sib, displacement)
+					@load1_Gw(modrm)
+
+			when 0xf40, 0xf41, 0xf42, 0xf43, 0xf44, 0xf45, 0xf46, 0xf47, 0xf48, 0xf49, 0xf4a, 0xf4b, 0xf4c, 0xf4d, 0xf4e, 0xf4f
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Gd(modrm)
+					@load1_Ed(prefices, modrm, sib, displacement)
+				else
+					@load0_Gw(modrm)
+					@load1_Ew(prefices, modrm, sib, displacement)
+
+			when 0x8d
+				@load0_M(prefices, modrm, sib, displacement)
+
+			when 0x80, 0x82, 0xc0
+				@load0_Eb(prefices, modrm, sib, displacement)
+				@working.write(@LOAD1_IB)
+				@working.write(immediate) #was int
+
+			when 0xc6, 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xe4, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, 0xcd, 0xd4, 0xd5, 0xe0, 0xe1, 0xe2, 0xe3, 0xeb, 0xe5
+				@working.write(@LOAD0_IB)
+				@working.write(immediate) # was int
+
+			when 0x81
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					load0_Ed(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_ID)
+					@working.write(immediate) #was int
+				else
+					load0_Ew(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_IW)
+					@working.write(immediate) #was int
+
+			when 0xc7, 0x68, 0x6a, 0xe8, 0xe9, 0xf80, 0xf81, 0xf82, 0xf83, 0xf84, 0xf85, 0xf86, 0xf87, 0xf88, 0xf89, 0xf8a, 0xf8b, 0xf8c, 0xf8d, 0xf8e, 0xf8f
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_ID)
+					@working.write(immediate) #int
+				else
+					@working.write(@LOAD0_IW)
+					@working.write(immediate) #int
+
+			when 0xc1
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					load0_Ed(prefices, modrm, sib, displacement)
+					@working.write(LOAD1_IB)
+					@working.write(immediate) #was int
+				else
+					load0_Ew(prefices, modrm, sib, displacement)
+					@working.write(LOAD1_IB)
+					@working.write(immediate) #was int
+
+
+			when 0x83
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					load0_Ed(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_ID)
+					@working.write(immediate) #was int
+				else
+					load0_Ew(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_IW)
+					@working.write(immediate) #was int
+
+			when 0x8f, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 0x07, 0x17, 0x1f
+				break
+			when 0xc2, 0xca
+				@working.write(@LOAD0_IW)
+				@working.write(immediate) #was int
+
+			when 0x9a, 0xea
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_ID)
+					@working.write(immediate) #was int
+					@working.write(@LOAD1_IW)
+					@working.write((immediate >>> 32)) # was int
+				else
+					@working.write(@LOAD0_IW)
+					@working.write((0xffff & immediate)) # was int
+					@working.write(@LOAD1_IW)
+					@working.write((immediate >>> 16)) #was int
+
+			when 0x9c
+				switch (prefices & @PREFICES_OPERAND)
+					when 0
+						@working.write(@LOAD0_FLAGS)
+					when @PREFICES_OPERAND
+						@working.write(@LOAD0_EFLAGS)
+
+			when 0xec, 0xed
+			    @working.write(@LOAD0_DX)
+
+			when 0xee
+			    @working.write(@LOAD0_DX)
+			    @working.write(@LOAD1_AL)
+
+			when 0xef
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_DX)
+					@working.write(@LOAD1_EAX)
+				else
+					@working.write(@LOAD0_DX)
+					@working.write(@LOAD1_AX)
+
+
+			when 0x04, 0x0c, 0x14, 0x1c, 0x24, 0x2c, 0x34, 0x3c, 0xa8
+				@working.write(@LOAD0_AL)
+				@working.write(@LOAD1_IB)
+				@working.write(immediate) #was int
+
+			when 0xc8
+				@working.write(@LOAD0_IW)
+				@working.write((0xffff & (immediate >>> 16))) # was int
+				@working.write(@LOAD1_IB)
+				@working.write((0xff & immediate)) #was int
+
+			when 0x69, 0x6b
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Ed(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_ID)
+					@working.write(immediate) #was int
+				else
+					@load0_Ew(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_IW)
+					@working.write(immediate) #was int
+
+
+			when 0xe6
+				@working.write(@LOAD0_IB)
+				@working.write(immediate) #was int
+				@working.write(@LOAD1_AL)
+
+			when 0x05, 0x0d, 0x15, 0x1d, 0x25, 0x2d, 0x35, 0x3d, 0xa9
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EAX)
+					@working.write(@LOAD1_ID)
+					@working.write(immediate) #was int
+				else
+					@working.write(@LOAD0_AX)
+					@working.write(@LOAD1_IW)
+					@working.write(immediate) #was int
+
+
+			when 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_ID)
+					@working.write(immediate) #was int
+				else
+					@working.write(@LOAD0_IW)
+					@working.write(immediate) #was int
+
+
+			when 0xe7
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_IB)
+					@working.write(immediate) #was int
+					@working.write(@LOAD1_EAX)
+				else
+					@working.write(@LOAD0_IB)
+					@working.write(immediate) #was int
+					@working.write(@LOAD1_AX)
+
+
 			when 0x40, 0x48, 0x50
 				if ((prefices & @PREFICES_OPERAND) != 0)
 					@working.write(@LOAD0_EAX)
 				else
 					@working.write(@LOAD0_AX)
-			when 0xc7, 0x68, 0x6a, 0xe8, 0xe9, 0xf80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x86, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f
+
+			when 0x41, 0x49, 0x51
 				if ((prefices & @PREFICES_OPERAND) != 0)
-					@working.write(@LOAD0_ID)
-					@working.write(immediate)
+					@working.write(@LOAD0_ECX)
 				else
-					@working.write(@LOAD0_IW)
-					@working.write(immediate)
+					@working.write(@LOAD0_CX)
 
-			when 0x80, 0x82, 0xc0
-				@load0_Eb(prefices, modrm, sib, displacement)
-				@working.write(@LOAD1_IB)
-				@working.write(immediate)
-			when 0x02, 0x0a, 0x12, 0x1a, 0x22, 0x2a, 0x32, 0x3a, 0xfc0
-				@load0_Gb(modrm)
-				@load1_Eb(prefices, modrm, sib, displacement)
+			when 0x42, 0x4a, 0x52
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EDX)
+				else
+					@working.write(@LOAD0_DX)
 
-			when 0x1e
-				@working.write(@LOAD0_DS)
+			when 0x43, 0x4b, 0x53
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EBX)
+				else
+					@working.write(@LOAD0_BX)
 
-			when 0x16
-				@working.write(@LOAD0_SS)
 
-			when 0xf01
-				switch modrm & 0x38
-					when 0x10, 0x18
-						@load0_Ew(prefices, modrm, sib, displacement)
-						@working.write(@ADDR_ID)
-						@working.write(2)
-						@working.write(@LOAD0_MEM_DWORD)
-					when 0x30
-						@load0_Ew(prefices, modrm, sib, displacement)
-					when 0x38
-						@decodeM(prefices, modrm, sib, displacement)
+			when 0x44, 0x4c, 0x54
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_ESP)
+				else
+					@working.write(@LOAD0_SP)
+
+
+			when 0x45, 0x4d, 0x55
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EBP)
+				else
+					@working.write(@LOAD0_BP)
+
+
+			when 0x46, 0x4e, 0x56
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_ESI)
+				else
+					@working.write(@LOAD0_SI)
+
+			when 0x47, 0x4f, 0x57
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EDI)
+				else
+					@working.write(@LOAD0_DI)
+
+			when 0x91
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EAX)
+					@working.write(@LOAD1_ECX)
+				else
+					@working.write(@LOAD0_AX)
+					@working.write(@LOAD1_CX)
 
 			when 0x92
 				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(LOAD0_EAX)
+					@working.write(LOAD1_EDX)
+				else
+					@working.write(LOAD0_AX)
+					@working.write(LOAD1_DX)
+
+
+			when 0x93
+				if ((prefices & @PREFICES_OPERAND) != 0)
 					@working.write(@LOAD0_EAX)
-					@working.write(@LOAD1_EDX)
+					@working.write(@LOAD1_EBX)
 				else
 					@working.write(@LOAD0_AX)
-					@working.write(@LOAD1_DX)
-			when 0xc6, 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xe4, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, 0xcd, 0xd4, 0xd5, 0xe0, 0xe1, 0xe2, 0xe3, 0xeb, 0xe5
-				@working.write(@LOAD0_IB)
-				@working.write(immediate)
-			when 0xa4, 0xa5, 0xa6, 0xa7, 0xac, 0xad
+					@working.write(@LOAD1_BX)
+
+			when 0x94
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EAX)
+					@working.write(@LOAD1_ESP)
+				else
+					@working.write(@LOAD0_AX)
+					@working.write(@LOAD1_SP)
+
+			when 0x95
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EAX)
+					@working.write(@LOAD1_EBP)
+				else
+					@working.write(@LOAD0_AX)
+					@working.write(@LOAD1_BP)
+
+			when 0x96
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EAX)
+					@working.write(@LOAD1_ESI)
+				else
+					@working.write(@LOAD0_AX)
+					@working.write(@LOAD1_SI)
+
+
+			when 0x97
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EAX)
+					@working.write(@LOAD1_EDI)
+				else
+					@working.write(@LOAD0_AX)
+					@working.write(@LOAD1_DI)
+
+			when 0xd0
+				@load0_Eb(prefices, modrm, sib, displacement)
+				@working.write(@LOAD1_IB)
+				@working.write(1)
+
+			when 0xd2
+				@load0_Eb(prefices, modrm, sib, displacement)
+				@working.write(@LOAD1_CL)
+
+			when 0xd1
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Ed(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_IB)
+					@working.write(1)
+				else
+					@load0_Ew(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_IB)
+					@working.write(1)
+
+
+			when 0xd3
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Ed(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_CL)
+				else
+					@load0_Ew(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_CL)
+
+			when 0xf6
+				switch (modrm & 0x38)
+					when 0x00
+						@load0_Eb(prefices, modrm, sib, displacement)
+						@working.write(@LOAD1_IB)
+						@working.write(immediate) #was int
+					when 0x10, 0x18
+						@load0_Eb(prefices, modrm, sib, displacement)
+					when 0x20, 0x28
+						@load0_Eb(prefices, modrm, sib, displacement)
+					when 0x30, 0x38
+						@load0_Eb(prefices, modrm, sib, displacement)
+
+			when 0xf7
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					switch (modrm & 0x38)
+						when 0x00
+							load0_Ed(prefices, modrm, sib, displacement)
+							@working.write(@LOAD1_ID)
+							@working.write(immediate) #was int
+						when 0x10, 0x18
+							load0_Ed(prefices, modrm, sib, displacement)
+						when 0x20, 0x28
+							load0_Ed(prefices, modrm, sib, displacement)
+						when 0x30, 0x38
+							load0_Ed(prefices, modrm, sib, displacement)
+
+				else
+					switch (modrm & 0x38)
+						when 0x00
+							@load0_Ew(prefices, modrm, sib, displacement)
+							@working.write(LOAD1_IW)
+							@working.write(immediate) #was int
+						when 0x10, 0x18
+							load0_Ew(prefices, modrm, sib, displacement)
+						when 0x20, 0x28
+							@load0_Ew(prefices, modrm, sib, displacement)
+						when 0x30, 0x38
+							@load0_Ew(prefices, modrm, sib, displacement)
+
+			when 0xfe
+				@load0_Eb(prefices, modrm, sib, displacement)
+
+			when 0x06
+				@working.write(@LOAD0_ES)
+
+			when 0x0e
+				@working.write(@LOAD0_CS)
+
+			when 0x16
+			    @working.write(@LOAD0_SS)
+
+			when 0x1e
+			    @working.write(@LOAD0_DS)
+
+			when 0x62
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Eq(prefices, modrm, sib, displacement)
+					@load1_Gd(modrm)
+				else
+					@load0_Ed(prefices, modrm, sib, displacement)
+					@load1_Gw(modrm)
+
+			when 0x8c
+				@load0_Sw(modrm)
+
+
+			when 0x8e, 0xfb7, 0xfbf
+				@load0_Ew(prefices, modrm, sib, displacement)
+
+			when 0xa0
+				@load0_Ob(prefices, displacement)
+
+			when 0xa2
+				@working.write(@LOAD0_AL)
+
+			when 0xa1
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Od(prefices, displacement)
+				else
+					@load0_Ow(prefices, displacement)
+
+			when 0xa3
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EAX)
+				else
+					@working.write(@LOAD0_AX)
+
+			when 0x6c, 0x6d
+				@working.write(@LOAD0_DX)
+
+			when 0x6e, 0x6f
+				@working.write(@LOAD0_DX)
 				@decodeSegmentPrefix(prefices)
+
+			when 0xa4, 0xa5, 0xa6, 0xa7, 0xac, 0xad
+				decodeSegmentPrefix(prefices)
+
+			when 0xaa
+				@working.write(@LOAD0_AL)
+
+			when 0xab
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EAX)
+				else
+					@working.write(@LOAD0_AX)
+
+			when 0xae
+				@working.write(@LOAD0_AL)
+
+			when 0xaf
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@LOAD0_EAX)
+				else
+					@working.write(@LOAD0_AX)
+
 			when 0xff
 				if ((prefices & @PREFICES_OPERAND) != 0)
 					switch (modrm & 0x38)
@@ -816,43 +1194,511 @@ class ProtectedModeUDecoder extends MicrocodeSet
 							@working.write(@ADDR_IB)
 							@working.write(4)
 							@working.write(@LOAD1_MEM_WORD)
+
 				else
 					switch (modrm & 0x38)
 						when 0x00, 0x08, 0x10, 0x20, 0x30
 							@load0_Ew(prefices, modrm, sib, displacement)
+
 						when 0x18, 0x28
 							@load0_Ew(prefices, modrm, sib, displacement)
 							@working.write(@ADDR_IB)
 							@working.write(2)
 							@working.write(@LOAD1_MEM_WORD)
 
-			when 0x6e, 0x6f
-				@working.write(@LOAD0_DX)
-				@decodeSegmentPrefix(prefices)
-			when 0x05, 0x0d, 0x15, 0x25, 0x2d, 0x35, 0x3d, 0xa9
-				if (( prefices & @PREFICES_OPERAND) != 0)
-					@working.write(@LOAD0_EAX)
-					@working.write(@LOAD1_ID)
-					@working.write(immediate)
-				else
-					@working.write(@LOAD0_AX)
-					@working.write(@LOAD1_IW)
-					@working.write(immediate)
 
-			when 0x62
+			when 0xc4, 0xc5, 0xfb2, 0xfb4, 0xfb5
 				if ((prefices & @PREFICES_OPERAND) != 0)
-					@load0_Eq(prefices, modrm, sib, displacement)
+					@load0_Ed(prefices, modrm, sib, displacement)
+					@working.write(@ADDR_IB)
+					@working.write(4)
+					@working.write(@LOAD1_MEM_WORD)
+				else
+					@load0_Ew(prefices, modrm, sib, displacement)
+					@working.write(@ADDR_IB)
+					@working.write(2)
+					@working.write(@LOAD1_MEM_WORD)
+
+
+			when 0xd7
+				switch (prefices & @PREFICES_SG)
+					when @PREFICES_ES
+						@working.write(@LOAD_SEG_ES)
+					when @PREFICES_CS
+						@working.write(@LOAD_SEG_CS)
+					when @PREFICES_SS
+						@working.write(@LOAD_SEG_SS)
+
+					when @PREFICES_DS
+						@working.write(@LOAD_SEG_DS)
+					when @PREFICES_FS
+						@working.write(@LOAD_SEG_FS)
+					when @PREFICES_GS
+						@working.write(@LOAD_SEG_GS)
+					else
+						@working.write(@LOAD_SEG_DS)
+
+				if ((prefices & @PREFICES_ADDRESS) != 0)
+					if (@decodingAddressMode())
+						@working.write(@ADDR_EBX)
+						@working.write(@ADDR_uAL)
+				else
+					if (@decodingAddressMode())
+						@working.write(@ADDR_BX)
+						@working.write(@ADDR_uAL)
+						@working.write(@ADDR_MASK16)
+
+				@working.write(@LOAD0_MEM_BYTE)
+
+
+			when 0xf00
+				switch (modrm & 0x38)
+					when 0x10, 0x18, 0x20, 0x28
+						@load0_Ew(prefices, modrm, sib, displacement)
+
+			when 0xf01
+				switch (modrm & 0x38)
+					when 0x10, 0x18
+						@load0_Ew(prefices, modrm, sib, displacement)
+						@working.write(@ADDR_ID)
+						@working.write(2)
+						@working.write(@LOAD1_MEM_DWORD)
+					when 0x30
+						@load0_Ew(prefices, modrm, sib, displacement)
+					when 0x38
+						@decodeM(prefices, modrm, sib, displacement)
+
+			when 0xfa0
+				@working.write(@LOAD0_FS)
+			when 0xfa8
+				@working.write(@LOAD0_GS)
+
+			when 0xf20
+				@load0_Cd(modrm)
+
+			when 0xf21
+				@load0_Dd(modrm)
+
+			when 0xf22, 0xf23
+				@load0_Rd(modrm)
+
+			when 0xf30
+				@working.write(@LOAD0_ECX)
+				@working.write(@LOAD1_EDX)
+				@working.write(@LOAD2_EAX)
+
+			when 0xf32
+				@working.write(@LOAD0_ECX)
+
+			when 0xf35
+				@working.write(@LOAD0_ECX)
+				@working.write(@LOAD1_EDX)
+
+			when 0xfa4, 0xfac
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Ed(prefices, modrm, sib, displacement)
+					@load1_Gd(modrm)
+					@working.write(@LOAD2_IB)
+					@working.write(immediate) #was int
+				else
+					@load0_Ew(prefices, modrm, sib, displacement)
+					@load1_Gw(modrm)
+					@working.write(@LOAD2_IB)
+					@working.write(immediate) #was int
+
+			when 0xfa5, 0xfad
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Ed(prefices, modrm, sib, displacement)
+					@load1_Gd(modrm)
+					@working.write(@LOAD2_CL)
+				else
+					@load0_Ew(prefices, modrm, sib, displacement)
+					@load1_Gw(modrm)
+					@working.write(@LOAD2_CL)
+
+			when 0xfb0
+				@load0_Eb(prefices, modrm, sib, displacement)
+				@load1_Gb(modrm)
+				@working.write(@LOAD2_AL)
+
+			when 0xfb1
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@load0_Ed(prefices, modrm, sib, displacement)
+					@load1_Gd(modrm)
+					@working.write(@LOAD2_EAX)
+				else
+					@load0_Ew(prefices, modrm, sib, displacement)
+					@load1_Gw(modrm)
+					@working.write(@LOAD2_AX)
+			when 0xfa3, 0xfab, 0xfb3, 0xfbb
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					switch (modrm & 0xc7)
+						when 0xc0
+							@working.write(@LOAD0_EAX)
+						when 0xc1
+							@working.write(@LOAD0_ECX)
+						when 0xc2
+							@working.write(@LOAD0_EDX)
+						when 0xc3
+							@working.write(@LOAD0_EBX)
+						when 0xc4
+							@working.write(@LOAD0_ESP)
+						when 0xc5
+							@working.write(@LOAD0_EBP)
+						when 0xc6
+							@working.write(@LOAD0_ESI)
+						when 0xc7
+							@working.write(@LOAD0_EDI)
+						else
+							@decodeM(prefices, modrm, sib, displacement)
 					@load1_Gd(modrm)
 				else
-					@load0_Ed(prefices, modrm, sib, displacement)
+					switch (modrm & 0xc7)
+						when 0xc0
+							@working.write(@LOAD0_AX)
+						when 0xc1
+							@working.write(@LOAD0_CX)
+						when 0xc2
+							@working.write(@LOAD0_DX)
+						when 0xc3
+							@working.write(@LOAD0_BX)
+						when 0xc4
+							@working.write(@LOAD0_SP)
+						when 0xc5
+							@working.write(@LOAD0_BP)
+						when 0xc6
+							@working.write(@LOAD0_SI)
+						when 0xc7
+							@working.write(@LOAD0_DI)
+						else
+							@decodeM(prefices, modrm, sib, displacement)
 					@load1_Gw(modrm)
 
-			when -1
-				throw "Return to test"
-			else
-				throw "ProtectedModeUdecoded, writeInputOperands, Non supported opcode, Got opcode #{opcode}"
+			when 0xfba
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					switch (modrm & 0xc7)
+						when 0xc0
+							@working.write(@LOAD0_EAX)
+						when 0xc1
+							@working.write(@LOAD0_ECX)
+						when 0xc2
+							@working.write(@LOAD0_EDX)
+						when 0xc3
+							@working.write(@LOAD0_EBX)
+						when 0xc4
+							@working.write(@LOAD0_ESP)
+						when 0xc5
+							@working.write(@LOAD0_EBP)
+						when 0xc6
+							@working.write(@LOAD0_ESI)
+						when 0xc7
+							@working.write(@LOAD0_EDI)
+						else
+							@decodeM(prefices, modrm, sib, displacement)
+
+				else
+					switch (modrm & 0xc7)
+						when 0xc0
+							@working.write(@LOAD0_AX)
+						when 0xc1
+							@working.write(@LOAD0_CX)
+						when 0xc2
+							@working.write(@LOAD0_DX)
+						when 0xc3
+							@working.write(@LOAD0_BX)
+						when 0xc4
+							@working.write(@LOAD0_SP)
+						when 0xc5
+							@working.write(@LOAD0_BP)
+						when 0xc6
+							@working.write(@LOAD0_SI)
+						when 0xc7
+							@working.write(@LOAD0_DI)
+						else
+							@decodeM(prefices, modrm, sib, displacement)
+				@working.write(@LOAD1_IB)
+				@working.write(immediate & 0x1f) #int
+				#check of voor of na if moet.
+
+			when 0xfc7
+				switch (modrm & 0x38)
+					when 0x08
+						@decodeM(prefices, modrm, sib, displacement)
+						@working.write(@LOAD0_MEM_QWORD)
+					else
+						throw new IllegalStateException("Invalid Gp 6 Instruction?")
+			when 0xfc8
+				@working.write(@LOAD0_EAX)
+			when 0xfc9
+				@working.write(@LOAD0_ECX)
+			when 0xfca
+				@working.write(@LOAD0_EDX)
+			when 0xfcb
+				@working.write(@LOAD0_EBX)
+			when 0xfcc
+				@working.write(@LOAD0_ESP)
+			when 0xfcd
+				@working.write(@LOAD0_EBP)
+			when 0xfce
+				@working.write(@LOAD0_ESI)
+			when 0xfcf
+				@working.write(@LOAD0_EDI)
+
+			when 0xd800
+				@working.write(@FWAIT)
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x28, 0x38
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FLOAD0_MEM_SINGLE)
+							@working.write(@FLOAD1_ST0)
+						else
+							@working.write(@FLOAD0_ST0)
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FLOAD1_MEM_SINGLE)
+				else
+					switch (modrm & 0xf8)
+						when 0xe8, 0xf8
+							@working.write(@FLOAD0_STN)
+							@working.write(modrm & 0x07)
+							@working.write(@FLOAD1_ST0)
+						else
+							@working.write(@FLOAD0_ST0)
+							@working.write(@FLOAD1_STN)
+							@working.write(modrm & 0x07)
+			when 0xd900
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@FWAIT)
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FLOAD0_MEM_SINGLE)
+						when 0x10, 0x18
+							@working.write(@FWAIT)
+							@working.write(@FLOAD0_ST0)
+						when 0x20
+							@working.write(@FWAIT)
+							@decodeM(prefices, modrm, sib, displacement)
+						when 0x28
+							@working.write(@FWAIT)
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@LOAD0_MEM_WORD)
+						when 0x30
+							@decodeM(prefices, modrm, sib, displacement)
+						when 0x38
+							@working.write(@LOAD0_FPUCW)
+				else
+					@working.write(@FWAIT)
+					switch (modrm & 0xf8)
+						when 0xc0
+							@working.write(@FLOAD0_STN)
+							@working.write(modrm & 0x07)
+						when 0xc8
+							@working.write(@FLOAD0_ST0)
+							@working.write(@FLOAD1_STN)
+							@working.write(modrm & 0x07)
+					switch (modrm)
+
+						when 0xd0, 0xf6, 0xf7
+							break
+						when 0xe0, 0xe1, 0xe5, 0xf0, 0xf2, 0xf4, 0xfa, 0xfb, 0xfc, 0xfe, 0xff
+							@working.write(@FLOAD0_ST0)
+						when 0xf1, 0xf3, 0xf5, 0xf8, 0xf9, 0xfd
+							@working.write(@FLOAD0_ST0)
+							@working.write(@FLOAD1_STN)
+							@working.write(1)
+						when 0xe4
+							@working.write(@FLOAD0_ST0)
+							@working.write(@FLOAD1_POS0)
+						when 0xe8
+							@working.write(@FLOAD0_1)
+						when 0xe9
+							@working.write(@FLOAD0_L2TEN)
+						when 0xea
+							@working.write(@FLOAD0_L2E)
+						when 0xeb
+							@working.write(@FLOAD0_PI)
+						when 0xec
+							@working.write(@FLOAD0_LOG2)
+						when 0xed
+							@working.write(@FLOAD0_LN2)
+						when 0xee
+							@working.write(@FLOAD0_POS0)
+			when 0xda00
+				@working.write(@FWAIT)
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x28, 0x38
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@LOAD0_MEM_DWORD)
+							@working.write(@FLOAD0_REG0)
+							@working.write(@FLOAD1_ST0)
+						else
+							@working.write(@FLOAD0_ST0)
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@LOAD0_MEM_DWORD)
+							@working.write(@FLOAD1_REG0)
+				else
+
+					switch (modrm & 0xf8)
+						when 0xc0, 0xc8, 0xd0, 0xd8
+							@working.write(@FLOAD0_STN)
+							@working.write(modrm & 0x07)
+					switch (modrm)
+						when 0xe9
+							@working.write(@FLOAD0_ST0)
+							@working.write(@FLOAD1_STN)
+							@working.write(1)
+
+			when 0xdb00
+				if ((modrm & 0xc0) != 0xc0)
+					@working.write(@FWAIT)
+					switch (modrm & 0x38)
+						when 0x00
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@LOAD0_MEM_DWORD)
+							@working.write(@FLOAD0_REG0)
+						when 0x08, 0x10, 0x18, 0x38
+							@working.write(@FLOAD0_ST0)
+						when 0x28
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FLOAD0_MEM_EXTENDED)
+				else
+					switch (modrm)
+						when 0xe2, 0xe3
+							break
+						else
+							@working.write(@FWAIT)
+					switch (modrm & 0xf8)
+						when 0xc0, 0xc8, 0xd0, 0xd8
+							@working.write(@FLOAD0_STN)
+							@working.write(modrm & 0x07)
+						when 0xe8, 0xf0
+							@working.write(@FLOAD0_ST0)
+							@working.write(@FLOAD1_STN)
+							@working.write(modrm & 0x07)
+
+			when 0xdc00
+				@working.write(@FWAIT)
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x28, 0x38
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FLOAD0_MEM_DOUBLE)
+							@working.write(@FLOAD1_ST0)
+						else
+							@working.write(@FLOAD0_ST0)
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FLOAD1_MEM_DOUBLE)
+				else
+					switch (modrm & 0xf8)
+						when 0xe8, 0xf8
+							@working.write(@FLOAD0_STN)
+							@working.write(modrm & 0x07)
+							@working.write(@FLOAD1_ST0)
+						else
+							@working.write(@FLOAD0_ST0)
+							@working.write(@FLOAD1_STN)
+							@working.write(modrm & 0x07)
 
 
+			when 0xdd00
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00
+							@working.write(@FWAIT)
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FLOAD0_MEM_DOUBLE)
+						when 0x08, 0x10, 0x18
+							@working.write(@FWAIT)
+							@working.write(@FLOAD0_ST0)
+						when 0x20
+							@working.write(@FWAIT)
+							@decodeM(prefices, modrm, sib, displacement)
+						when 0x30
+							@decodeM(prefices, modrm, sib, displacement)
+						when 0x38
+							@working.write(@LOAD0_FPUSW)
+				else
+					@working.write(@FWAIT)
+					switch (modrm & 0xf8)
+						when 0xc0
+							@working.write(@LOAD0_ID)
+							@working.write(modrm & 0x07)
+						when 0xd0, 0xd8
+							@working.write(@FLOAD0_ST0)
+						when 0xe0, 0xe8
+							@working.write(@FLOAD0_ST0)
+							@working.write(@FLOAD1_STN)
+							@working.write(modrm & 0x07)
+
+
+			when 0xde00
+				@working.write(@FWAIT)
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x28, 0x38
+							decodeM(prefices, modrm, sib, displacement)
+							@working.write(@LOAD0_MEM_WORD)
+							@working.write(@FLOAD0_REG0)
+							@working.write(@FLOAD1_ST0)
+						when 0x30
+							@working.write(@FLOAD0_ST0)
+							decodeM(prefices, modrm, sib, displacement)
+							@working.write(@LOAD0_MEM_QWORD)
+							@working.write(@FLOAD1_REG0L)
+						else
+							@working.write(@FLOAD0_ST0)
+							decodeM(prefices, modrm, sib, displacement)
+							@working.write(@LOAD0_MEM_WORD)
+							@working.write(@FLOAD1_REG0)
+				else
+					switch (modrm & 0xf8)
+						when 0xc0, 0xc8, 0xe0, 0xf0
+							@working.write(@FLOAD0_ST0)
+							@working.write(@FLOAD1_STN)
+							@working.write(modrm & 0x07)
+						when 0xe8, 0xf8
+							@working.write(@FLOAD1_ST0)
+							@working.write(@FLOAD0_STN)
+							@working.write(modrm & 0x07)
+
+					switch (modrm)
+						when 0xd9
+							@working.write(@FLOAD0_ST0)
+							@working.write(@FLOAD1_STN)
+							@working.write(1)
+
+			when 0xdf00
+				if ((modrm & 0xc0) != 0xc0)
+					@working.write(@FWAIT)
+					switch (modrm & 0x38)
+						when 0x00
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@LOAD0_MEM_WORD)
+							@working.write(@FLOAD0_REG0)
+						when 0x28
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@LOAD0_MEM_QWORD)
+							@working.write(@FLOAD0_REG0L)
+						when 0x08, 0x10, 0x18, 0x38
+							@working.write(@FLOAD0_ST0)
+						when 0x30
+							@working.write(@FLOAD0_ST0)
+							@decodeM(prefices, modrm, sib, displacement)
+						when 0x20
+							@decodeM(prefices, modrm, sib, displacement)
+				else
+					switch (modrm)
+						when 0xe0
+							@working.write(LOAD0_FPUSW)
+						else
+							@working.write(FWAIT)
+					switch (modrm & 0xf8)
+						when 0xe8, 0xf0
+							@working.write(FLOAD0_ST0)
+							@working.write(FLOAD1_STN)
+							@working.write(modrm & 0x07)
 	# 0x00: ADD Eb, Gb
 	# 0x01: ADD Ev, Gv
 	# 0x02: ADD Gb, Eb
@@ -2368,36 +3214,308 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 	writeOutputOperands: (prefices, opcode, modrm, sib, displacement) ->
 		switch opcode
-			when 0x63
-				log "0x63"
-			# One byte operation
-			when 0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x88, 0xc0, 0xc6, 0xfe, 0xf90, 0xf91, 0xf92, 0xf93, 0xf94, 0xf95, 0xf96, 0xf97, 0xf98, 0xf99, 0xf9a, 0xf9b, 0xf9c, 0xf9d, 0xf9e, 0x9f
+			when 0x00, 0x08, 0x10, 0x18, 0x20, 0x28, 0x30, 0x88, 0xc0, 0xc6, 0xfe, 0xf90, 0xf91, 0xf92, 0xf93, 0xf94, 0xf95, 0xf96, 0xf97, 0xf98, 0xf99, 0xf9a, 0xf9b, 0xf9c, 0xf9d, 0xf9e, 0xf9f
 				@store0_Eb(prefices, modrm, sib, displacement)
-			when 0x44, 0x4c, 0x5c, 0xbc
-				if ((prefices & @PREFICES_OPERAND) != 0)
-					@working.write(@STORE_ESP)
-				else
-					@working.write(@STORE0_SP)
-			when 0x01, 0x09, 0x11, 0x19, 0x21, 0x29, 0x31, 0x89, 0xc7, 0xc1, 0x8f, 0xd1, 0xd3
-				if ((prefices & @PREFICES_OPERAND) != 0)
-					@store0_Ed(prefices, modrm, sib, displacement)
-				else
-					@store0_Ew(prefices, modrm, sib, displacement)
-			when 0x03, 0x0b, 0x13, 0x1b, 0x23, 0x2b, 0x33, 0x69, 0x6b, 0x8b, 0x8d, 0xf02, 0xf03, 0xf40, 0xf41, 0xf42, 0xf43, 0xf44, 0xf45, 0xf46, 0xf47, 0xf48, 0xf49, 0xf4a, 0xf4b, 0xf4c, 0xf4d, 0xf4e, 0xf4f, 0xfaf, 0xfb6, 0xfb7, 0xfbc, 0xfbd, 0xfbe, 0xfbf
-				if ((prefices & @PREFICES_OPERAND) != 0)
-					@store0_Gd(modrm)
-				else
-					@store0_Gw(modrm)
+
+			when 0xfb0
+				@working.write(@STORE1_AL)
+				@store0_Eb(prefices, modrm, sib, displacement)
+
 			when 0x80, 0x82
-				if (modrm & 0x38) == 0x38
+				if ((modrm & 0x38) == 0x38)
 					break
 				@store0_Eb(prefices, modrm, sib, displacement)
+
 			when 0x86
 				@store0_Gb(modrm)
 				@store1_Eb(prefices, modrm, sib, displacement)
 
 			when 0x02, 0x0a, 0x12, 0x1a, 0x22, 0x2a, 0x32, 0x8a
 				@store0_Gb(modrm)
+
+			when 0x01, 0x09, 0x11, 0x19, 0x21, 0x29, 0x31, 0x89, 0xc7, 0xc1, 0x8f, 0xd1, 0xd3
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Ed(prefices, modrm, sib, displacement)
+				else
+					@store0_Ew(prefices, modrm, sib, displacement)
+
+			when 0xfb1
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE1_EAX)
+					@store0_Ed(prefices, modrm, sib, displacement)
+				else
+					@working.write(@STORE1_AX)
+					@store0_Ew(prefices, modrm, sib, displacement)
+
+			when 0x81, 0x83
+				if ((modrm & 0x38) == 0x38)
+					break
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Ed(prefices, modrm, sib, displacement)
+				else
+					@store0_Ew(prefices, modrm, sib, displacement)
+
+			when 0x87
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Gd(modrm)
+					@store1_Ed(prefices, modrm, sib, displacement)
+				else
+					@store0_Gw(modrm)
+					@store1_Ew(prefices, modrm, sib, displacement)
+
+
+			when 0x03, 0x0b, 0x13, 0x1b, 0x23, 0x2b, 0x33, 0x69, 0x6b, 0x8b, 0x8d, 0xf02, 0xf03, 0xf40, 0xf41, 0xf42, 0xf43, 0xf44, 0xf45, 0xf46, 0xf47, 0xf48, 0xf49, 0xf4a, 0xf4b, 0xf4c, 0xf4d, 0xf4e, 0xf4f, 0xfaf, 0xfb6, 0xfb7, 0xfbc, 0xfbd, 0xfbe, 0xfbf
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Gd(modrm)
+				else
+					@store0_Gw(modrm)
+
+			when 0xec, 0x04, 0x0c, 0x14, 0x1c, 0x24, 0x2c, 0x34, 0xe4, 0xb0
+				@working.write(@STORE0_AL)
+
+			when 0xb1
+				@working.write(@STORE0_CL)
+
+			when 0xb2
+				@working.write(@STORE0_DL)
+
+			when 0xb3
+				@working.write(@STORE0_BL)
+
+			when 0xb4
+				@working.write(@STORE0_AH)
+
+			when 0xb5
+				@working.write(@STORE0_CH)
+
+			when 0xb6
+				@working.write(@STORE0_DH)
+
+			when 0xb7
+				@working.write(@STORE0_BH)
+
+			when 0x05, 0x0d, 0x15, 0x1d, 0x25, 0x2d, 0x35, 0xb8, 0xe5, 0x40, 0x48, 0x58, 0xed
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_EAX)
+				else
+					@working.write(@STORE0_AX)
+
+			when 0x41, 0x49, 0x59, 0xb9
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_ECX)
+				else
+					@working.write(@STORE0_CX)
+
+			when 0x42, 0x4a, 0x5a, 0xba
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_EDX)
+				else
+					@working.write(@STORE0_DX)
+
+			when 0x43, 0x4b, 0x5b, 0xbb
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_EBX)
+				else
+					@working.write(@STORE0_BX)
+
+			when 0x44, 0x4c, 0x5c, 0xbc
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_ESP)
+				else
+					@working.write(@STORE0_SP)
+
+			when 0x45, 0x4d, 0x5d, 0xbd
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_EBP)
+				else
+					@working.write(@STORE0_BP)
+
+			when 0x46, 0x4e, 0x5e, 0xbe
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_ESI)
+				else
+					@working.write(@STORE0_SI)
+
+			when 0x47, 0x4f, 0x5f, 0xbf
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_EDI)
+				else
+					@working.write(@STORE0_DI)
+
+			when 0x91
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_ECX)
+					@working.write(@STORE1_EAX)
+				else
+					@working.write(@STORE0_CX)
+					@working.write(@STORE1_AX)
+
+			when 0x92
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_EDX)
+					@working.write(@STORE1_EAX)
+				else
+					@working.write(@STORE0_DX)
+					@working.write(@STORE1_AX)
+
+			when 0x93
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_EBX)
+					@working.write(@STORE1_EAX)
+				else
+					@working.write(@STORE0_BX)
+					@working.write(@STORE1_AX)
+
+			when 0x94
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_ESP)
+					@working.write(@STORE1_EAX)
+				else
+					@working.write(@STORE0_SP)
+					@working.write(@STORE1_AX)
+
+			when 0x95
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_EBP)
+					@working.write(@STORE1_EAX)
+				else
+					@working.write(@STORE0_BP)
+					@working.write(@STORE1_AX)
+
+			when 0x96
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_ESI)
+					@working.write(@STORE1_EAX)
+				else
+					@working.write(@STORE0_SI)
+					@working.write(@STORE1_AX)
+
+			when 0x97
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_EDI)
+					@working.write(@STORE1_EAX)
+				else
+					@working.write(@STORE0_DI)
+					@working.write(@STORE1_AX)
+
+			when 0x9d
+				switch (prefices & @PREFICES_OPERAND)
+					when 0
+						@working.write(@STORE0_FLAGS)
+					when @PREFICES_OPERAND
+						@working.write(@STORE0_EFLAGS)
+
+			when 0xd0, 0xd2
+				@store0_Eb(prefices, modrm, sib, displacement)
+
+			when 0xf6
+				switch (modrm & 0x38)
+					when 0x10, 0x18
+						@store0_Eb(prefices, modrm, sib, displacement)
+
+			when 0xf7
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					switch (modrm & 0x38)
+						when 0x10, 0x18
+							@store0_Ed(prefices, modrm, sib, displacement)
+				else
+					switch (modrm & 0x38)
+						when 0x10, 0x18
+							@store0_Ew(prefices, modrm, sib, displacement)
+
+			when 0x07
+				@working.write(@STORE0_ES)
+
+			when 0x17
+				@working.write(@STORE0_SS)
+
+			when 0x1f
+				@working.write(@STORE0_DS)
+
+			when 0x8c
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Ed(prefices, modrm, sib, displacement)
+				else
+					@store0_Ew(prefices, modrm, sib, displacement)
+
+			when 0x8e
+				@store0_Sw(modrm)
+
+			when 0xa0
+				@working.write(@STORE0_AL)
+
+			when 0xa2
+				@store0_Ob(prefices, displacement)
+
+			when 0xa1
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@working.write(@STORE0_EAX)
+				else
+					@working.write(@STORE0_AX)
+
+			when 0xa3
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Od(prefices, displacement)
+				else
+					@store0_Ow(prefices, displacement)
+
+			when 0xff
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					switch (modrm & 0x38)
+						when 0x00, 0x08
+							@store0_Ed(prefices, modrm, sib, displacement)
+				else
+					switch (modrm & 0x38)
+						when 0x00, 0x08
+							@store0_Ew(prefices, modrm, sib, displacement)
+
+			when 0xc4
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Gd(modrm)
+					@working.write(@STORE1_ES)
+				else
+					@store0_Gw(modrm)
+					@working.write(@STORE1_ES)
+
+
+			when 0xc5
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Gd(modrm)
+					@working.write(@STORE1_DS)
+				else
+					@store0_Gw(modrm)
+					@working.write(@STORE1_DS)
+
+
+			when 0xf00
+				switch (modrm & 0x38)
+					when 0x00
+						@store0_Ew(prefices, modrm, sib, displacement)
+					when 0x08
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							switch (modrm & 0xc7)
+								when 0xc0
+									@working.write(@STORE0_EAX)
+								when 0xc1
+									@working.write(@STORE0_ECX)
+								when 0xc2
+									@working.write(@STORE0_EDX)
+								when 0xc3
+									@working.write(@STORE0_EBX)
+								when 0xc4
+									@working.write(@STORE0_ESP)
+								when 0xc5
+									@working.write(@STORE0_EBP)
+								when 0xc6
+									@working.write(@STORE0_ESI)
+								when 0xc7
+									@working.write(@STORE0_EDI)
+								else
+									@decodeM(prefices, modrm, sib, displacement)
+									@working.write(@STORE0_MEM_WORD)
+						else
+							@store0_Ew(prefices, modrm, sib, displacement)
+
 			when 0xf01
 				switch (modrm & 0x38)
 					when 0x00, 0x08
@@ -2407,41 +3525,310 @@ class ProtectedModeUDecoder extends MicrocodeSet
 						@working.write(@STORE1_MEM_DWORD)
 					when 0x20
 						@store0_Ew(prefices, modrm, sib, displacement)
-			when 0x92
 
-				if ((prefices & @PREFICES_OPERAND) != 0)
-					@working.write(@STORE0_DEX)
-					@working.write(@STORE1_EAX)
-				else
-					@working.write(@STORE0_DX)
-					@working.write(@STORE1_AX)
-			when 0x8e
-				@store0_Sw(modrm)
-
-			when 0x43, 0x4b, 0x5b, 0xbb
-				if ((prefices & @PREFICES_OPERAND) != 0)
-					@working.write(@STORE0_EBX)
-				else
-					@working.write(@STORE0_BX)
-
-
-			when 0x51, 0x53, 0x50, 0xe8, 0x16, 0xe2, 0xac, 0xf9, 0x6f, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, 0x3d, 0x2f, 0x6e, 0x62
-				# 6e moet mogelijk niet hierbij?
+			when 0xf1f
 				break
-
-			when 0xff
-				rm = modrm & 0x38
+			when 0xfa4, 0xfa5, 0xfac, 0xfad
 				if ((prefices & @PREFICES_OPERAND) != 0)
-					if (rm == 0x00 || rm == 0x08)
+					store0_Ed(prefices, modrm, sib, displacement)
+				else
+					store0_Ew(prefices, modrm, sib, displacement)
+
+			when 0xfb2
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Gd(modrm)
+					@working.write(@STORE1_SS)
+				else
+					@store0_Gw(modrm)
+					@working.write(@STORE1_SS)
+
+
+			when 0xfb4
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Gd(modrm)
+					@working.write(@STORE1_FS)
+				else
+					@store0_Gw(modrm)
+					@working.write(@STORE1_FS)
+
+			when 0xfb5
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store0_Gd(modrm)
+					@working.write(@STORE1_GS)
+				else
+					@store0_Gw(modrm)
+					@working.write(@STORE1_GS)
+
+			when 0xfc0
+				@store1_Gb(modrm)
+				@store0_Eb(prefices, modrm, sib, displacement)
+
+			when 0xfc1
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					@store1_Gd(modrm)
+					@store0_Ed(prefices, modrm, sib, displacement)
+				else
+					@store1_Gw(modrm)
+					@store0_Ew(prefices, modrm, sib, displacement)
+
+			when 0xd6, 0xd7
+				@working.write(@STORE0_AL)
+
+			when 0xf20, 0xf21
+				store0_Rd(modrm)
+
+			when 0xf22
+				@store0_Cd(modrm)
+			when 0xf23
+				@store0_Dd(modrm)
+
+			when 0xf31, 0xf32
+				@working.write(@STORE0_EAX)
+				@working.write(@STORE1_EDX)
+
+			when 0xfa1
+				@working.write(@STORE0_FS)
+
+			when 0xfa9
+				@working.write(@STORE0_GS)
+
+			when 0xfab, 0xfb3, 0xfbb
+				if ((prefices & @PREFICES_OPERAND) != 0)
+					if ((modrm & 0xc0) == 0xc0)
 						@store0_Ed(prefices, modrm, sib, displacement)
 				else
-					if (rm == 0x00 || rm == 0x08)
+					if ((modrm & 0xc0) == 0xc0)
 						@store0_Ew(prefices, modrm, sib, displacement)
 
-			when -1
+			when 0xfba
+				switch (modrm & 0x38)
+					when 0x28, 0x30, 0x38
+						if ((prefices & @PREFICES_OPERAND) != 0)
+							if ((modrm & 0xc0) == 0xc0)
+								@store0_Ed(prefices, modrm, sib, displacement)
+						else
+							if ((modrm & 0xc0) == 0xc0)
+								@store0_Ew(prefices, modrm, sib, displacement)
 
-			else
-				throw "ProtectedModeUdecoded, Got not supported opcode @writeOutputOperands #{opcode}"
+			when 0xfc7
+				switch (modrm & 0x38)
+					when 0x08
+						@decodeM(prefices, modrm, sib, displacement)
+						@working.write(@STORE0_MEM_QWORD)
+					else
+						throw new IllegalStateException("Invalid Gp 6 Instruction?")
+
+
+			when 0xfc8
+				@working.write(@STORE0_EAX)
+			when 0xfc9
+				@working.write(@STORE0_ECX)
+			when 0xfca
+				@working.write(@STORE0_EDX)
+			when 0xfcb
+				@working.write(@STORE0_EBX)
+			when 0xfcc
+				@working.write(@STORE0_ESP)
+			when 0xfcd
+				@working.write(@STORE0_EBP)
+			when 0xfce
+				@working.write(@STORE0_ESI)
+			when 0xfcf
+				@working.write(@STORE0_EDI)
+			when 0xd800
+				switch (modrm & 0x38)
+					when 0x00, 0x08, 0x20, 0x28, 0x30, 0x38
+						@working.write(@FSTORE0_ST0)
+						@working.write(@FCHECK0)
+					when 0x10
+						break
+					when 0x18
+						@working.write(@FPOP)
+
+			when 0xd900
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00, 0x20, 0x30
+							break
+						when 0x10
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FSTORE0_MEM_SINGLE)
+						when 0x18
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FSTORE0_MEM_SINGLE)
+							@working.write(@FPOP)
+						when 0x28
+							@working.write(@STORE0_FPUCW)
+						when 0x38
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@STORE0_MEM_WORD)
+
+				else
+					switch (modrm & 0xf8)
+						when 0xc0
+							break
+						when 0xc8
+							@working.write(@FSTORE0_STN)
+							@working.write(modrm & 0x07)
+							@working.write(@FSTORE1_ST0)
+					switch (modrm)
+						when 0xd0, 0xe4, 0xe5, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xf6, 0xf7
+							break
+						when 0xe0, 0xe1, 0xfe, 0xff
+							@working.write(@FSTORE0_ST0)
+						when 0xf0, 0xf5, 0xf8, 0xfa, 0xfc, 0xfd
+							@working.write(@FSTORE0_ST0)
+							@working.write(@FCHECK0)
+						when 0xf2
+							@working.write(@FSTORE0_ST0)
+							@working.write(@FLOAD0_1)
+							@working.write(@FPUSH)
+						when 0xf1, 0xf3
+							@working.write(@FPOP)
+							@working.write(@FSTORE0_ST0)
+						when 0xf9
+							@working.write(@FPOP)
+							@working.write(@FSTORE0_ST0)
+							@working.write(@FCHECK0)
+						when 0xf4
+							@working.write(@FSTORE1_ST0)
+							@working.write(@FPUSH)
+						when 0xfb
+							@working.write(@FSTORE1_ST0)
+							@working.write(@FPUSH)
+							@working.write(@FCHECK0)
+							@working.write(@FCHECK1)
+
+			when 0xda00
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00, 0x08, 0x20, 0x28, 0x30, 0x38
+							@working.write(@FSTORE0_ST0)
+							@working.write(@FCHECK0)
+						when 0x10
+							break
+						when 0x18
+							@working.write(@FPOP)
+				else
+					switch (modrm)
+						when 0xe9
+							@working.write(@FPOP)
+							@working.write(@FPOP)
+			when 0xdb00
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00, 0x28
+							break
+						when 0x10
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@STORE0_MEM_DWORD)
+						when 0x08, 0x18
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@STORE0_MEM_DWORD)
+							@working.write(@FPOP)
+						when 0x38
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FSTORE0_MEM_EXTENDED)
+							@working.write(@FPOP)
+
+			when 0xdc00
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00, 0x08, 0x20, 0x28, 0x30, 0x38
+							@working.write(@FSTORE0_ST0)
+							@working.write(@FCHECK0)
+
+						when 0x10
+							break
+						when 0x18
+							@working.write(@FPOP)
+				else
+					switch (modrm & 0xf8)
+						when 0xc0, 0xc8, 0xe0, 0xe8, 0xf0, 0xf8
+							@working.write(@FSTORE0_STN)
+							@working.write(modrm & 0x07)
+							@working.write(@FCHECK0)
+
+			when 0xdd00
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00, 0x20, 0x30
+							break
+						when 0x08
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@STORE0_MEM_QWORD)
+							@working.write(@FPOP)
+						when 0x10
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FSTORE0_MEM_DOUBLE)
+						when 0x18
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@FSTORE0_MEM_DOUBLE)
+							@working.write(@FPOP)
+						when 0x38
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@STORE0_MEM_WORD)
+				else
+					switch (modrm & 0xf8)
+						when 0xc0, 0xe0
+							break
+						when 0xd0
+							@working.write(@FSTORE0_STN)
+							@working.write(modrm & 0x07)
+						when 0xd8
+							@working.write(@FSTORE0_STN)
+							@working.write(modrm & 0x07)
+							@working.write(@FPOP)
+						when 0xe8
+							@working.write(@FPOP)
+
+			when 0xde00
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00, 0x08, 0x20, 0x28, 0x30, 0x38
+							@working.write(@FSTORE0_ST0)
+							@working.write(@FCHECK0)
+						when 0x10
+							break
+						when 0x18
+							@working.write(@FPOP)
+				else
+					switch (modrm & 0xf8)
+						when 0xc0, 0xc8, 0xe0, 0xe8, 0xf0, 0xf8
+							@working.write(@FSTORE0_STN)
+							@working.write(modrm & 0x07)
+							@working.write(@FPOP)
+							@working.write(@FCHECK0)
+						when 0xd0, 0xd8
+							break
+					switch (modrm)
+						when 0xd9
+							@working.write(@FPOP)
+							@working.write(@FPOP)
+
+			when 0xdf00
+				if ((modrm & 0xc0) != 0xc0)
+					switch (modrm & 0x38)
+						when 0x00, 0x20, 0x28, 0x30
+							break
+						when 0x08, 0x18
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@STORE0_MEM_WORD)
+							@working.write(@FPOP)
+						when 0x10
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@STORE0_MEM_WORD)
+						when 0x38
+							@decodeM(prefices, modrm, sib, displacement)
+							@working.write(@STORE0_MEM_QWORD)
+							@working.write(@FPOP)
+				else
+					switch (modrm & 0xf8)
+						when 0xe8, 0xf0
+							@working.write(@FPOP)
+					switch (modrm)
+						when 0xe0
+							@working.write(@STORE0_AX)
 
 	writeFlags: (prefices, opcode, modrm) ->
 		switch (opcode)
@@ -2963,6 +4350,46 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			else
 				@decodeM(prefices, modrm, sib, displacement)
 				@working.write(@LOAD0_MEM_DWORD)
+	load0_Gw: (modrm) ->
+		switch (modrm & 0x38)
+			when 0x00
+				@working.write(@LOAD0_AX)
+			when 0x08
+				@working.write(@LOAD0_CX)
+			when 0x10
+				@working.write(@LOAD0_DX)
+			when 0x18
+				@working.write(@LOAD0_BX)
+			when 0x20
+				@working.write(@LOAD0_SP)
+			when 0x28
+				@working.write(@LOAD0_BP)
+			when 0x30
+				@working.write(@LOAD0_SI)
+			when 0x38
+				@working.write(@LOAD0_DI)
+			else
+				throw new IllegalStateException("Unknown Word Register Operand")
+
+	load1_Ew: (prefices, modrm, sib, displacement) ->
+		switch (modrm & 0xc7)
+			when 0xc0
+				@working.write(@LOAD1_AX)
+			when 0xc1
+				@working.write(@LOAD1_CX)
+			when 0xc2
+				@working.write(@LOAD1_DX)
+			when 0xc3
+				@working.write(@LOAD1_BX)
+			when 0xc4
+				@working.write(@LOAD1_SP)
+			when 0xc5
+				@working.write(@LOAD1_BP)
+			when 0xc6
+				@working.write(@LOAD1_SI)
+			when 0xc7
+				@working.write(@LOAD1_DI)
+
 
 	isJump: (opcode, modrm) ->
 		return @isNearJump(opcode, modrm) || @isFarJump(opcode, modrm) || @isModeSwitch(opcode, modrm) || @isBlockTerminating(opcode, modrm);
@@ -3138,6 +4565,36 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				@working.write(@LOAD_SEG_GS)
 			else
 				@working.write(@LOAD_SEG_DS)
+	load0_Ob: (prefices, displacement) ->
+		@decodeO(prefices, displacement)
+		@working.write(@LOAD0_MEM_BYTE)
+
+	decodeO: (prefices, displacement) ->
+		switch (prefices & @PREFICES_SG)
+			when @PREFICES_DS
+				@working.write(@LOAD_SEG_DS)
+			when @PREFICES_ES
+				@working.write(@LOAD_SEG_ES)
+			when @PREFICES_SS
+				@working.write(@LOAD_SEG_SS)
+			when @PREFICES_CS
+				@working.write(@LOAD_SEG_CS)
+			when @PREFICES_FS
+				@working.write(@LOAD_SEG_FS)
+			when @PREFICES_GS
+				@working.write(@LOAD_SEG_GS)
+
+		if ((prefices & @PREFICES_ADDRESS) != 0)
+			if (@decodingAddressMode())
+				@working.write(@ADDR_ID)
+				@working.write(displacement)
+		else
+			if (@decodingAddressMode())
+				@working.write(@ADDR_IW)
+				@working.write(displacement)
+				@working.write(@ADDR_MASK16)
+
+
 
 
 	decodingAddressMode: ->

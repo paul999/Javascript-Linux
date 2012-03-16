@@ -131,6 +131,11 @@ class processor
 		@CY_OFFENDBIT_SHORT = 21
 		@CY_OFFENDBIT_INT = 22
 
+		@parityMap = new Array(256)
+
+		for i in [0...@parityMap.length]
+			@parityMap[i] = ((numberOfSetBits(i) & 0x1) == 0)
+
 	toString: ->
 		return "Processor"
 
@@ -276,7 +281,7 @@ class processor
 
 		@eflagsIOPrivilegeLevel = 0
 		@eflagsInterruptEnableSoon = false
-#TODO: FIXME :(
+
 		@cs = sgm.createRealModeSegment(0xf000)
 		@ds = sgm.createRealModeSegment(0)
 		@ss = sgm.createRealModeSegment(0)
@@ -284,9 +289,9 @@ class processor
 		@fs = sgm.createRealModeSegment(0)
 		@gs = sgm.createRealModeSegment(0)
 
-		@idtr = sgm.createDescriptorTableSegment(0, 0xFFFF)
+		@idtr = sgm.createDescriptorTableSegment(0, 0xffff)
 		@ldtr = sgm.NULL_SEGMENT
-		@gdtr = sgm.createDescriptorTableSegment(0, 0xFFFF)
+		@gdtr = sgm.createDescriptorTableSegment(0, 0xffff)
 		@tss = sgm.NULL_SEGMENT
 
 	#	@modelSpecificRegisters.clear()
@@ -458,7 +463,7 @@ class processor
 		@carryOne = dataOne
 		@carryTwo = dataTwo
 		@carryMethod = method
-	setAuxiliaryCarryFlag3: (@auxiliaryCarryOne, @auxiliaryCarryTwo, @auxiliaryCarryThree, @AuxiliaryCarryMethod) ->
+	setAuxiliaryCarryFlag3: (@auxiliaryCarryOne, @auxiliaryCarryTwo, @auxiliaryCarryThree, @auxiliaryCarryMethod) ->
 		@auxiliaryCarryCalculated = false
 
 	setAuxiliaryCarryFlag2: (@auxiliaryCarryOne, @auxiliaryCarryTwo, @auxiliaryCarryMethod) ->
@@ -467,7 +472,7 @@ class processor
 	setAuxiliaryCarryFlag1: (@auxiliaryCarryOne, @auxiliaryCarryMethod) ->
 		@auxiliaryCarryCalculated = false
 
-	setAuxiliaryCarryFlagBook: (@eflagsAuxiliaryCarry) ->
+	setAuxiliaryCarryFlagBool: (@eflagsAuxiliaryCarry) ->
 		@auxiliaryCarryCalculated = true
 
 	setOverflowFlagBool: (@eflagsOverflow) ->
@@ -556,7 +561,7 @@ class processor
 					when @CY_OFFENDBIT_INT
 						@eflagsCarry = ((@carryLong & 0x100000000) != 0)
 					else
-						log "Missing carry flag calcuation method"
+						throw new IllegalStateException("Missing carry flag calcuation method")
 			return @eflagsCarry
 	getZeroFlag:  ->
 		if (@zeroCalculated)
@@ -590,5 +595,80 @@ class processor
 				when @AC_LNIBBLE_NZERO
 					@eflagsAuxiliaryCarry = ((@auxiliaryCarryOne & 0xf) != 0x0)
 				else
-					log "Missing auxiliary carry flag. Value: #{@auxiliaryCarryMethod}"
+					throw new IllegalStateException("Missing auxiliary carry flag. Value: #{@auxiliaryCarryMethod}")
 			return @eflagsAuxiliaryCarry
+	getParityFlag: ->
+		if (@parityCalculated)
+			return @flagsParity
+		else
+			@parityCalculated = true
+
+		@eflagsParity = @parityMap[@parityOne & 0xff]
+		return @eflagsParity
+
+	getOverflowFlag: ->
+		if (@overflowCalculated)
+			return @eflagsoverflow
+		else
+			@overflowCalculated = true
+		if (@overflowMethod == @OF_ADD_BYTE)
+			return (((@overflowTwo & 0x80) == (@overflowThree & 0x80)) && ((@overflowTwo & 0x80) != (@overflowOne & 0x80)))
+		else if (@overflowMethod == @OF_ADD_SHORT)
+			return (((@overflowTwo & 0x8000) == (@overflowThree & 0x8000)) && ((@overflowTwo & 0x8000) != (@overflowOne & 0x8000)))
+		else if (@overflowMethod == @OF_ADD_INT)
+			return (((@overflowTwo & 0x80000000) == (@overflowThree & 0x80000000)) && ((@overflowTwo & 0x80000000) != (@overflowOne & 0x80000000)))
+		else if (@overflowMethod == @OF_SUB_BYTE)
+			return (((@overflowTwo & 0x80) != (@overflowThree & 0x80)) && ((@overflowTwo & 0x80) != (@overflowOne & 0x80)))
+		else if (@overflowMethod == @OF_SUB_SHORT)
+			return (((@overflowTwo & 0x8000) != (@overflowThree & 0x8000)) && ((@overflowTwo & 0x8000) != (@overflowOne & 0x8000)))
+		else if (@overflowMethod == @OF_SUB_INT)
+			return (((@overflowTwo & 0x80000000) != (@overflowThree & 0x80000000)) && ((@overflowTwo & 0x80000000) != (@overflowOne & 0x80000000)))
+		else if (@overflowMethod == @OF_MAX_BYTE)
+			return (@eflagsoverflow = (@overflowOne == 0x7f))
+		else if (@overflowMethod == @OF_MAX_SHORT)
+			return (@eflagsoverflow = (@overflowOne == 0x7fff))
+		else if (@overflowMethod == @OF_MIN_SHORT)
+			return (@eflagsoverflow = (@overflowOne == 0x8000))#short
+		else if (@overflowMethod == @OF_BIT15_XOR_CARRY)
+			return (@eflagsoverflow = (((@overflowOne & 0x8000) != 0) ^ getCarryFlag()))
+		else
+			switch (@overflowMethod)
+				when @OF_NZ
+					return (@eflagsoverflow = (@overflowOne != 0))
+				when @OF_NOT_BYTE
+					return (@eflagsoverflow = (@overflowOne != @overflowOne)) #byte
+				when @OF_NOT_SHORT
+					return (@eflagsoverflow = (@overflowOne != @overflowOne)) #short
+				when @OF_NOT_INT
+					return (@eflagsoverflow = (@overflowLong != @overflowLong)) #int
+
+				when @OF_LOW_WORD_NZ
+					return (@eflagsoverflow = ((@overflowOne & 0xffff) != 0))
+				when @OF_HIGH_BYTE_NZ
+					return (@eflagsoverflow = ((@overflowOne & 0xff00) != 0))
+
+				when @OF_BIT6_XOR_CARRY
+					return (@eflagsoverflow = (((@overflowOne & 0x40) != 0) ^ getCarryFlag()))
+				when @OF_BIT7_XOR_CARRY
+					return (@eflagsoverflow = (((@overflowOne & 0x80) != 0) ^ getCarryFlag()))
+				when @OF_BIT14_XOR_CARRY
+					return (@eflagsoverflow = (((@overflowOne & 0x4000) != 0) ^ getCarryFlag()))
+				when @OF_BIT30_XOR_CARRY
+					return (@eflagsoverflow = (((@overflowOne & 0x40000000) != 0) ^ getCarryFlag()))
+				when @OF_BIT31_XOR_CARRY
+					return (@eflagsoverflow = (((@overflowOne & 0x80000000) != 0) ^ getCarryFlag()))
+
+				when @OF_BIT7_DIFFERENT
+					return (@eflagsoverflow = ((@overflowOne & 0x80) != (@overflowTwo & 0x80)))
+				when @OF_BIT15_DIFFERENT
+					return (@eflagsoverflow = ((@overflowOne & 0x8000) != (@overflowTwo & 0x8000)))
+				when @OF_BIT31_DIFFERENT
+					return (@eflagsoverflow = ((@overflowOne & 0x80000000) != (@overflowTwo & 0x80000000)))
+
+				when @OF_MAX_INT
+					return (@eflagsoverflow = (@overflowOne == 0x7fffffff))
+
+				when @OF_MIN_BYTE
+					return (@eflagsoverflow = (@overflowOne == 0x80)) #byte
+				when @OF_MIN_INT
+					return (@eflagsoverflow = (@overflowOne == 0x80000000))

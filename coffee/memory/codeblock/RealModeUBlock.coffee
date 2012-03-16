@@ -208,6 +208,70 @@ class RealModeUBlock extends MicrocodeSet
 
 					when @UNDEFINED
 						break
+					when @IMUL_O16
+						reg0 = @imul_o16(reg0, reg1) #short
+					when @LOAD0_DL
+						reg0 = proc.edx & 0xff
+					when @ADDR_IW
+						addr0 += (@microcodes[position++]) #short
+					when @CLC
+						proc.setCarryFlagBool(false)
+					when @LOAD1_DL
+						reg1 = proc.edx & 0xff
+					when @LOAD1_CL
+						reg1 = proc.ecx & 0xff
+					when @LOAD1_BL
+						reg1 = proc.ebx & 0xff
+					when @ADC
+						reg2 = reg0
+						reg0 = reg2 + reg1 + (proc.getCarryFlag() ? 1 : 0)
+					when @ADC_O8_FLAGS
+						@adc_o8_flags(reg0, reg2, reg1)
+					when @SBB
+						reg2 = reg0
+						reg0 = reg2 - (reg1 + (proc.getCarryFlag() ? 1 : 0))
+					when @SBB_O8_FLAGS
+						@sbb_o8_flags(reg0, reg2, reg1)
+					when @XOR
+						reg0 ^= reg1
+					when @INC
+						reg0++
+					when @STORE0_BX
+						proc.ebx = (proc.ebx & ~0xffff) | (reg0 & 0xffff)
+					when @INC_O16_FLAGS
+						@inc_flagsShort(reg0) #short
+					when @LOAD0_CS
+						reg0 = 0xffff & proc.cs.getSelector()
+					when @STORE0_CX
+						proc.ecx = (proc.ecx & ~0xffff) | (reg0 & 0xffff)
+					when @JNP_O8
+						bt = getBytes(reg0)
+						@jnp_o8(bt[0])
+					when @LOAD0_ESI
+						reg0 = proc.esi
+					when @LOAD0_ES
+						reg0 = 0xffff & proc.es.getSelector()
+					when @LOAD1_IB
+						reg1 = @microcodes[position++] & 0xff
+					when @LOAD0_BL
+						reg0 = proc.ebx & 0xff
+					when @STORE0_BL
+						proc.ebx = (proc.ebx & ~0xff) | (reg0 & 0xff)
+					when @LOAD0_CL
+						reg0 = proc.ecx & 0xff
+					when @STORE0_CL
+						proc.ecx = (proc.ecx & ~0xff) | (reg0 & 0xff)
+					when @CWD
+						if ((proc.eax & 0x8000) == 0)
+							proc.edx &= 0xffff0000
+						else
+							proc.edx |= 0x0000ffff
+					when @LOAD0_AH
+						reg0 = (proc.eax >> 8) & 0xff
+					when @STORE0_AH
+						proc.eax = (proc.eax & ~0xff00) | ((reg0 << 8) & 0xff00)
+					when @INT3_O16_A16
+						@int3_o16_a16()
 					else
 						throw "Possible missing microcode: #{mc}"
 		catch e
@@ -243,31 +307,31 @@ class RealModeUBlock extends MicrocodeSet
 			proc.setOverflagFlagBool(false)
 			proc.setCarryFlagBool(true)
 		else
-			proc.setOverflowFlag3(result, operand1, operand2, PC.OF_ADD_SHORT)
+			proc.setOverflowFlag3(result, operand1, operand2, proc.OF_ADD_SHORT)
 			@arithmetic_flags_o16(result, operand1, operand2)
 	add_o16_flags: (result, operand1, operand2) ->
 		@arithmetic_flags_o16(result, operand1, operand2)
-		proc.setOverflowFlag3(result, operand1, operand2, PC.OF_ADD_SHORT)
+		proc.setOverflowFlag3(result, operand1, operand2, proc.OF_ADD_SHORT)
 
 	arithmetic_flags_o16: (result, operand1, operand2) ->
 		proc.setZeroFlagInt(result)
 		proc.setParityFlagInt(result)
 		proc.setSignFlagInt(result)
 
-		proc.setCarryFlag1(result, PC.CY_TWIDDLE_FFFF)
-		proc.setAuxiliaryCarryFlag3(operand1, operand2, result, PC.AC_XOR)
+		proc.setCarryFlag1(result, proc.CY_TWIDDLE_FFFF)
+		proc.setAuxiliaryCarryFlag3(operand1, operand2, result, proc.AC_XOR)
 
 	add_o8_flags: (result, operand1, operand2) ->
 		@arithmetic_flags_o8(result, operand1, operand2)
-		proc.setOverflowFlag3(result, operand1, operand2, PC.OF_ADD_BYTE)
+		proc.setOverflowFlag3(result, operand1, operand2, proc.OF_ADD_BYTE)
 
 	arithmetic_flags_o8: (result, operand1, operand2) ->
 		proc.setZeroFlagInt(result)
 		proc.setParityFlagInt(result)
 		proc.setSignFlagInt(result)
 
-		proc.setCarryFlag1(result, PC.CY_TWIDDLE_FF)
-		proc.setAuxiliaryCarryFlag3(operand1, operand2, result, PC.AC_XOR)
+		proc.setCarryFlag1(result, proc.CY_TWIDDLE_FF)
+		proc.setAuxiliaryCarryFlag3(operand1, operand2, result, proc.AC_XOR)
 
 	bitwise_flags: (result) ->
 		proc.setOverflowFlagBool(false)
@@ -322,7 +386,7 @@ class RealModeUBlock extends MicrocodeSet
 			proc.eax = (proc.eax & ~0xff) | ((proc.eax - 0x06) & 0xff)
 			tempCF = ( tempAL < 0x06) || proc.getCarryFlag()
 		if (tempAL > 0x99) || proc.getCarryFlag()
-			proc.eax = (prox.eax & ~0xff) | ((proc.eax - 0x60) & 0xff)
+			proc.eax = (proc.eax & ~0xff) | ((proc.eax - 0x60) & 0xff)
 			tempCF = true
 		proc.setOverflowFlagBool(false)
 		proc.setZeroFlagInt(proc.eax)
@@ -346,3 +410,54 @@ class RealModeUBlock extends MicrocodeSet
 			addr += 1
 
 		proc.esi = (proc.esi & ~0xffff) | (addr & 0xffff)
+
+	imul_o16: (data0, data1) ->
+		result = data0 * data1
+		proc.setOverflowFlag1(result, proc.OF_NOT_SHORT)
+		proc.setCarryFlag1(result, proc.CY_NOT_SHORT)
+		return result
+
+	adc_o8_flags: (result, operand1, operand2) ->
+		if (proc.getCarryFlag() && operand2 == 0xff)
+			@arithmetic_flags_o8(result, operand1, operand2)
+			proc.setOverflowFlagBool(false)
+			proc.setCarryFlagBool(true)
+		else
+			proc.setOverflowFlag3(result, operand1, operand2, proc.OF_ADD_BYTE)
+			@arithmetic_flags_o8(result, operand1, operand2)
+
+	sbb_o8_flags: (result, operand1, operand2) ->
+		proc.setOverflowFlag3(result, operand1, operand2, proc.OF_SUB_BYTE)
+		@arithmetic_flags_o8(result, operand1, operand2)
+
+	inc_flagsShort: (result) ->
+		proc.setZeroFlagBool(result)
+		proc.setParityFlagBool(result)
+		proc.setSignFlagBool(result)
+		proc.setOverflowFlag1(result, proc.OF_MIN_SHORT)
+		proc.setAuxiliaryCarryFlag1(result, proc.AC_LNIBBLE_ZERO)
+
+	jnp_o8: (offset) ->
+		if (!proc.getParityFlag())
+			@jump_o8(offset)
+
+	int3_o16_a16: ->
+		vector = 3
+
+		if (((proc.esp & 0xffff) < 6) && ((proc.esp & 0xffff) > 0))
+			throw new IllegalStateException("SS Processor Exception Thrown in \"handleInterrupt(#{vector})\"")
+
+		proc.esp = (proc.esp & 0xffff0000) | (0xffff & (proc.esp - 2))
+		eflags = proc.getEFlags() & 0xffff
+		proc.ss.setWord(proc.esp & 0xffff, eflags) #short
+		proc.eflagsInterruptEnable = false
+		proc.eflagsInterruptEnableSoon = false
+		proc.eflagsTrap = false
+		proc.eflagsAlignmentCheck = false
+		proc.esp = (proc.esp & 0xffff0000) | (0xffff & (proc.esp - 2))
+		proc.ss.setWord(proc.esp & 0xffff, proc.cs.getSelector()) #short
+		proc.esp = (proc.esp & 0xffff0000) | (0xffff & (proc.esp - 2))
+		proc.ss.setWord(proc.esp & 0xffff, proc.eip) #short
+
+		proc.eip = 0xffff & proc.idtr.getWord(4*vector)
+		proc.cs.setSelector(0xffff & proc.idtr.getWord(4*vector+2))

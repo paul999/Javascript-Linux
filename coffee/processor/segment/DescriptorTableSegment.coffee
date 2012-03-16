@@ -16,3 +16,11 @@
 class DescriptorTableSegment extends Segment
 	constructor: (@base, limit) ->
 		@limit = 0xffffffff & limit;
+
+	checkAddress: (offset) ->
+		if (0xffffffff & offset) > @limit
+			log "Offset beyond end of Descriptor Table Segment: Offset=" + offset + ", limit=" + @limit
+			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, offset, true)
+	translateAddressRead: (offset) ->
+		@checkAddress(offset)
+		return @base + offset

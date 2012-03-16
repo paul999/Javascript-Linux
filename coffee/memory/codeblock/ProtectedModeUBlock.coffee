@@ -21,7 +21,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		@parityMap = new Array(256)
 
 		for i in [0...@parityMap.length]
-			@parityMap[i] = ((@NumberOfSetBits(i) & 0x1) == 0)
+			@parityMap[i] = ((numberOfSetBits(i) & 0x1) == 0)
 
 		@cumulativeX86Length = x86lengths
 
@@ -34,11 +34,6 @@ class ProtectedModeUBlock extends MicrocodeSet
 				if (@cumulativeX86Length[i] > @cumulativeX86Length[i-1])
 					count++
 			@x86Count = count
-
-	NumberOfSetBits: (i) ->
-		i = i - ((i >> 1) & 0x55555555)
-		i = (i & 0x33333333) + ((i >> 2) & 0x33333333)
-		return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24
 
 	getX86Length: ->
 		if (@microcodes.length == 0)

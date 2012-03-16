@@ -21,12 +21,15 @@ class ByteSourceWrappedMemory
 	set: (@offset) ->
 		@startingPosition = @offset
 
+		if (@startingPosition == 8)
+			throw new LengthIncorrectError('0x8')
+
 	getOffset: ->
 		return @offset
 
 	getByte: ->
 
-		tmp = window.pc.getMemoryOffset(8,@offset)
+		tmp = window.pc.getMemoryOffset(8, @offset)
 		@offset++
 
 		if (!tmp && tmp != 0)
@@ -45,4 +48,7 @@ class ByteSourceWrappedMemory
 		@offset = @startingPosition
 
 	toString: ->
-		return "ByteSourceWrappedMemory @ 0x" + @startingPosition
+		if (@startingPosition == 0x8)
+			throw new LengthIncorrectError('0x8')
+
+		return "ByteSourceWrappedMemory @ " + @startingPosition

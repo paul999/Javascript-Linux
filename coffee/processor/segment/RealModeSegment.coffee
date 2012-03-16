@@ -42,3 +42,8 @@ class RealModeSegment extends Segment
 			throw new ProcessorException(type.GENERAL_PROTECTION, 0, true)
 	getSelector: ->
 		return @selector
+
+	setSelector: (selector) ->
+		@selector = selector
+		@base = selector << 4
+		@type = 0x01 | 0x02
