@@ -20,7 +20,7 @@ class DMAController
 		@pagePortList1 = 0x2
 		@pagePortList2 = 0x3
 		@pagePortList3 = 0x7
-		@pagePortList = [@pagePortList0, @pagePortList1, @PagePortList2, @PagePortList3]
+		@pagePortList = [@pagePortList0, @pagePortList1, @pagePortList2, @pagePortList3]
 		@COMMAND_MEMORY_TO_MEMORY = 0x01
 		@COMMAND_ADDRESS_HOLD = 0x02
 		@COMMAND_CONTROLLER_DISABLE = 0x04
@@ -42,12 +42,23 @@ class DMAController
 		@ADDRESS_WRITE_MASK = 0xf
 
 		@ioportRegistrered = false
-		@dShift = primary ? 0 : 1
-		@ioBase = primary ? 0x00 : 0x0c
-		@pageLowBase = primary ? 0x80 : 0x88
-		tmp = primary ? 0x480 : 0x488
-		@pageHighBase = @highPageEnable ? tmp : -1
-		@controllerNumber = primary ? 0 : 1
+		if primary
+			@dShift = 0
+			@ioBase = 0x00
+			@pageLowBase = 0x80
+			tmp = 0x480
+			@controllerNumber = 0
+		else
+			@dShift = 1
+			@ioBase = 0x0c
+			@pageLowBase = 0x0c
+			tmp = 0x488
+			@controllerNumber = 1
+
+		if (@highPageEnable)
+			@pageHighBase =  tmp
+		else
+			@pageHighBase = -1
 
 		@channels = new Int32Array()
 		@channels = [-1, 2, 3, 1, -1, -1, -1, 0]
@@ -168,7 +179,7 @@ class DMAController
 		val
 
 	readPageLow: (portNumber) ->
-		channelNumber = int @channels[portNumber & 7]
+		channelNumber = @channels[portNumber & 7]
 
 		if (channelNumber == -1)
 			-1
@@ -218,6 +229,8 @@ class DMAController
 		for i in [0...8]
 			temp[j++] = @ioBase + (i << @dShift)
 
+		log "Low: #{@pageLowBase} high: #{@pageHighBase}"
+
 		for i in [0...@pagePortList.length]
 			temp[j++] = @pageLowBase + @pagePortList[i]
 			if (@pageHighBase >= 0)
@@ -226,6 +239,8 @@ class DMAController
 		for i in [0...8]
 			temp[j++] = @ioBase + ((i+8) << @dShift)
 
+
+		log temp
 		return temp
 
 	getFlipFlop: () ->
@@ -237,6 +252,24 @@ class DMAController
 		r = @dmaChannels[channelNumber]
 		r.currentAddress = r.baseAddress << @dShift
 		r.currentWordCount = 0
+
+	ioPortReadWord: (address) ->
+		return (@ioPortReadByte(address) | (@ioPortReadByte(address) << 8))
+
+	ioPortReadByte: (address) ->
+		switch ((address - @ioBase) >>> @dShift)
+			when 0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7
+				return @readChannel(address)
+			when 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf
+				return @readController(address)
+		switch (address - @pageLowBase)
+			when @pagePortList0, @pagePortList1, @pagePortList2, @pagePortList3
+				return @readPageLow(address)
+		switch (address - @pageLowHigh)
+			when @pagePortList0, @pagePortList1, @pagePortList2, @pagePortList3
+				return @readPageHigh(address)
+		return 0xff
+
 
 	numberOfTrailingZeros: (i) ->
 		if (i == 0)

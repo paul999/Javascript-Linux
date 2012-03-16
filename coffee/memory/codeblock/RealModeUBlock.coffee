@@ -77,13 +77,13 @@ class RealModeUBlock extends MicrocodeSet
 							@eipUpdated = true
 							proc.eip += @cumulativeX86Length[position - 1]
 					when @LOAD0_IW
-						reg0 = @microcodes[position++] & 0xffff
+						reg0 = @microcodes[position++]
 					when @STORE0_SP
-						proc.esp = (proc.esp & ~0xffff) | (reg0 & 0xffff)
+						proc.esp = (proc.esp) | (reg0)
 					when @LOAD0_MEM_WORD
-						reg0 = 0xffff & seg0.getWord(addr0)
+						reg0 = seg0.getWord(addr0)
 					when @LOAD1_AX
-						reg1 = proc.eax & 0xffff
+						reg1 = proc.eax
 					when @ADD
 						reg2 = reg0
 						reg0 = reg2 + reg1
@@ -93,15 +93,15 @@ class RealModeUBlock extends MicrocodeSet
 						addr0 = 0
 						seg0 = null
 					when @LOAD0_CX
-						reg0 = proc.ecx & 0xffff
+						reg0 = proc.ecx
 					when @PUSH_O16_A16
 						@push_o16_a16(reg0)
 					when @CALL_O16_A16
 						@call_o16_a16(reg0)
 					when @LOAD0_BX
-						reg0 = proc.ebx & 0xffff
+						reg0 = proc.ebx
 					when @LOAD0_AX
-						reg0 = proc.eax & 0xffff
+						reg0 = proc.eax
 					when @LOAD0_MEM_BYTE
 						try
 							reg0 = 0xff & seg0.getByte(addr0)
@@ -109,7 +109,7 @@ class RealModeUBlock extends MicrocodeSet
 							log "Load, Geen seg0?"
 							log e
 					when @LOAD1_AL
-						reg1 = proc.eax & 0xff
+						reg1 = proc.eax
 					when @STORE0_MEM_BYTE
 						try
 							seg0.setByte(addr0, reg0) #check.
@@ -133,17 +133,17 @@ class RealModeUBlock extends MicrocodeSet
 					when @OR
 						reg0 |= reg1
 					when @STORE0_AX
-						proc.eax = (proc.eax & ~0xffff) | (reg0 & 0xffff)
+						proc.eax = (proc.eax) | (reg0)
 					when @BITWISE_FLAGS_O16
 						@bitwise_flags(reg0) #check was short
 					when @LOAD0_AL
-						reg0 = proc.eax & 0xff
+						reg0 = proc.eax
 					when @LOAD1_BH
-						reg1 = (proc.ebx >> 8) & 0xff
+						reg1 = (proc.ebx >> 8)
 					when @STORE0_AL
-						proc.eax = (proc.eax & ~0xff) | (reg0 & 0xff)
+						proc.eax = (proc.eax) | (reg0)
 					when @LOAD0_DX
-						reg0 = proc.edx & 0xffff
+						reg0 = proc.edx
 
 					when @OUTSW_A16
 						@outsw_a16(reg0, seg0)
@@ -155,16 +155,16 @@ class RealModeUBlock extends MicrocodeSet
 						bt = getBytes(@microcodes[position++])
 						addr0 += bt[0] #check.
 					when @LOAD1_CH
-						reg1 = (proc.ecx >> 8) & 0xff
+						reg1 = (proc.ecx >> 8)
 					when @LOAD0_IB
-						reg0 = @microcodes[position++] & 0xff
+						reg0 = @microcodes[position++]
 					when @JNC_O8
 						bt = getBytes(reg0)
 						@jnc_o8(bt[0]) #check
 					when @ADDR_DI
 						addr0 += (proc.edi) #short
 					when @LOAD1_DH
-						reg1 = (proc.edx >> 8) & 0xff
+						reg1 = (proc.edx >> 8)
 					when @JZ_O8
 						bt = getBytes(reg0)
 						@jz_o8(bt[0]) #byte
@@ -175,9 +175,9 @@ class RealModeUBlock extends MicrocodeSet
 						bt = getBytes(reg0)
 						@jc_o8(bt[0])
 					when @LOAD1_AH
-						reg1 = (proc.eax >> 8) & 0xff
+						reg1 = (proc.eax >> 8)
 					when @LOAD1_IW
-						reg1 = @microcodes[position++] & 0xffff
+						reg1 = @microcodes[position++]
 					when @SUB
 						reg2 = reg0
 						reg0 = reg2 - reg1
@@ -211,17 +211,17 @@ class RealModeUBlock extends MicrocodeSet
 					when @IMUL_O16
 						reg0 = @imul_o16(reg0, reg1) #short
 					when @LOAD0_DL
-						reg0 = proc.edx & 0xff
+						reg0 = proc.edx
 					when @ADDR_IW
 						addr0 += (@microcodes[position++]) #short
 					when @CLC
 						proc.setCarryFlagBool(false)
 					when @LOAD1_DL
-						reg1 = proc.edx & 0xff
+						reg1 = proc.edx
 					when @LOAD1_CL
-						reg1 = proc.ecx & 0xff
+						reg1 = proc.ecx
 					when @LOAD1_BL
-						reg1 = proc.ebx & 0xff
+						reg1 = proc.ebx
 					when @ADC
 						reg2 = reg0
 						reg0 = reg2 + reg1 + (proc.getCarryFlag() ? 1 : 0)
@@ -237,41 +237,148 @@ class RealModeUBlock extends MicrocodeSet
 					when @INC
 						reg0++
 					when @STORE0_BX
-						proc.ebx = (proc.ebx & ~0xffff) | (reg0 & 0xffff)
+						proc.ebx = (proc.ebx) | (reg0)
 					when @INC_O16_FLAGS
 						@inc_flagsShort(reg0) #short
 					when @LOAD0_CS
-						reg0 = 0xffff & proc.cs.getSelector()
+						reg0 = proc.cs.getSelector()
 					when @STORE0_CX
-						proc.ecx = (proc.ecx & ~0xffff) | (reg0 & 0xffff)
+						proc.ecx = (proc.ecx) | (reg0)
 					when @JNP_O8
 						bt = getBytes(reg0)
 						@jnp_o8(bt[0])
 					when @LOAD0_ESI
 						reg0 = proc.esi
 					when @LOAD0_ES
-						reg0 = 0xffff & proc.es.getSelector()
+						reg0 = proc.es.getSelector()
 					when @LOAD1_IB
-						reg1 = @microcodes[position++] & 0xff
+						reg1 = @microcodes[position++]
 					when @LOAD0_BL
-						reg0 = proc.ebx & 0xff
+						reg0 = proc.ebx
 					when @STORE0_BL
-						proc.ebx = (proc.ebx & ~0xff) | (reg0 & 0xff)
+						proc.ebx = (proc.ebx) | (reg0)
 					when @LOAD0_CL
-						reg0 = proc.ecx & 0xff
+						reg0 = proc.ecx
 					when @STORE0_CL
-						proc.ecx = (proc.ecx & ~0xff) | (reg0 & 0xff)
+						proc.ecx = (proc.ecx) | (reg0)
 					when @CWD
 						if ((proc.eax & 0x8000) == 0)
 							proc.edx &= 0xffff0000
 						else
 							proc.edx |= 0x0000ffff
 					when @LOAD0_AH
-						reg0 = (proc.eax >> 8) & 0xff
+						reg0 = (proc.eax >> 8)
 					when @STORE0_AH
-						proc.eax = (proc.eax & ~0xff00) | ((reg0 << 8) & 0xff00)
+						proc.eax = (proc.eax) | ((reg0 << 8))
 					when @INT3_O16_A16
 						@int3_o16_a16()
+					when @LOAD0_BP
+						reg0 = proc.ebp
+
+					when @LOAD0_SP
+						reg0 = proc.esp
+					when @STORE0_BP
+						proc.ebp = (proc.ebp) | (reg0)
+					when @LOAD0_SI
+						reg0 = proc.esi
+					when @LOAD0_DH
+						reg0 = (proc.edx >> 8)
+					when @STORE0_DH
+						proc.edx = (proc.edx) | ((reg0 << 8))
+					when @STORE0_DL
+						proc.edx = (proc.edx) | (reg0)
+					when @STORE1_MEM_BYTE
+						bt = getBytes(reg1)
+						seg0.setByte(addr0, bt[0])
+					when @LOAD1_MEM_BYTE
+						reg1 = seg0.getByte(addr0)
+					when @LOAD0_SS
+						reg0 = proc.ss.getSelector()
+					when @ADDR_ID
+						addr0 += @microcodes[position++]
+					when @LOAD1_MEM_DWORD
+						reg1 = seg0.getDoubleWord(addr0)
+					when @LGDT_O16
+						proc.gdtr = proc.createDescriptorTableSegment(reg1 & 0x00ffffff, reg0)
+					when @LOAD1_DX
+						reg1 = proc.edx
+					when @STORE0_DX
+						proc.edx = (proc.edx) | (reg0)
+					when @STORE1_AX
+						proc.eax = (proc.eax) | (reg1)
+					when @LOOP_CX
+						proc.ecx = (proc.ecx) | ((proc.ecx - 1))
+						if ((0xffff & proc.ecx) != 0)
+							bt = getBytes(reg0)
+							@jump_o8(bt[0])
+					when @STORE0_DS
+						proc.ds.setSelector(reg0)
+					when @STORE0_ES
+						proc.es.setSelector(0xffff & reg0)
+					when @STORE0_FS
+						proc.fs.setSelector(0xffff & reg0)
+					when @STORE0_GS
+						proc.gs.setSelector(0xffff & reg0)
+					when @STORE0_SS
+						proc.ss.setSelector(0xffff & reg0)
+					when @LOAD0_ADDR
+						reg0 = addr0
+					when @STORE0_DI
+						proc.edi = (proc.edi) | (reg0)
+					when @SUB_O8_FLAGS
+						@sub_o8_flags(reg0, reg2, reg1)
+					when @LOAD1_DI
+						reg1 = proc.edi
+					when @STORE0_SI
+						proc.esi = (proc.esi) | (reg0)
+					when @LOAD0_BH
+						reg0 = (proc.ebx >> 8)
+					when @STORE0_BH
+						proc.ebx = (proc.ebx) | ((reg0 << 8))
+					when @SAR_O16
+						reg1 &= 0x1f
+						reg2 = reg0
+						reg0 = (reg0) >> reg1
+					when @SAR_O16_FLAGS
+						@sar_flags(reg0, reg2, reg1) #short 0 en 2
+					when @SHR
+						reg2 = reg0
+						reg0 >>>= reg1
+					when @SHR_O16_FLAGS
+						@shr_flags_short(reg0, reg2, reg1)
+					when @LOAD0_ID
+						reg0 = @microcodes[position++]
+					when @STORE0_MEM_DWORD
+						seg0.setDoubleWord(addr0, reg0)
+					when @LOOPNZ_CX
+						proc.ecx = (proc.ecx) | ((proc.ecx - 1))
+						if (((0xffff & proc.ecx) != 0) && !proc.getZeroFlag())
+							bt = getBytes(reg0)
+							@jump_o8(bt[0])
+					when @LOAD1_CX
+						reg1 = proc.ecx
+					when @AAM
+						reg0 = @aam(reg0)
+					when @JUMP_O16
+						@jump_o16(reg0) #short
+					when @LOOPZ_CX
+						proc.ecx = (proc.ecx) | ((proc.ecx - 1))
+						if (((0xffff & proc.ecx) != 0) && proc.getZeroFlag())
+							@jump_o8(getBytes(reg0)[0])
+					when @REP_STOSW_A16
+						@rep_stosw_a16(reg0)
+					when @CLD
+						proc.eflagsDirection = false
+					when @REP_MOVSW_A16
+						@rep_movsw_a16(seg0)
+					when @IN_O16
+						reg0 = proc.ioports.ioPortReadWord(reg0)
+					when @IN_O8
+						reg0 = proc.ioports.ioPortReadByte(reg0)
+					when @LOAD0_DI
+						reg0 = proc.edi
+					when @LOAD0_DR7
+						reg0 = proc.getDR7() #komt van protected.
 					else
 						throw "Possible missing microcode: #{mc}"
 		catch e
@@ -296,10 +403,10 @@ class RealModeUBlock extends MicrocodeSet
 
 		proc.ss.setWord(offset, proc.eip)
 		proc.esp = (proc.esp & 0xffff0000) | offset
-		tmp = proc.eip + target
-		proc.eip = tmp & 0xffff #?
+		old = proc.eip
+		proc.eip = proc.eip + target
 
-		log "Target: #{target} new EIP: #{proc.eip}"
+		log "Eip: #{old} Target: #{target} new EIP: #{proc.eip}"
 
 	adc_o16_flags: (result, operand1, operand2) ->
 		if (proc.getCarryFlag() && (operand2 = 0xffff))
@@ -360,9 +467,9 @@ class RealModeUBlock extends MicrocodeSet
 	jump_o8: (offset) ->
 		proc.eip += offset
 
-		if (proc.eip & 0xffff0000) != 0
-			proc.eip -+ offset
-			throw ProcessorException.GENERAL_PROTECTION_0
+#		if (proc.eip & 0xffff0000) != 0
+#			proc.eip -= offset
+#			throw ProcessorException.GENERAL_PROTECTION_0
 
 	jz_o8: (offset) ->
 		if (!proc.getZeroFlag())
@@ -461,3 +568,86 @@ class RealModeUBlock extends MicrocodeSet
 
 		proc.eip = 0xffff & proc.idtr.getWord(4*vector)
 		proc.cs.setSelector(0xffff & proc.idtr.getWord(4*vector+2))
+
+	sub_o8_flags: (result, operand1, operand2) ->
+		@arithmetic_flags_o8(result, operand1, operand2)
+		proc.setOverflowFlag3(result, operand1, operand2, proc.OF_SUB_BYTE)
+
+	sar_flags: (result, initial, count) ->
+		if (count > 0)
+			proc.setCarryFlag2(initial, count, proc.CY_SHR_OUTBIT)
+
+			if (count == 1)
+				proc.setOverflowFlagBool(false)
+
+			proc.setSignFlagBool(result)
+			proc.setZeroFlagBool(result)
+			proc.setParityFlagBool(result)
+	shr_flags_short: (result, initial, count) ->
+		if count > 0
+			proc.setCarryFlag2(initial, count, proc.CY_SHR_OUTBIT)
+
+			if count == 1
+				proc.setOverflowFlag2(result, initial, proc.OF_BIT15_DIFFERENT)
+
+			proc.setZeroFlagBool(result)
+			proc.setParityFlagBool(result)
+			proc.setSignFlagBool(result)
+	aam: (base) ->
+		tl = proc.eax
+
+		if base == 0
+			throw ProcessorException.DIVIDE_ERROR
+
+		ah = (tl / base)
+		al = (tl % base)
+		proc.eax |= (al | (ah << 8))
+
+		proc.setAuxiliaryCarryFlagBool(false)
+
+		return al
+	jump_o16: (offset) ->
+		log "Jump. Old: #{proc.eip}, offset: #{offset} new " + (proc.eip + offset)
+		proc.eip += offset
+
+	rep_stosw_a16: (data) ->
+		count = proc.ecx
+		addr = proc.edi
+
+		@executeCount += count
+
+		if proc.eflagsDirection
+			while count != 0
+				proc.es.setWord(addr, data) #short
+				count--
+				addr -= 2
+		else
+			while count != 0
+				proc.es.setWord(addr, data) #short
+				count--
+				addr += 2
+		proc.ecx = proc.ecx | count
+		proc.edi = proc.edi | addr
+
+	rep_movsw_a16: (segment) ->
+		count = proc.ecx
+		inAddr = proc.edi
+		outAddr = proc.esi
+		@executeCount += count
+
+		if (proc.eflagsDirection)
+			while count != 0
+				proc.es.setWord(inAddr, segment.getWord(outAddr))
+				count--
+				outAddr -= 2
+				inAddr -= 2
+
+		else
+			while count != 0
+				proc.es.setWord(inAddr, segment.getWord(outAddr))
+				count--
+				outAddr += 2
+				inAddr += 2
+		proc.ecx = proc.ecx | count
+		proc.edi = proc.edi | inAddr
+		proc.esi = proc.esi | outAddr

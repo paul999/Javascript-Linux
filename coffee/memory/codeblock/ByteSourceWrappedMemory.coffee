@@ -21,7 +21,7 @@ class ByteSourceWrappedMemory
 	set: (@offset) ->
 		@startingPosition = @offset
 
-		if (@startingPosition == 8)
+		if (@startingPosition == 18286)
 			throw new LengthIncorrectError('0x8')
 
 	getOffset: ->
@@ -32,6 +32,8 @@ class ByteSourceWrappedMemory
 		tmp = window.pc.getMemoryOffset(8, @offset)
 		@offset++
 
+#		log "New offset: #{@offset}, start #{@startingPosition}, returned: #{tmp}"
+
 		if (!tmp && tmp != 0)
 			throw new LengthIncorrectError("getByte has been undefined, data: #{tmp}")
 
@@ -40,7 +42,7 @@ class ByteSourceWrappedMemory
 
 	skip: (count) ->
 		if (@offset + count >= window.pc.getMemorySize())
-			throw new MemoryOutOfBound
+			throw new MemoryOutOfBound()
 
 		@offset += count
 
@@ -48,7 +50,7 @@ class ByteSourceWrappedMemory
 		@offset = @startingPosition
 
 	toString: ->
-		if (@startingPosition == 0x8)
+		if (@startingPosition == 18286)
 			throw new LengthIncorrectError('0x8')
 
 		return "ByteSourceWrappedMemory @ " + @startingPosition

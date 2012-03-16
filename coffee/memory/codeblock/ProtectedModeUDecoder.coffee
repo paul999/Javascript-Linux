@@ -230,20 +230,24 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			if (!read && read != 0 )
 				throw new LengthIncorrectError("Read has been undefined, source: #{@source}")
 
-			opcode = 0xff & read
+			opcode = read
+			if (opcode != 0x0)
+				log "Read opcode: #{opcode}"
 
 			bytesRead += 1
 
 			switch (opcode)
 				when 0x0f
 					opcodePrefix = (opcodePrefix << 8) | opcode
-					opcode = 0xff & @source.getByte()
+					opcode =  @source.getByte()
+					log "new opcode #{opcode}"
 					bytesRead += 1
 					modrm = opcode
 				when 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf
 					opcodePrefix = (opcodePrefix << 8) | opcode
 					opcode = 0
-					modrm = 0xff & @source.getByte()
+					log "Opcode 0"
+					modrm =  @source.getByte()
 					bytesRead += 1
 				when 0x2e
 					prefices &= ~@PREFICES_SG
@@ -293,7 +297,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					continue
 			break
 
-
+		if (opcode == 0x30)
+			throw "bla"
 
 		opcode = (opcodePrefix << 8) | opcode
 
@@ -795,11 +800,11 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 			when 0x81
 				if ((prefices & @PREFICES_OPERAND) != 0)
-					load0_Ed(prefices, modrm, sib, displacement)
+					@load0_Ed(prefices, modrm, sib, displacement)
 					@working.write(@LOAD1_ID)
 					@working.write(immediate) #was int
 				else
-					load0_Ew(prefices, modrm, sib, displacement)
+					@load0_Ew(prefices, modrm, sib, displacement)
 					@working.write(@LOAD1_IW)
 					@working.write(immediate) #was int
 
@@ -813,22 +818,22 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 			when 0xc1
 				if ((prefices & @PREFICES_OPERAND) != 0)
-					load0_Ed(prefices, modrm, sib, displacement)
-					@working.write(LOAD1_IB)
+					@load0_Ed(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_IB)
 					@working.write(immediate) #was int
 				else
-					load0_Ew(prefices, modrm, sib, displacement)
-					@working.write(LOAD1_IB)
+					@load0_Ew(prefices, modrm, sib, displacement)
+					@working.write(@LOAD1_IB)
 					@working.write(immediate) #was int
 
 
 			when 0x83
 				if ((prefices & @PREFICES_OPERAND) != 0)
-					load0_Ed(prefices, modrm, sib, displacement)
+					@load0_Ed(prefices, modrm, sib, displacement)
 					@working.write(@LOAD1_ID)
 					@working.write(immediate) #was int
 				else
-					load0_Ew(prefices, modrm, sib, displacement)
+					@load0_Ew(prefices, modrm, sib, displacement)
 					@working.write(@LOAD1_IW)
 					@working.write(immediate) #was int
 
@@ -992,11 +997,11 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 			when 0x92
 				if ((prefices & @PREFICES_OPERAND) != 0)
-					@working.write(LOAD0_EAX)
-					@working.write(LOAD1_EDX)
+					@working.write(@LOAD0_EAX)
+					@working.write(@LOAD1_EDX)
 				else
-					@working.write(LOAD0_AX)
-					@working.write(LOAD1_DX)
+					@working.write(@LOAD0_AX)
+					@working.write(@LOAD1_DX)
 
 
 			when 0x93
@@ -1102,7 +1107,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 							@working.write(LOAD1_IW)
 							@working.write(immediate) #was int
 						when 0x10, 0x18
-							load0_Ew(prefices, modrm, sib, displacement)
+							@load0_Ew(prefices, modrm, sib, displacement)
 						when 0x20, 0x28
 							@load0_Ew(prefices, modrm, sib, displacement)
 						when 0x30, 0x38
@@ -1164,7 +1169,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				@decodeSegmentPrefix(prefices)
 
 			when 0xa4, 0xa5, 0xa6, 0xa7, 0xac, 0xad
-				decodeSegmentPrefix(prefices)
+				@decodeSegmentPrefix(prefices)
 
 			when 0xaa
 				@working.write(@LOAD0_AL)
@@ -3530,9 +3535,9 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				break
 			when 0xfa4, 0xfa5, 0xfac, 0xfad
 				if ((prefices & @PREFICES_OPERAND) != 0)
-					store0_Ed(prefices, modrm, sib, displacement)
+					@store0_Ed(prefices, modrm, sib, displacement)
 				else
-					store0_Ew(prefices, modrm, sib, displacement)
+					@store0_Ew(prefices, modrm, sib, displacement)
 
 			when 0xfb2
 				if ((prefices & @PREFICES_OPERAND) != 0)
@@ -4390,6 +4395,27 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			when 0xc7
 				@working.write(@LOAD1_DI)
 
+	store0_Ed: (prefices, modrm, sib, displacement) ->
+		switch modrm & 0xc7
+			when 0xc0
+				@working.write(@STORE0_EAX)
+			when 0xc2
+				@working.write(@STORE0_ECX)
+			when 0xc2
+				@working.write(@STORE0_EDX)
+			when 0xc3
+				@working.write(@STORE0_EBX)
+			when 0xc4
+				@working.write(@STORE0_ESP)
+			when 0xc5
+				@working.write(@STORE0_EBP)
+			when 0xc6
+				@working.write(@STORE0_ESI)
+			when 0xc7
+				@working.write(@STORE0_EDI)
+			else
+				@decodeM(prefices, modrm, sib, displacement)
+				@working.write(@STORE0_MEM_DWORD)
 
 	isJump: (opcode, modrm) ->
 		return @isNearJump(opcode, modrm) || @isFarJump(opcode, modrm) || @isModeSwitch(opcode, modrm) || @isBlockTerminating(opcode, modrm);
@@ -4594,8 +4620,9 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				@working.write(displacement)
 				@working.write(@ADDR_MASK16)
 
-
-
+	load0_M: (prefices, modrm, sib, displacement) ->
+		@decodeM(prefices, modrm, sib, displacement)
+		@working.write(@LOAD0_ADDR)
 
 	decodingAddressMode: ->
 #		return true

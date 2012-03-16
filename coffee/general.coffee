@@ -14,10 +14,10 @@
 # the Free Software Foundation.
 c = document.getElementById("log");
 log = (message) ->
-	c.appendChild(document.createTextNode(message));
-	c.appendChild(document.createElement("br"));
+#	c.appendChild(document.createTextNode(message));
+#	c.appendChild(document.createElement("br"));
 	console.log(message);
-	c.scrollTop += 20;
+#	c.scrollTop += 20;
 	return
 
 # Copy of the java method Systemarraycopy

@@ -35,7 +35,7 @@ class IOPortHandler
 		for i in [0...data.length]
 			port = data[i]
 			if (!@ioPortDevice[port])
-				log "Added port #{port}"
+				log "Added port #{port} to device #{device}"
 				@ioPortDevice[port] = device
 	initialised: ->
 		return true
@@ -54,13 +54,26 @@ class IOPortHandler
 		@check(address)
 		@ioPortDevice[address].ioPortWriteByte(address, data)
 
+	ioPortReadWord: (address) ->
+		@check(address)
+
+		return @ioPortDevice[address].ioPortReadWord(address)
+
+
+	ioPortReadByte: (address) ->
+		@check(address)
+
+		return @ioPortDevice[address].ioPortReadByte(address)
 
 class UnconnectedIOPort
 	ioPortReadByte: ->
+		log "Trying to read from unconnectedIOPort"
 		return 0xff
 	ioPortReadWord: ->
+		log "Trying to read from unconnectedIOPort"
 		return 0xffff
 	ioPortReadLong: ->
+		log "Trying to read from unconnectedIOPort"
 		return 0xffffffff
 
 	ioPortWriteByte: ->

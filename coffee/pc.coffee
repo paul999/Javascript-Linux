@@ -258,12 +258,6 @@ class PC
 			log "Running setMemory from window?"
 			return window.pc.setMemory(type, offset, data)
 
-		if (data != 0x00 && @running)
-			log "setMemory called with #{type}, #{offset}, #{data}"
-
-		if (data == 0xA0 && @running)
-			throw new LengthIncorrectError()
-
 		if ((!offset && offset != 0) || (!data && data != 0))
 			log "Set memory missing offset/data: #{offset} #{data}"
 			return false

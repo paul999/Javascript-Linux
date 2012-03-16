@@ -28,3 +28,5 @@ After that, open test.html in a browser (Not file the file:// protocol, the test
 Generating start.js/kernel.js:
 wget http://bellard.org/jslinux/linuxstart.bin && php conv.php linuxstart.bin src/start.js start
 The kernel need to be generate in the same way, any Linux kernel based on Fabrice Bellards linuxstarter kernel should work. You should use the kernel variable name for the kernel.
+
+Due to a bug in firefox (https://bugzilla.mozilla.org/show_bug.cgi?id=686274) the kernel cant be loaded via this method. For now only Google Chrome is supported anyway, so it should not be a problem.
