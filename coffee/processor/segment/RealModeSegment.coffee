@@ -34,10 +34,12 @@ class RealModeSegment extends Segment
 		return @defaultSize
 
 	translateAddressWrite: (offset) ->
-		return @base + offset
+#		return @base + offset
+		return offset
 
 	checkAddress: (offset) ->
-		if (0xffffffff & offset) > @limit
+		return
+		if (offset) > @limit
 			log "Segment limit exceeded: offset=#{offset}, limit: #{@limit}"
 			throw new ProcessorException(type.GENERAL_PROTECTION, 0, true)
 	getSelector: ->

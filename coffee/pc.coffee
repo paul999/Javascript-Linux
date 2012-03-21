@@ -16,7 +16,7 @@
 #TODO: Controleer of coffeescript/javascript references gebruikt
 # of vars kopieert.
 
-SYS_RAM_SIZE = 1024 * 1024 * 5
+SYS_RAM_SIZE = 1024 * 1024 * 10
 proc = manager = Clock = sgm = null
 
 class PC
@@ -242,29 +242,44 @@ class PC
 		if !offset || offset == null
 			return false
 		switch type
-			when ""
-				return @mem[offset]
+#			when ""
+#				tmp = @mem[offset]
 			when 8
-				return @mem8[offset]
+				tmp = @mem8[offset]
 			when 16
-				return @mem16[offset]
+				tmp = @mem16[offset]
 			when 32
-				return @mem32[offset]
+				tmp = @mem32[offset]
 			else
 				return false
+		if (tmp == null || tmp == 'undefined' || isNaN(tmp))
+			log "getMemoryOffset: read null/undefined (type; #{type}, offset: #{offset}"
 
-	setMemory: (type = "", offset, data) ->
+		tmp = parseInt tmp
+		return tmp
+
+	setMemory: (type = "err", offset = "err", data = "err") ->
+
+		if (type == "err" || offset == "err" || data == "err")
+			log "Set memory requires 3 parameters"
+			return false
+
 		if !(@ instanceof PC)
 			log "Running setMemory from window?"
 			return window.pc.setMemory(type, offset, data)
 
-		if ((!offset && offset != 0) || (!data && data != 0))
+		if ((!offset && offset != 0) || (data == null || data == 'undefined'))
 			log "Set memory missing offset/data: #{offset} #{data}"
+			tmp = null
+			tmp.getError()
 			return false
 
 		len = @getMemoryLength(type, offset)
-		if (!len || offset > len)
+		if (!len)
+			log "Memory returned a zero length."
+		if (offset > len)
 			log "Set memory length error: len: #{len} offset: #{offset} result: " + (offset > len)
+			tmp.getError()
 			return false
 
 		switch type

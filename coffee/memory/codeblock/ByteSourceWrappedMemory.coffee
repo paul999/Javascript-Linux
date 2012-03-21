@@ -21,6 +21,10 @@ class ByteSourceWrappedMemory
 	set: (@offset) ->
 		@startingPosition = @offset
 
+		if (isNaN(@offset))
+			tmp.get()
+			throw new LengthIncorrectError("Offset cant be NaN.")
+
 		if (@startingPosition == 18286)
 			throw new LengthIncorrectError('0x8')
 
@@ -35,7 +39,7 @@ class ByteSourceWrappedMemory
 #		log "New offset: #{@offset}, start #{@startingPosition}, returned: #{tmp}"
 
 		if (!tmp && tmp != 0)
-			throw new LengthIncorrectError("getByte has been undefined, data: #{tmp}")
+			throw new LengthIncorrectError("getByte has been undefined, offset #{@offset}, start #{@startingPosition} data: #{tmp}")
 
 
 		return tmp

@@ -175,6 +175,8 @@ class processor
 		if (@eflagsID)
 			result |= 0x200000
 
+		log "result eflags: #{result}"
+
 		return result
 
 
@@ -242,6 +244,10 @@ class processor
 
 	getInstructionPointer: ->
 		tmp = @cs.translateAddressRead(@eip)
+
+		if (isNaN(tmp) || isNaN(@eip))
+			throw new lengthIncorrectError("EIP cant be NaN.")
+
 		return tmp
 
 	reset: ->
@@ -263,9 +269,7 @@ class processor
 
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0
-		@cr0 = @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH |  0x10
-		log "@CR0_CACHE_DISABLE" + @CR0_CACHE_DISABLE
-		log "cr0: " + @cr0
+		@cr0 = @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH | @CR0_PROTECTION_ENABLE |  0x10
 		@cr2 = @cr3 = @cr4 = 0x0
 
 		@dr0 = @dr1 = @dr2 = @dr3 = 0x0
@@ -672,3 +676,141 @@ class processor
 					return (@eflagsoverflow = (@overflowOne == 0x80)) #byte
 				when @OF_MIN_INT
 					return (@eflagsoverflow = (@overflowOne == 0x80000000))
+
+	setCR0: (value) ->
+		value |= 0x10
+
+		changedBits = value ^ @cr0
+
+		if changedBits == 0
+			return
+
+		@cr0 = value
+
+		pagingChanged = (changedBits & @CR0_PAGING) != 0
+		cachingChanged = (changedBits & @CR0_CACHE_DISABLE) != 0
+		modeSwitch = (changedBits & @CR0_PROTECTION_ENABLE) != 0
+		wpUserPagesChanged = (changedBits & @CR0_WRITE_PROTECT) != 0
+		alignmentChanged = (changedBits & @CR0_ALIGNMENT_MASK) != 0
+
+		if (changedBits & @CR0_NOT_WRITETHROUGH) != 0
+			log "Unimplemented CR0 flags changed."
+
+		if (pagingChanged)
+			if (((value & @CR0_PROTECTION_ENABLE) == 0) && ((value & @CR0_PAGING) != 0))
+				throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
+
+
+		if (alignmentChanged)
+			@checkAlignmentChecking()
+
+		if (pagingChanged || cachingChanged)
+			log "Unsupported cr0 flag changed."
+			les.setPagingEnabled ((value & @CR0_PAGING) != 0)
+			les.setPageCacheEnabled((value & @CR0_CACHE_DISABLE) == 0)
+
+		if (wpUserPagesChanged)
+			log "Unsuported cr0 flag changed."
+			les.setWriteProtectUserPages((value & CR0_WRITE_PROTECT) != 0)
+
+		if (modeSwitch)
+			if (value & @CR0_PROTECTION_ENABLE) != 0
+				@convertSegmentsToProtectedMode()
+				throw ModeSwitchException.PROTECTED_MODE_EXCEPTION
+			else
+				@setCPL(0)
+				@convertSegmentsToRealMode()
+				throw ModeSwitchException.REAL_MODE_EXCEPTION
+
+	getCR0: ->
+		return @cr0
+
+	setCR3: (value) ->
+		@cr3 = value
+		log "No les"
+#linearMemory.setPageWriteThroughEnabled((value & CR3_PAGE_WRITES_TRANSPARENT) != 0);
+#linearMemory.setPageCacheEnabled((value & CR3_PAGE_CACHE_DISABLE) == 0);
+#linearMemory.setPageDirectoryBaseAddress(value);
+
+	getCR3: ->
+		return @cr3
+
+	getCR2: ->
+		return @cr2
+
+	setCR2: (value) ->
+		@cr2 = value
+
+	setCR4: (value) ->
+		if (@cr4 == value)
+			return
+
+		@cr4 = (@cr4 & ~0x5f) | (value & 0xf5)
+
+		if ((@cr4 & @CR4_VIRTUAL8086_MODE_EXTENSIONS) != 0)
+			log "Virtual-8086 mode extensions enabled in the processor"
+		if ((@cr4 & @CR4_PROTECTED_MODE_VIRTUAL_INTERRUPTS) != 0)
+			log "Protected mode virtual interrupts enabled in the processor"
+		if ((@cr4 & @CR4_OS_SUPPORT_UNMASKED_SIMD_EXCEPTIONS) != 0)
+			log "SIMD instruction support modified in the processor"
+		if ((@cr4 & @CR4_OS_SUPPORT_FXSAVE_FXSTORE) != 0)
+			log "FXSave and FXRStore enabled in the processor"
+		if ((@cr4 & @CR4_DEBUGGING_EXTENSIONS) != 0)
+			log "Debugging extensions enabled"
+		if ((@cr4 & @CR4_TIME_STAMP_DISABLE) != 0)
+			log "Timestamp restricted to CPL0"
+		if ((@cr4 & @CR4_PHYSICAL_ADDRESS_EXTENSION) != 0)
+			log "36-bit addressing enabled"
+			throw new IllegalStateException("36-bit addressing enabled")
+
+#		linearMemory.setGlobalPagesEnabled((value & CR4_PAGE_GLOBAL_ENABLE) != 0)
+#		linearMemory.setPageSizeExtensionsEnabled((cr4 & CR4_PAGE_SIZE_EXTENSIONS) != 0)
+
+	getCR4: ->
+		return @cr4
+
+	setDR0: (@dr0) ->
+
+	setDR1: (@dr1) ->
+
+	setDR2: (@dr2) ->
+
+	setDR3: (@dr3) ->
+
+	setDR4: (@dr4) ->
+
+	setDR5: (@dr5) ->
+
+	setDR6: (@dr6) ->
+
+	setDR7: (@dr7) ->
+
+	getDR0: ->
+		return @dr0
+
+	getDR1: ->
+		return @dr1
+
+	getDR2: ->
+		return @dr2
+
+	getDR3: ->
+		return @dr3
+
+	getDR4: ->
+		return @dr4
+
+	getDR5: ->
+		return @dr5
+
+	getDR6: ->
+		return @dr6
+
+	getDR7: ->
+		return @dr7
+
+	getIOPrivilegeLevel: ->
+		return @eflagsIOPrivilegeLevel
+
+	getCPL: ->
+		return @currentPrivilegeLevel

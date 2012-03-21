@@ -33,6 +33,10 @@ class CodeBlockManager
 		"CodeBlockManager"
 
 	getCodeBlockAt: (offset, operandSize) ->
+		if (isNaN(offset))
+			tmp.get()
+			throw new LengthIncorrectError("Offset cant be NaN")
+
 		block = null
 		block = @tryFactory(@compilingChain,offset, operandSize)
 

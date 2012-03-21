@@ -379,6 +379,11 @@ class RealModeUBlock extends MicrocodeSet
 						reg0 = proc.edi
 					when @LOAD0_DR7
 						reg0 = proc.getDR7() #komt van protected.
+
+					when @SBB_O16_FLAGS
+						@sbb_o16_flags(reg0, reg2, reg1)
+					when @SLDT
+						reg0 = proc.ldtr.getSelector() # alleen protected?
 					else
 						throw "Possible missing microcode: #{mc}"
 		catch e
@@ -637,17 +642,31 @@ class RealModeUBlock extends MicrocodeSet
 
 		if (proc.eflagsDirection)
 			while count != 0
-				proc.es.setWord(inAddr, segment.getWord(outAddr))
+				dt = segment.getWord(outAddr)
+
+#				if (!dt)
+#					log "Got a 'null/undefined/false' value from segment: #{dt}, addr: #{outAddr}"
+
+				proc.es.setWord(inAddr, dt)
 				count--
 				outAddr -= 2
 				inAddr -= 2
 
 		else
 			while count != 0
-				proc.es.setWord(inAddr, segment.getWord(outAddr))
+				dt = segment.getWord(outAddr)
+
+#				if (!dt)
+#					log "Got a 'null/undefined/false' value from segment: #{dt}, addr: #{outAddr}"
+
+				proc.es.setWord(inAddr, dt)
 				count--
 				outAddr += 2
 				inAddr += 2
 		proc.ecx = proc.ecx | count
 		proc.edi = proc.edi | inAddr
 		proc.esi = proc.esi | outAddr
+
+	sbb_o16_flags: (result, operand1, operand2) ->
+		proc.setOverflowFlag3(result, operand1, operand2, proc.OF_SUB_SHORT)
+		@arithmetic_flags_o16(result, operand1, operand2)

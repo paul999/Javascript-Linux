@@ -29,7 +29,12 @@ class Segment
 		return pc.getMemoryOffset(8, @translateAddressRead(offset))
 
 	getWord: (offset) ->
-		return pc.getMemoryOffset(16, @translateAddressRead(offset))
+		tm = pc.getMemoryOffset(16, @translateAddressRead(offset))
+
+		if (isNaN(tm))
+			log "getMemoryOffset returned wrong value? #{tm}, address: #{@translateAddressRead(offset)}"
+
+		return tm
 
 	getDoubleWord: (offset) ->
 		return pc.getMemoryOffset(32, @translateAddressRead(offset))
