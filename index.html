@@ -4,12 +4,57 @@
 <script defer src="src/start.js" type="text/javascript"></script>
 <script defer src="src/kernel.js" type="text/javascript"></script>
 <script defer src="src/emulator.js" type="text/javascript"></script>
+<script defer src="termlib/termlib.js" type="text/javascript"></script>
+
+<style type="text/css">
+
+.lh15 {
+	line-height: 15px;
+}
+
+.term {
+	font-family: "Courier New",courier,fixed,monospace;
+	font-size: 12px;
+	color: #94aad6;
+	background: none;
+	letter-spacing: 1px;
+}
+.term .termReverse {
+	color: #232e45;
+	background: #95a9d5;
+}
+
+table.inventory td {
+	padding-bottom: 20px !important;
+}
+
+tt {
+	font-family: courier,fixed,monospace;
+	color: #ccffaa;
+	font-size: 12px;
+	line-height: 15px;
+}
+
+li {
+	line-height: 15px;
+	margin-bottom: 8px !important;
+}
+
+.dimmed,.dimmed *,.dimmed * * {
+	background-color: #222222 !important;
+	color: #333333 !important;
+}
+</style>
 </head>
 <body>
 <a href="info.html">Update information</a><br />
+
+<div id="termDiv" style=" z-index:1;"></div>
+
 <input type="button" onclick="this.disabled=true;pc.create();" value="PC create" />
-<input type="button" disabled="true" onclick="pc.start();this.disabled=true" id="start" value="start" />
+<input type="button" onclick="pc.start();this.disabled=true" id="start" value="start" />
 <input type="button" onclick="pc.stop();this.disabled=true;" id="stop" value="stop" />
-<div id="log" style="height: 90%;border:black solid 1px; overflow:auto;"></div>
+
+<a href="http://www.masswerk.at/termlib/">Powered by termlib</a>
 </body>
 </html>

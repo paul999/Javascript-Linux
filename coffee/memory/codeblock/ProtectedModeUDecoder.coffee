@@ -127,7 +127,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 		@working = null
 
 		@blockComplete = null
-		@addressModeDecoded = null
+		@addressModeDecoded = false
 
 		@decodeLimit = null
 
@@ -231,8 +231,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				throw new LengthIncorrectError("Read has been undefined, source: #{@source}")
 
 			opcode = read
-			if (opcode != 0x0)
-				log "Read opcode: #{opcode}"
 
 			bytesRead += 1
 
@@ -1431,7 +1429,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 						@decodeM(prefices, modrm, sib, displacement)
 						@working.write(@LOAD0_MEM_QWORD)
 					else
-						throw new IllegalStateException("Invalid Gp 6 Instruction?")
+						throw new IllegalStateException("4 6 Instruction?")
 			when 0xfc8
 				@working.write(@LOAD0_EAX)
 			when 0xfc9
@@ -2572,7 +2570,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					when 0x08
 						@working.write(@DEC)
 					else
-						throw new IllegalStateException("Invalid Gp 4 Instruction?")
+						#throw new IllegalStateException("Invalid Gp 4 Instruction?")
 
 			when 0xff
 				switch (modrm & 0x38)
@@ -2622,8 +2620,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 								@working.write(@PUSH_O16_A32)
 							when @PREFICES_ADDRESS | @PREFICES_OPERAND
 								@working.write(@PUSH_O32_A32)
-					else
-						throw new IllegalStateException("Invalid Gp 5 Instruction? FF modrm=" + modrm)
+					#else
+					#	throw new IllegalStateException("Invalid Gp 5 Instruction? FF modrm=" + modrm)
 
 			when 0x90
 				@working.write(@MEM_RESET)

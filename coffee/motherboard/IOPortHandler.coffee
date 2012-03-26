@@ -41,6 +41,7 @@ class IOPortHandler
 		return true
 
 	check: (address) ->
+		log "Checking for read/write to address: #{address}"
 		if (!@ioPortDevice[address])
 			log "Address unconnected set to: #{address}. TODO: Check if it is ok for this to happen :)."
 			@ioPortDevice[address] = @defaultDevice

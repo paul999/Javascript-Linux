@@ -16,8 +16,8 @@
 #TODO: Controleer of coffeescript/javascript references gebruikt
 # of vars kopieert.
 
-SYS_RAM_SIZE = 1024 * 1024 * 10
-proc = manager = Clock = sgm = null
+SYS_RAM_SIZE = 1024 * 1024 * 32
+proc = manager = Clock = sgm = term = null
 
 class PC
 	constructor: ->
@@ -52,7 +52,7 @@ class PC
 		@add(new DMAController(false, false))
 		@add(new RTC(0x70, 8))
 		@add(new IntervalTimer(0x40, 0))
-#		@add(new GateA20Handler()) #Needed?
+#		@add(new GateA20Handler()) #Needed?, Yes
 
 #		@add(new Keyboard)
 
@@ -60,11 +60,25 @@ class PC
 
 		@resetMemory()
 
+		try
+
+			if (!term || term.closed) && !!Terminal
+				tmp = {x: 220, y: 70, termDiv: 'termDiv', bgColor: '#232e45', greeting: '', wrapping: true}
+				#handler: termHandler, exitHandler: termExitHandler,
+				term = new Terminal(tmp)
+				term.open()
+
+				window.mainPane = document.getElementById('mainPane')
+
+				if (mainPane)
+					mainPane.className = 'lh15 dimmed'
+		catch e
+			log "Could not open Term. Running tests?"
 		document.getElementById("start").disabled = false
 
 		return true
 
-	saveMemory: (data, len, address) ->
+	saveMemory: (data, len, address) =>
 		log "saving file data at #{address} with length #{data.length}"
 
 		if typeof data == "string"
@@ -75,7 +89,7 @@ class PC
 					rs = null
 				addr = address + i
 
-				if (!window.pc.setMemory(8, addr, parseInt(rs)))
+				if (!@setMemory(8, addr, parseInt(rs)))
 					throw new MemoryOutOfBound()
 		else
 			for i in [0...len]
@@ -85,7 +99,7 @@ class PC
 					rs = null
 				addr = address + i
 
-				if (!window.pc.setMemory(8, addr, parseInt(rs)))
+				if (!@setMemory(8, addr, parseInt(rs)))
 					throw new MemoryOutOfBound()
 
 		return true
@@ -98,13 +112,16 @@ class PC
 		@create()
 		@configure()
 
+		if (!@configured)
+			return
+
 		data = window.start
 		@saveMemory(data, data.length, 0x10000)
 		data = window.kernel
 		@saveMemory(data, data.length, 0x00100000)
 
 		st = "console=ttyS0 root=/dev/hda ro init=/sbin/init notsc=1"
-		loc = 0xf800
+		loc = 0xf800 #& 0xff
 		for i in [0...st.length]
 			if (!window.pc.setMemory(8, loc+i, (st.charCodeAt(i) & 0xff)))
 				throw new memoryOutOfBound()
@@ -236,9 +253,12 @@ class PC
 
 				throw e
 	getMemoryLength: (type = "") ->
-		return @mem.byteLength
+		if (!type || type == "" || type == 8)
+			return @mem.byteLength
+		type /= 2
+		return @mem.byteLength / type
 
-	getMemoryOffset: (type = "", offset = null) ->
+	getMemoryOffset: (type = "", offset = null) =>
 		if !offset || offset == null
 			return false
 		switch type
@@ -258,7 +278,7 @@ class PC
 		tmp = parseInt tmp
 		return tmp
 
-	setMemory: (type = "err", offset = "err", data = "err") ->
+	setMemory: (type = "err", offset = "err", data = "err") =>
 
 		if (type == "err" || offset == "err" || data == "err")
 			log "Set memory requires 3 parameters"
@@ -294,7 +314,7 @@ class PC
 			else
 				return false
 		return true
-	resetMemory: ->
+	resetMemory: =>
 		@mem = new ArrayBuffer(SYS_RAM_SIZE + 16);
 		@mem8 = new Uint8Array(@mem, 0, SYS_RAM_SIZE + 16);
 		@mem16 = new Uint16Array(@mem, 0, (SYS_RAM_SIZE + 16) / 2);

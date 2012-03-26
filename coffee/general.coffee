@@ -13,11 +13,14 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 c = document.getElementById("log");
-log = (message) ->
+log = (message) =>
 #	c.appendChild(document.createTextNode(message));
 #	c.appendChild(document.createElement("br"));
 	console.log(message);
 #	c.scrollTop += 20;
+
+	if (term)
+		term.write(message + "\n")
 	return
 
 # Copy of the java method Systemarraycopy

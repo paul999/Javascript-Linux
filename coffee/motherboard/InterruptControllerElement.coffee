@@ -15,7 +15,7 @@
 
 class InterruptControllerElement
 	constructor: (@master, @parent) ->
-		log "create IntteruptControllerElement"
+		log "create InteruptControllerElement"
 		@lastInterruptRequestRegister = null
 		@interruptRequestRegister = null
 		@interruptMaskRegister = null
@@ -39,11 +39,11 @@ class InterruptControllerElement
 		@ioPorts = new Array()
 
 		if (@master)
-			ioPorts = [0x20, 0x21, 0x4d0]
-			elcrMask = 0xf8
+			@ioPorts = [0x20, 0x21, 0x4d0]
+			@elcrMask = 0xf8
 		else
-			ioPorts = [0xa0, 0xa1, 0xfd1]
-			elcrMask = 0xde
+			@ioPorts = [0xa0, 0xa1, 0xfd1]
+			@elcrMask = 0xde
 
 	ioPortsRequested: ->
 		return @ioPorts
@@ -60,7 +60,7 @@ class InterruptControllerElement
 		return @interruptMaskRegister
 
 	elcrRead: ->
-		return elcr
+		return @elcr
 
 	ioPortWrite: (address, data) ->
 		priority = command = irq = null

@@ -104,7 +104,6 @@ class ProtectedModeUBlock extends MicrocodeSet
 						proc.esp = (proc.esp) | (reg0 )
 
 					when @LOAD0_MEM_WORD
-						log "Segment: " + seg0
 						reg0 = seg0.getWord(addr0)
 					when @LOAD_SEG_DS
 						seg0 = proc.ds
@@ -456,7 +455,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					when @LODSB_A16
 						@lodsb_a16(seg0)
 					when @STC
-						proc.setCarryFlag(true)
+						proc.setCarryFlagBool(true)
 
 					when @CMPXCHG_O8_FLAGS
 						@sub_o8_flags(reg2 - reg1, reg2, reg1)
@@ -749,6 +748,8 @@ class ProtectedModeUBlock extends MicrocodeSet
 						proc.eflagsDirection = true
 					when @CMC
 						proc.setCarryFlagBool(!proc.getCarryFlag())
+					when @CLC
+						proc.setCarryFlagBool(false)
 
 					when @STOSB_A16
 						@stosb_a16(reg0)
@@ -852,6 +853,24 @@ class ProtectedModeUBlock extends MicrocodeSet
 								proc.eflagsInterruptEnableSoon = true;
 							else
 								throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+					when @CLI
+						if (proc.getIOPrivilegeLevel() >= proc.getCPL())
+							proc.eflagsInterruptEnable = false
+							proc.eflagsInterruptEnableSoon = false
+						else
+							if ((proc.getIOPrivilegeLevel() < proc.getCPL()) && (proc.getCPL() == 3) && ((proc.getCR4() & 1) != 0))
+								proc.eflagsInterruptEnableSoon = false
+							else
+								log "IOPL: " + proc.getIOPrivilegeLevel() + " CPL: " + proc.getCPL()
+								throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+					when @IDIV_O8
+						@idiv_o8(reg0) #byte
+					when @IDIV_O16
+						@idiv_o16(reg0) #short
+					when @IDIV_O32
+						@idiv_o32(reg0)
+					when @JUMP_ABS_O16
+						@jump_abs(reg0)
 
 					else
 						throw "File: ProtectedModeUBlock: Not added microcode yet? #{@microcodes[position - 1]}"
@@ -1009,7 +1028,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if (proc.getCarryFlag() && operand2 == 0xffff)
 			@arithmetic_flags_o16(result, operand1, operand2)
 			proc.setOverflowFlag(false)
-			proc.setCarryFlag(true)
+			proc.setCarryFlagBool(true)
 		else
 			proc.setOverflowFlag3(result, operand1, operand2, proc.OF_ADD_SHORT)
 			@arithmetic_flags_o16(result, operand1, operand2)
@@ -1018,7 +1037,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if (proc.getCarryFlag() && operand2 == 0xff)
 			@arithmetic_flags_o8(result, operand1, operand2)
 			proc.setOverflowFlagBook(false)
-			proc.setCarryFlag(true)
+			proc.setCarryFlagBool(true)
 		else
 			proc.setOverflowFlag3(result, operand1, operand2, proc.OF_ADD_BYTE)
 			@arithmetic_flags_o8(result, operand1, operand2)
@@ -1601,3 +1620,46 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.eip = nw
 
 		proc.esp = (proc.esp) | (proc.esp + 2)
+
+	idiv_o8: (data) ->
+		if (data == 0)
+			throw ProcessorException.DEVIDE_ERROR
+
+		temp = proc.eax
+		result = temp / data
+		remainder = temp % data
+
+#        if ((result > Byte.MAX_VALUE) || (result < Byte.MIN_VALUE))
+#	    throw ProcessorException.DIVIDE_ERROR;
+
+		proc.eax = (proc.eax) | result | (remainder << 8) #check extra bitwise
+
+	idiv_o16: (data) ->
+		if (data == 0)
+			throw ProcessorException.DIVIDE_ERROR
+
+		temp = (proc.edx << 16) | proc.eax#bit
+		result = temp / data
+		remainder = temp % data
+
+		proc.eax = (proc.eax) | result #bit (2 keer)
+		proc.edx = proc.edx | remainder
+
+	idiv_o32: (data) ->
+		if (data == 0)
+			throw ProcessorException.DIVIDE_ERROR
+
+		temp = (proc.edx) << 32
+		temp |= proc.eax
+		result = temp / data
+		remainder = temp % data
+
+		proc.eax = result
+		proc.edx = remainder
+
+	jump_abs: (offset) ->
+		proc.cs.checkAddress(offset);
+
+		log "jump_abs EIP update: old EIP #{proc.eip} new EIP: #{offset}"
+
+		proc.eip = offset

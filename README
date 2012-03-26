@@ -20,6 +20,8 @@ This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License version 2 as published by
 the Free Software Foundation.
 
+The Terminal is written by http://www.masswerk.at/termlib/
+
 
 Running tests:
 To run the tests included with the emulator you will need to download the QUnit files seperatly, and place them in the src/ directory. Without these files the emulator will not run at all.

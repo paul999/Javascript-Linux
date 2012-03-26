@@ -327,6 +327,8 @@ class processor
 	processProtectedModeInterrupts: (instructions) ->
 		Clock.updateAndProcess(instructions)
 
+		log "interrupt enable: #{@eflagsInterruptEnable}"
+
 		if (@eflagsInterruptEnable)
 			if ((@interruptFlags & @IFLAGS_RESET_REQUEST) != 0)
 				@reset()
