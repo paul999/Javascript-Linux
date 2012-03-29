@@ -327,8 +327,6 @@ class processor
 	processProtectedModeInterrupts: (instructions) ->
 		Clock.updateAndProcess(instructions)
 
-		log "interrupt enable: #{@eflagsInterruptEnable}"
-
 		if (@eflagsInterruptEnable)
 			if ((@interruptFlags & @IFLAGS_RESET_REQUEST) != 0)
 				@reset()
@@ -413,8 +411,8 @@ class processor
 			segmentDescriptor = @ldtr.getQuadWord(segmentSelector & 0xfff8)
 
 		else
-#		if (segmentSelector < 0x4)
-#			return sgm.NULL_SEGMENT
+		if (segmentSelector < 0x4) # removed comments.
+			return sgm.NULL_SEGMENT
 			segmentDescriptor = @gdtr.getQuadWord(segmentSelector & 0xfff8)
 
 		result = sgm.createProtectedModeSegment(segmentSelector, segmentDescriptor)
@@ -522,7 +520,8 @@ class processor
 			else if (@carryMethod == @CY_SHR_OUTBIT)
 				@eflagsCarry = (((@carryOne >>> (@carryTwo - 1)) & 0x1) != 0)
 			else if (@carryMethod == @CY_TWIDDLE_FFFFFFFF)
-				@eflagsCarry = ((@carryLong & (~0xffffffff)) != 0)
+##				@eflagsCarry = ((@carryLong & (~0xffffffff)) != 0)
+				log "Unsuported action"
 			else if (@carryMethod == @CY_SHL_OUTBIT_SHORT)
 				@eflagsCarry = (((@carryOne << (@carryTwo - 1)) & 0x8000) != 0)
 
@@ -536,9 +535,12 @@ class processor
 						@eflagsCarry = -1
 					when @CY_NOT_INT
 						@eflagsCarry = -1
-#	    case CY_NOT_BYTE: return (eflagsCarry = (carryOne != (byte)carryOne));
-#	    case CY_NOT_SHORT: return (eflagsCarry = (carryOne != (short)carryOne));
-#	    case CY_NOT_INT: return (eflagsCarry = (carryLong != (int)carryLong));
+					when @CY_NOT_BYTE
+						@eflagsCarry = (@carryOne != byte(@carryOne))
+					when @CY_NOT_SHORT
+						@eflagsCarry = (@carryOne != short(@carryOne))
+					when @CY_NOT_INT
+						@eflagsCarry = (@carryLong != int(@carryLong))
 					when @CY_LOW_WORD_NZ
 						@eflagsCarry = ((@carryOne & 0xffff) != 0)
 					when @CY_HIGH_BYTE_NZ

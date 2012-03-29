@@ -6,10 +6,10 @@ test("Memory Length", function()
 
 	window.pc.create()
 
-	equal(window.pc.getMemoryLength(), 0x500010, 'Memory length Array')
-	equal(window.pc.getMemoryLength(8),0x500010/2, 'Memory length uint8')
-	equal(window.pc.getMemoryLength(16), 0x500010/4, 'Memory length uint16')
-	equal(window.pc.getMemoryLength(32), 0x500010/8, 'Memory length uint32')
+	equal(window.pc.getMemoryLength(), 0x2000010, 'Memory length Array')
+	equal(window.pc.getMemoryLength(8),0x2000010, 'Memory length uint8')
+	equal(window.pc.getMemoryLength(16), 0x2000010/2, 'Memory length uint16')
+	equal(window.pc.getMemoryLength(32), 0x2000010/4, 'Memory length uint32')
 });
 
 test("Check emptyness", function()
@@ -37,7 +37,7 @@ test("Save memory", function()
 	setup()
 	window.pc.create()
 
-	raises(function(){window.pc.saveMemory(window.start, window.start.length, 0x50001A)}, MemoryOutOfBound, "Saving memory out of bound")
+	raises(function(){window.pc.saveMemory(window.start, window.start.length, SYS_RAM_SIZE + 10)}, MemoryOutOfBound, "Saving memory out of bound")
 
 	equal(window.pc.getMemoryOffset(8, 0), 0, "Test memory 0")
 	equal(window.pc.getMemoryOffset(8, 0x10000), 0, "Test memory 0x00000")

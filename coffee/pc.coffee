@@ -19,6 +19,8 @@
 SYS_RAM_SIZE = 1024 * 1024 * 32
 proc = manager = Clock = sgm = term = null
 
+log "Memory size: #{SYS_RAM_SIZE}"
+
 class PC
 	constructor: ->
 		log "pc.construct"
@@ -36,7 +38,6 @@ class PC
 
 		sgm = new SegmentFactory()
 
-		@general = new general()
 		proc= new processor()
 		Clock = new clock
 		try
@@ -253,10 +254,13 @@ class PC
 
 				throw e
 	getMemoryLength: (type = "") ->
-		if (!type || type == "" || type == 8)
-			return @mem.byteLength
-		type /= 2
-		return @mem.byteLength / type
+		switch (type)
+			when 8, ""
+				return @mem8.length
+			when 16
+				return @mem16.length
+			when 32
+				return @mem32.length
 
 	getMemoryOffset: (type = "", offset = null) =>
 		if !offset || offset == null
@@ -298,8 +302,8 @@ class PC
 		if (!len)
 			log "Memory returned a zero length."
 		if (offset > len)
-			log "Set memory length error: len: #{len} offset: #{offset} result: " + (offset > len)
-			tmp.getError()
+#			log "Set memory length error: len: #{len} offset: #{offset} result: " + (offset > len)
+			#tmp.getError()
 			return false
 
 		switch type
@@ -319,6 +323,11 @@ class PC
 		@mem8 = new Uint8Array(@mem, 0, SYS_RAM_SIZE + 16);
 		@mem16 = new Uint16Array(@mem, 0, (SYS_RAM_SIZE + 16) / 2);
 		@mem32 = new Int32Array(@mem, 0, (SYS_RAM_SIZE + 16) / 4);
+
+		if (@mem.byteLength != (SYS_RAM_SIZE + 16))
+			throw new LengthIncorrectError("Memory length is not correct.")
+		else
+			log "Memlength is OK, size: #{SYS_RAM_SIZE}, real: #{@mem.byteLength}"
 
 
 	printStackTrace: (e) ->

@@ -295,8 +295,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					continue
 			break
 
-		if (opcode == 0x30)
-			throw "bla"
+#		if (opcode == 0x30)
+#			throw "bla"
 
 		opcode = (opcodePrefix << 8) | opcode
 

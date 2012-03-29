@@ -12,6 +12,7 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
+
 c = document.getElementById("log");
 log = (message) =>
 #	c.appendChild(document.createTextNode(message));
@@ -43,6 +44,7 @@ arraycopy = (buf, offset, buffer, address, len) ->
 			buffer[address] = rs
 			address++
 	else
+		log "Non type String found in Arraycopy."
 #		j = 0
 #		for i in [0...len]
 #			buffer[address + j] = buf[i + offset]
@@ -52,31 +54,89 @@ arraycopy = (buf, offset, buffer, address, len) ->
 
 	return buffer
 
-getBytes = (x) ->
+# Java byte: signed
+# Functie heeft geen support voor negatief, gaat van 0-128.
+# Results > 128 geven 128 terug.
+byte = (x) =>
+	if (x < 0)
+		if (x < -127)
+			return -127
+	else
+		if (x > 127)
+			return 127
+	return x
+
+	neg = false
+	if (x < 0)
+		neg = true
+		x *= -1
+	convert = new jDataView(jDataView.createBuffer(x), undefined, undefined)
+
+	result =  convert.getUint8()
+
+	if (result >= 128)
+		result = 127
+
+	if (neg)
+		result *= -1
+	return result
+
+	# It is a unsigned value, however we need to make sure we convert it.
+
+
 	bytes = []
 
 	for i in [3..0]
-		bytes[i] = x & 255
+		bytes[i] = x & 0x80
 		x = x >> 8
-	return bytes
+	log bytes
+	return bytes[3]
+
+short = (x) =>
+	if (x < 0)
+		if (x < -32767)
+			return -32767
+	else
+		if (x > 32767)
+			return 32767
+	return x
+	neg = false
+	if (x < 0)
+		neg = true
+		x *= -1
+	tmp = String.fromCharCode(x)
+	log "Charcode at: " + tmp.charCodeAt(0)
+	convert = new jDataView(jDataView.createBuffer(x), undefined, undefined)
+
+	result = convert.getUint16()
+
+	log "Got back: #{result}"
+
+	if (result >= 32768)
+		result = 32767
+
+	if (neg)
+		result *= -1
+	return result
+
+int = (x) =>
+	x
 
 numberOfSetBits = (i) ->
 	i = i - ((i >> 1) & 0x55555555)
 	i = (i & 0x33333333) + ((i >> 2) & 0x33333333)
 	return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24
 
-class general
-	scale64: (input,multiply,devide) ->
-		rl = (0xffffffff & input) * multiply
-		rh = (input >>> 32) * multiply
+scale64: (input,multiply,devide) ->
+	rl = (0xffffffff & input) * multiply
+	rh = (input >>> 32) * multiply
 
-		rh += (rl >> 32)
+	rh += (rl >> 32)
 
-		resultHigh = 0xffffffff & (rh / divide)
-		resultLow = 0xffffffff & ((((rh % divide) << 32) + (rl & 0xffffffff)) / divide)
+	resultHigh = 0xffffffff & (rh / divide)
+	resultLow = 0xffffffff & ((((rh % divide) << 32) + (rl & 0xffffffff)) / divide)
 
-		(resultHigh << 32) | resultLow
-
+	(resultHigh << 32) | resultLow
 
 `
 Error.createCustromConstructor = (function() {

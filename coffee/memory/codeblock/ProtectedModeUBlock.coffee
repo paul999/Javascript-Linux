@@ -122,9 +122,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 					when @PUSH_O16_A16, @PUSH_O16_A32
 						if (proc.ss.getDefaultSizeFlag())
-							@push_o16_a32(reg0)
+							@push_o16_a32(short(reg0))
 						else
-							@push_o16_a16(reg0)
+							@push_o16_a16(short(reg0))
 					when @CALL_O16_A16, @CALL_O16_A32
 						if proc.ss.getDefaultSizeFlag()
 							@call_o16_a32(reg0)
@@ -341,21 +341,21 @@ class ProtectedModeUBlock extends MicrocodeSet
 						 addr0 += proc.edi
 
 					when @ADDR_AX
-						 addr0 += (proc.eax)
+						 addr0 += short(proc.eax)
 					when @ADDR_CX
-						 addr0 += (proc.ecx)
+						 addr0 += short(proc.ecx)
 					when @ADDR_DX
-						 addr0 += (proc.edx)
+						 addr0 += short(proc.edx)
 					when @ADDR_BX
-						 addr0 += (proc.ebx)
+						 addr0 += short(proc.ebx)
 					when @ADDR_SP
-						 addr0 += (proc.esp)
+						 addr0 += short(proc.esp)
 					when @ADDR_BP
-						 addr0 += (proc.ebp)
+						 addr0 += short(proc.ebp)
 					when @ADDR_SI
-						 addr0 += (proc.esi)
+						 addr0 += short(proc.esi)
 					when @ADDR_DI
-						 addr0 += (proc.edi)
+						 addr0 += short(proc.edi)
 
 					when @ADDR_2EAX
 						 addr0 += (proc.eax << 1)
@@ -430,7 +430,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 						reg0 = seg0.getDoubleWord(addr0)
 
 					when @ADDR_IB #Wrong call?
-						addr0 += getBytes(@microcodes[position++])
+						addr0 += byte(@microcodes[position++])
 					when @ADDR_ID
 						addr0 += @microcodes[position++]
 					when @LGDT_O16
@@ -465,28 +465,28 @@ class ProtectedModeUBlock extends MicrocodeSet
 						@sub_o32_flags((0xffffffff & reg2) - (0xffffffff & reg1), reg2, reg1)
 
 					when @BITWISE_FLAGS_O8
-						@bitwise_flags(reg0) #byte
+						@bitwise_flags(byte(reg0)) #byte
 					when @BITWISE_FLAGS_O16
-						@bitwise_flags(reg0) #short
+						@bitwise_flags(short(reg0)) #short
 					when @BITWISE_FLAGS_O32
 						@bitwise_flags(reg0)
 
 					when @SUB_O8_FLAGS
-						@sub_o8_flags(reg0, reg2, reg1)
+						@sub_o8_flags(reg0, reg2, reg1) # check, byte? geen comment
 					when @SUB_O16_FLAGS
 						@sub_o16_flags(reg0, reg2, reg1)
 					when @SUB_O32_FLAGS
 						@sub_o32_flags(reg0l, reg2, reg1)
 
 					when @ADD_O8_FLAGS
-						@add_o8_flags(reg0, reg2, reg1)
+						@add_o8_flags(reg0, reg2, reg1) #check, byte? Geen commment
 					when @ADD_O16_FLAGS
 						@add_o16_flags(reg0, reg2, reg1)
 					when @ADD_O32_FLAGS
 						@add_o32_flags(reg0l, reg2, reg1)
 
 					when @ADC_O8_FLAGS
-						@adc_o8_flags(reg0, reg2, reg1)
+						@adc_o8_flags(reg0, reg2, reg1) #check, byte? Geen comment
 					when @ADC_O16_FLAGS
 						@adc_o16_flags(reg0, reg2, reg1)
 					when @ADC_O32_FLAGS
@@ -500,37 +500,37 @@ class ProtectedModeUBlock extends MicrocodeSet
 						@sbb_o32_flags(reg0l, reg2, reg1)
 
 					when @INC_O8_FLAGS
-						@inc_flags_byte(reg0) #byte
+						@inc_flags_byte(byte(reg0)) #byte
 					when @INC_O16_FLAGS
-						@inc_flags_short(reg0) #short
+						@inc_flags_short(short(reg0)) #short
 					when @INC_O32_FLAGS
 						@inc_flags_int(reg0)
 
 					when @DEC_O8_FLAGS
-						@dec_flags(reg0) #byte
+						@dec_flags(byte(reg0)) #byte
 					when @DEC_O16_FLAGS
-						@dec_flags(reg0) #short
+						@dec_flags(short(reg0)) #short
 					when @DEC_O32_FLAGS
 						@dec_flags(reg0)
 
 					when @SHL_O8_FLAGS
-						@shl_flags_byte(reg0, reg2, reg1) #byte, byte
+						@shl_flags_byte(byte(reg0), byte(reg2), reg1) #byte, byte
 					when @SHL_O16_FLAGS
-						@shl_flags_short(reg0, reg2, reg1) #short, short
+						@shl_flags_short(short(reg0), short(reg2), reg1) #short, short
 					when @SHL_O32_FLAGS
 						@shl_flags_int(reg0, reg2, reg1)
 
 					when @SHR_O8_FLAGS
-						@shr_flags(reg0, reg2, reg1) #byte
+						@shr_flags(byte(reg0), reg2, reg1) #byte
 					when @SHR_O16_FLAGS
-						@shr_flags(reg0, reg2, reg1) #short
+						@shr_flags(short(reg0), reg2, reg1) #short
 					when @SHR_O32_FLAGS
 						@shr_flags(reg0, reg2, reg1)
 
 					when @SAR_O8_FLAGS
-						@sar_flags(reg0, reg2, reg1) #byte, byte
+						@sar_flags(byte(reg0), byte(reg2), reg1) #byte, byte
 					when @SAR_O16_FLAGS
-						@sar_flags(reg0, reg2, reg1) #short, short
+						@sar_flags(short(reg0), short(reg2), reg1) #short, short
 					when @SAR_O32_FLAGS
 						@sar_flags(reg0, reg2, reg1)
 
@@ -542,62 +542,63 @@ class ProtectedModeUBlock extends MicrocodeSet
 						reg0 >>>= reg1
 					when @SAR_O8
 						reg2 = reg0
-						reg0 = (reg0) >> reg1 #byte
+						reg0 = (byte(reg0)) >> reg1 #byte
 					when @SAR_O16
 						reg2 = reg0
-						reg0 = (reg0) >> reg1 #short
+						reg0 = (short(reg0)) >> reg1 #short
 					when @SAR_O32
 						reg2 = reg0
 						reg0 >>= reg1
 
 					when @RCL_O8_FLAGS
-						@rcl_o8_flags(reg0, reg1)
+						@rcl_o8_flags(reg0, reg1) # Check byte? Geen commentaar
 					when @RCL_O16_FLAGS
 						@rcl_o16_flags(reg0, reg1)
 					when @RCL_O32_FLAGS
 						@rcl_o32_flags(reg0l, reg1)
 
 					when @RCR_O8_FLAGS
-						@rcr_o8_flags(reg0, reg1, reg2)
+						@rcr_o8_flags(reg0, reg1, reg2) #check byte? Geen commentaar
 					when @RCR_O16_FLAGS
 						@rcr_o16_flags(reg0, reg1, reg2)
 					when @RCR_O32_FLAGS
 						@rcr_o32_flags(reg0l, reg1, reg2)
 
 					when @ROL_O8_FLAGS
-						@rol_flags_byte(reg0, reg1)#byte
+						@rol_flags_byte(byte(reg0), reg1)#byte
 					when @ROL_O16_FLAGS
-						@rol_flags_short(reg0, reg1) #short
+						@rol_flags_short(short(reg0), reg1) #short
 					when @ROL_O32_FLAGS
 						@rol_flags_int(reg0, reg1)
 
 					when @ROR_O8_FLAGS
-						@ror_flags(reg0, reg1) #byte
+						@ror_flags(byte(reg0), reg1) #byte
 					when @ROR_O16_FLAGS
-						@ror_flags(reg0, reg1) #short
+						@ror_flags(short(reg0), reg1) #short
 					when @ROR_O32_FLAGS
 						@ror_flags(reg0, reg1)
 
 					when @NEG_O8_FLAGS
-						@neg_flags(reg0) #byte
+						@neg_flags(byte(reg0)) #byte
 					when @NEG_O16_FLAGS
-						@neg_flags(reg0) #short
+						@neg_flags(short(reg0)) #short
 					when @NEG_O32_FLAGS
 						@neg_flags(reg0)
 					when @LOAD0_ADDR
 						reg0 = addr0
 
 					when @ADDR_IB
-						addr0 += (@microcodes[position++]) #byte
+						addr0 += byte((@microcodes[position++])) #byte
 					when @ADDR_IW
-						addr0 += (@microcodes[position++]) #short
+						addr0 += short(@microcodes[position++]) #short
 					when @ADDR_ID
 						addr0 += @microcodes[position++]
 
 					when @STORE0_MEM_BYTE
-						seg0.setByte(addr0, reg0) #byte
+						# controle welke byte?
+						seg0.setByte(addr0, byte(reg0)) #byte
 					when @STORE0_MEM_WORD
-						seg0.setWord(addr0, reg0) #short
+						seg0.setWord(addr0, short(reg0)) #short
 					when @STORE0_MEM_DWORD
 						seg0.setDoubleWord(addr0, reg0)
 					when @STORE0_MEM_QWORD
@@ -606,70 +607,70 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 
 					when @JO_O8
-						@jo_o8(reg0) #byte
+						@jo_o8(byte(reg0)) #byte
 					when @JNO_O
-						@jno_o8(reg0) #byte
+						@jno_o8(byte(reg0)) #byte
 					when @JC_O8
-						@jc_o8(reg0) #byte
+						@jc_o8(byte(reg0)) #byte
 					when @JNC_O
-						@jnc_o8(reg0) #byte
+						@jnc_o8(byte(reg0)) #byte
 					when @JZ_O8
-						@jz_o8(reg0) #byte
+						@jz_o8(byte(reg0)) #byte
 					when @JNZ_O8
-						@jnz_o8(reg0) #byte
+						@jnz_o8(byte(reg0)) #byte
 					when @JNA_O8
-						@jna_o8(reg0) #byte
+						@jna_o8(byte(reg0)) #byte
 					when @JA_O8
-						@ja_o8(reg0) #byte
+						@ja_o8(byte(reg0)) #byte
 					when @JS_O8
-						@js_o8(reg0) #byte
+						@js_o8(byte(reg0)) #byte
 					when @JNS_O8
-						@jns_o8(reg0) #byte
+						@jns_o8(byte(reg0)) #byte
 					when @JP_O8
-						@jp_o8(reg0) #byte
+						@jp_o8(byte(reg0)) #byte
 					when @JNP_O8
-						@jnp_o8(reg0) #byte
+						@jnp_o8(byte(reg0)) #byte
 					when @JL_O8
-						@jl_o8(reg0) #byte
+						@jl_o8(byte(reg0)) #byte
 					when @JNL_O8
-						@jnl_o8(reg0) #byte
+						@jnl_o8(byte(reg0)) #byte
 					when @JNG_O8
-						@jng_o8(reg0) #byte
+						@jng_o8(byte(reg0)) #byte
 					when @JG_O8
-						@jg_o8(reg0) #byte
+						@jg_o8(byte(reg0)) #byte
 
 					when @JO_O16
-						@jo_o16(reg0) #short
+						@jo_o16(short(reg0)) #short
 					when @JNO_O16
-						@jno_o16(reg0) #short
+						@jno_o16(short(reg0)) #short
 					when @JC_O16
-						@jc_o16(reg0) #short
+						@jc_o16(short(reg0)) #short
 					when @JNC_O16
-						@jnc_o16(reg0) #short
+						@jnc_o16(short(reg0)) #short
 					when @JZ_O16
-						@jz_o16(reg0) #short
+						@jz_o16(short(reg0)) #short
 					when @JNZ_O16
-						@jnz_o16(reg0) #short
+						@jnz_o16(short(reg0)) #short
 					when @JNA_O16
-						@jna_o16(reg0) #short
+						@jna_o16(short(reg0)) #short
 					when @JA_O16
-						@ja_o16(reg0) #short
+						@ja_o16(short(reg0)) #short
 					when @JS_O16
-						@js_o16(reg0) #short
+						@js_o16(short(reg0)) #short
 					when @JNS_O16
-						@jns_o16(reg0) #short
+						@jns_o16(short(reg0)) #short
 					when @JP_O16
-						@jp_o16(reg0) #short
+						@jp_o16(short(reg0)) #short
 					when @JNP_O16
-						@jnp_o16(reg0) #short
+						@jnp_o16(short(reg0)) #short
 					when @JL_O16
-						@jl_o16(reg0) #short
+						@jl_o16(short(reg0)) #short
 					when @JNL_O16
-						@jnl_o16(reg0) #short
+						@jnl_o16(short(reg0)) #short
 					when @JNG_O16
-						@jng_o16(reg0) #short
+						@jng_o16(short(reg0)) #short
 					when @JG_O16
-						@jg_o16(reg0) #short
+						@jg_o16(short(reg0)) #short
 
 					when @JO_O32
 						@jo_o32(reg0)
@@ -705,9 +706,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 						@jg_o32(reg0)
 
 					when @JUMP_O8
-						@jump_o8(reg0)#byte
+						@jump_o8(byte(reg0))#byte
 					when @JUMP_O16
-						@jump_o16(reg0)#short
+						@jump_o16(short(reg0))#short
 					when @JUMP_O32
 						jump_o32(reg0)
 
@@ -864,9 +865,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 								log "IOPL: " + proc.getIOPrivilegeLevel() + " CPL: " + proc.getCPL()
 								throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
 					when @IDIV_O8
-						@idiv_o8(reg0) #byte
+						@idiv_o8(getByte(reg0)) #byte
 					when @IDIV_O16
-						@idiv_o16(reg0) #short
+						@idiv_o16(short(reg0)) #short
 					when @IDIV_O32
 						@idiv_o32(reg0)
 					when @JUMP_ABS_O16
@@ -896,7 +897,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if ((proc.esp < 2) && (proc.esp > 0))
 			throw ProcessorException.STACK_SEGMENT_0
 
-		proc.ss.setWord(proc.esp - 2, (proc.eip))
+		proc.ss.setWord(proc.esp - 2, short(proc.eip))
 		proc.esp -= 2
 
 		log "call_o16_a32: EIP update: old EIP: #{proc.eip} offset: #{target} new EIP: #{tempEIP}"
@@ -909,7 +910,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if (proc.esp < 2)
 			throw ProcessorException.STACK_SEGMENT_0
 
-		proc.ss.setWord((proc.esp - 2), proc.eip)
+		proc.ss.setWord((proc.esp - 2), short(proc.eip))
 		proc.esp = (proc.esp) | (proc.esp - 2)
 
 		log "call_o16_a16: EIP update: old EIP: #{proc.eip} offset: #{target} new EIP: #{tempEIP}"
@@ -981,9 +982,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 
 	arithmetic_flags_o16: (result, operand1, operand2) ->
-		proc.setZeroFlagBool(result)
+		proc.setZeroFlagBool(short(result))
 		proc.setParityFlagBool(result)
-		proc.setSignFlagBool(result)
+		proc.setSignFlagBool(short(result))
 
 		proc.setCarryFlag1(result, proc.CY_TWIDDLE_FFFF)
 		proc.setAuxiliaryCarryFlag3(operand1, operand2, result, proc.AC_XOR)
@@ -1369,7 +1370,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 	stosw_a16: (data) ->
 		addr = proc.edi
-		proc.es.setWord(addr, data) #short
+		proc.es.setWord(addr, short(data)) #short
 
 		if (proc.eflagsDirection)
 			addr -= 2
@@ -1380,7 +1381,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 	stosw_a32: (data) ->
 		addr = proc.edi
-		proc.es.setWord(addr, data) #short
+		proc.es.setWord(addr, short(data)) #short
 
 		if (proc.eflagsDirection)
 			addr -= 2
@@ -1460,12 +1461,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if (proc.eflagsDirection)
 			while (count != 0)
 				log "count: #{count}, addr: #{addr}"
-				proc.es.setWord(addr, data) #short
+				proc.es.setWord(addr, short(data)) #short
 				count--
 				addr -= 2
 		else
 			while (count != 0)
-				proc.es.setWord(addr, data) #SHORT
+				proc.es.setWord(addr, short(data)) #SHORT
 				count--
 				addr += 2
 
@@ -1479,12 +1480,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		if (proc.eflagsDirection)
 			while (count != 0)
-				proc.es.setWord(addr, data) #short
+				proc.es.setWord(addr, short(data)) #short
 				count--
 				addr -= 2
 		else
 			while (count != 0)
-				proc.es.setWord(addr, data) #short
+				proc.es.setWord(addr, short(data)) #short
 				count--
 				addr += 2
 
@@ -1596,6 +1597,22 @@ class ProtectedModeUBlock extends MicrocodeSet
 		@bitwise_flags(al)
 		proc.setCarryFlagBool(newCF)
 
+	das: ->
+		tempCF = false
+		tempAL = proc.eax
+
+		if (((tempAL & 0xf) > 0x9) || proc.getAuxiliaryCarryFlag())
+			proc.setAuxiliaryCarryFlagBool(true)
+			proc.eax = (proc.eax) | (proc.eax - 0x06) #bitwise
+			tempCF = (tempAL < 0x06) || proc.getCarryFlag()
+
+		if (tempAL > 0x99) || proc.getCarryFlag()
+			proc.eax = proc.eax | (proc.eax - 0x60)
+			tempCF = true
+
+		@bitwise_flags(byte(proc.eax))
+		proc.setCarryFlagBool(tempCF)
+
 	_rol_flags: (result, count, type) ->
 		if (count > 0)
 			proc.setCarryFlag1(result, proc.CY_LOWBIT)
@@ -1625,12 +1642,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if (data == 0)
 			throw ProcessorException.DEVIDE_ERROR
 
-		temp = proc.eax
+		temp = short(proc.eax)
 		result = temp / data
 		remainder = temp % data
 
-#        if ((result > Byte.MAX_VALUE) || (result < Byte.MIN_VALUE))
-#	    throw ProcessorException.DIVIDE_ERROR;
+#		if ((result > Byte.MAX_VALUE) || (result < Byte.MIN_VALUE))
+#			throw ProcessorException.DIVIDE_ERROR;
 
 		proc.eax = (proc.eax) | result | (remainder << 8) #check extra bitwise
 

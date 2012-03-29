@@ -152,28 +152,23 @@ class RealModeUBlock extends MicrocodeSet
 					when @ADDR_BP
 						addr0 += (proc.ebp) #check, was short.
 					when @ADDR_IB
-						bt = getBytes(@microcodes[position++])
-						addr0 += bt[0] #check.
+						addr0 += byte(@microcodes[position++]) #check.
 					when @LOAD1_CH
 						reg1 = (proc.ecx >> 8)
 					when @LOAD0_IB
 						reg0 = @microcodes[position++]
 					when @JNC_O8
-						bt = getBytes(reg0)
-						@jnc_o8(bt[0]) #check
+						@jnc_o8(byte(reg0)) #check
 					when @ADDR_DI
 						addr0 += (proc.edi) #short
 					when @LOAD1_DH
 						reg1 = (proc.edx >> 8)
 					when @JZ_O8
-						bt = getBytes(reg0)
-						@jz_o8(bt[0]) #byte
+						@jz_o8(byte(reg0)) #byte
 					when @JNS_O8
-						bt = getBytes(reg0)
-						@jns_o8(bt[0])
+						@jns_o8(byte(reg0))
 					when @JC_O8
-						bt = getBytes(reg0)
-						@jc_o8(bt[0])
+						@jc_o8(byte(reg0))
 					when @LOAD1_AH
 						reg1 = (proc.eax >> 8)
 					when @LOAD1_IW
@@ -190,8 +185,7 @@ class RealModeUBlock extends MicrocodeSet
 					when @AND
 						reg0 &= reg1
 					when @BITWISE_FLAGS_O8
-						bt = getBytes(reg0)
-						@bitwise_flags(bt[0])
+						@bitwise_flags(byte(reg0))
 					when @OUTSB_A16
 						@outsb_a16(reg0, seg0)
 					when @LOAD0_MEM_DWORD
@@ -245,8 +239,7 @@ class RealModeUBlock extends MicrocodeSet
 					when @STORE0_CX
 						proc.ecx = (proc.ecx) | (reg0)
 					when @JNP_O8
-						bt = getBytes(reg0)
-						@jnp_o8(bt[0])
+						@jnp_o8(byte(reg0))
 					when @LOAD0_ESI
 						reg0 = proc.esi
 					when @LOAD0_ES
@@ -288,8 +281,7 @@ class RealModeUBlock extends MicrocodeSet
 					when @STORE0_DL
 						proc.edx = (proc.edx) | (reg0)
 					when @STORE1_MEM_BYTE
-						bt = getBytes(reg1)
-						seg0.setByte(addr0, bt[0])
+						seg0.setByte(addr0, byte(reg1))
 					when @LOAD1_MEM_BYTE
 						reg1 = seg0.getByte(addr0)
 					when @LOAD0_SS
@@ -309,8 +301,7 @@ class RealModeUBlock extends MicrocodeSet
 					when @LOOP_CX
 						proc.ecx = (proc.ecx) | ((proc.ecx - 1))
 						if ((0xffff & proc.ecx) != 0)
-							bt = getBytes(reg0)
-							@jump_o8(bt[0])
+							@jump_o8(byte(reg0))
 					when @STORE0_DS
 						proc.ds.setSelector(reg0)
 					when @STORE0_ES
@@ -353,8 +344,7 @@ class RealModeUBlock extends MicrocodeSet
 					when @LOOPNZ_CX
 						proc.ecx = (proc.ecx) | ((proc.ecx - 1))
 						if (((0xffff & proc.ecx) != 0) && !proc.getZeroFlag())
-							bt = getBytes(reg0)
-							@jump_o8(bt[0])
+							@jump_o8(byte(reg0))
 					when @LOAD1_CX
 						reg1 = proc.ecx
 					when @AAM
@@ -364,7 +354,7 @@ class RealModeUBlock extends MicrocodeSet
 					when @LOOPZ_CX
 						proc.ecx = (proc.ecx) | ((proc.ecx - 1))
 						if (((0xffff & proc.ecx) != 0) && proc.getZeroFlag())
-							@jump_o8(getBytes(reg0)[0])
+							@jump_o8(byte(reg0))
 					when @REP_STOSW_A16
 						@rep_stosw_a16(reg0)
 					when @CLD
