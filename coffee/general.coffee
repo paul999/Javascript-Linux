@@ -58,69 +58,25 @@ arraycopy = (buf, offset, buffer, address, len) ->
 # Functie heeft geen support voor negatief, gaat van 0-128.
 # Results > 128 geven 128 terug.
 byte = (x) =>
-	if (x < 0)
-		if (x < -127)
-			return -127
-	else
-		if (x > 127)
-			return 127
-	return x
-
-	neg = false
-	if (x < 0)
-		neg = true
-		x *= -1
 	convert = new jDataView(jDataView.createBuffer(x), undefined, undefined)
 
-	result =  convert.getUint8()
+	result =  convert.getInt8()
 
-	if (result >= 128)
-		result = 127
-
-	if (neg)
-		result *= -1
 	return result
 
-	# It is a unsigned value, however we need to make sure we convert it.
-
-
-	bytes = []
-
-	for i in [3..0]
-		bytes[i] = x & 0x80
-		x = x >> 8
-	log bytes
-	return bytes[3]
-
 short = (x) =>
-	if (x < 0)
-		if (x < -32767)
-			return -32767
-	else
-		if (x > 32767)
-			return 32767
-	return x
-	neg = false
-	if (x < 0)
-		neg = true
-		x *= -1
-	tmp = String.fromCharCode(x)
-	log "Charcode at: " + tmp.charCodeAt(0)
 	convert = new jDataView(jDataView.createBuffer(x), undefined, undefined)
 
-	result = convert.getUint16()
+	result =  convert.getInt16()
 
-	log "Got back: #{result}"
-
-	if (result >= 32768)
-		result = 32767
-
-	if (neg)
-		result *= -1
 	return result
 
 int = (x) =>
-	x
+	convert = new jDataView(jDataView.createBuffer(x), undefined, undefined)
+
+	result =  convert.getInt32()
+
+	return result
 
 numberOfSetBits = (i) ->
 	i = i - ((i >> 1) & 0x55555555)
