@@ -246,7 +246,7 @@ class processor
 		tmp = @cs.translateAddressRead(@eip)
 
 		if (isNaN(tmp) || isNaN(@eip))
-			throw new lengthIncorrectError("EIP cant be NaN.")
+			throw new LengthIncorrectError("EIP cant be NaN. Value: " + @eip)
 
 		return tmp
 
@@ -269,7 +269,7 @@ class processor
 
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0
-		@cr0 = @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH | @CR0_PROTECTION_ENABLE |  0x10
+		@cr0 = @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH |  0x10
 		@cr2 = @cr3 = @cr4 = 0x0
 
 		@dr0 = @dr1 = @dr2 = @dr3 = 0x0

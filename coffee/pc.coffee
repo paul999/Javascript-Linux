@@ -17,7 +17,7 @@
 # of vars kopieert.
 
 SYS_RAM_SIZE = 1024 * 1024 * 32
-proc = manager = Clock = sgm = term = null
+proc = manager = Clock = sgm = term = rtc = null
 
 log "Memory size: #{SYS_RAM_SIZE}"
 
@@ -46,12 +46,15 @@ class PC
 			@printStackTrace e
 			throw e
 
+		rtc = new RTC(0x70, 8)
+
 		@add(proc)
+		@add(Clock)
 		@add(new IOPortHandler)
 		@add(new InterruptController)
 		@add(new DMAController(false, true))
 		@add(new DMAController(false, false))
-		@add(new RTC(0x70, 8))
+		@add(rtc)
 		@add(new IntervalTimer(0x40, 0))
 #		@add(new GateA20Handler()) #Needed?, Yes
 
@@ -249,6 +252,7 @@ class PC
 			if (e instanceof ProcessorException)
 				proc.handleProtectedModeException(e)
 			else
+				log e
 				@printStackTrace(e)
 				window.pc.stop()
 
@@ -331,6 +335,9 @@ class PC
 
 
 	printStackTrace: (e) ->
+		if (e == null)
+			e.null()
+
 		callstack = new Array()
 		isCallstackPopulated = false
 		if (e.stack)

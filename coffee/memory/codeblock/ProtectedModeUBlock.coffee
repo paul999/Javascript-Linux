@@ -507,11 +507,11 @@ class ProtectedModeUBlock extends MicrocodeSet
 						@inc_flags_int(reg0)
 
 					when @DEC_O8_FLAGS
-						@dec_flags(byte(reg0)) #byte
+						@dec_flags_byte(byte(reg0)) #byte
 					when @DEC_O16_FLAGS
-						@dec_flags(short(reg0)) #short
+						@dec_flags_short(short(reg0)) #short
 					when @DEC_O32_FLAGS
-						@dec_flags(reg0)
+						@dec_flags_int(reg0)
 
 					when @SHL_O8_FLAGS
 						@shl_flags_byte(byte(reg0), byte(reg2), reg1) #byte, byte
@@ -872,6 +872,27 @@ class ProtectedModeUBlock extends MicrocodeSet
 						@idiv_o32(reg0)
 					when @JUMP_ABS_O16
 						@jump_abs(reg0)
+					when @SIGN_EXTEND_8_16
+						reg0 = 0xffff & byte(reg0)
+					when @SIGN_EXTEND_8_32
+						reg0 = byte(reg0)
+					when @SIGN_EXTEND_16_32
+						reg0 = short(reg0)
+					when @POPA_32, @POPA_A16
+						if (proc.ss.getDefaultSizeFlag())
+							@popa_a32()
+						else
+							@popa_a16()
+
+					when @BOUND_O16 #real mode only?
+						lower = short(reg0)
+						upper = short(reg0 >> 16)
+						index = short(reg1)
+
+#						if ((index < lower) || (index > (upper + 2)))
+#							log "here?"
+#							throw ProcessorException.BOUND_RANGE
+
 
 					else
 						throw "File: ProtectedModeUBlock: Not added microcode yet? #{@microcodes[position - 1]}"
@@ -1680,3 +1701,45 @@ class ProtectedModeUBlock extends MicrocodeSet
 		log "jump_abs EIP update: old EIP #{proc.eip} new EIP: #{offset}"
 
 		proc.eip = offset
+
+	dec_flags_int: (result) ->
+		proc.setZeroFlagBool(result)
+		proc.setParityFlagBool(result)
+		proc.setSignFlagBool(result)
+		proc.setOverflowFlag1(result, proc.OF_MAX_INT)
+		proc.setAuxiliaryCarryFlag1(result, proc.AC_LNIBBLE_MAX)
+
+	dec_flags_short: (result) ->
+		proc.setZeroFlagBool(result)
+		proc.setParityFlagBool(result)
+		proc.setSignFlagBool(result)
+		proc.setOverflowFlag1(result, proc.OF_MAX_SHORT)
+		proc.setAuxiliaryCarryFlag1(result, proc.AC_LNIBBLE_MAX)
+
+	dec_flags_byte: (result) ->
+		proc.setZeroFlagBool(result)
+		proc.setParityFlagBool(result)
+		proc.setSignFlagBool(result)
+		proc.setOverflowFlag1(result, proc.OF_MAX_BYTE)
+		proc.setAuxiliaryCarryFlag1(result, proc.AC_LNIBBLE_MAX)
+
+	popa_a16: ->
+
+		offset = proc.esp
+
+		proc.edi = (proc.edi) | proc.ss.getWord(offset)
+		offset += 2
+		proc.esi = (proc.esi) | proc.ss.getWord(offset)
+		offset += 2
+		proc.ebp = (proc.ebp) | proc.ss.getWord(offset)
+		offset += 4
+
+		proc.ebx = (proc.ebx) | proc.ss.getWord(offset)
+		offset += 2
+		proc.edx = (proc.edx) | proc.ss.getWord(offset)
+		offset += 2
+		proc.ecx = (proc.ecx) | proc.ss.getWord(offset)
+		offset += 2
+		proc.eax = (proc.eax) | proc.ss.getWord(offset)
+
+		proc.esp = proc.esp | offset & 0xff #bitwise nodig hier?

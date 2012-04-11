@@ -38,7 +38,7 @@ class ByteSourceWrappedMemory
 
 #		log "New offset: #{@offset}, start #{@startingPosition}, returned: #{tmp}"
 
-		if (!tmp && tmp != 0)
+		if (tmp == undefined || isNaN(tmp))
 			throw new LengthIncorrectError("getByte has been undefined, offset #{@offset}, start #{@startingPosition} data: #{tmp}")
 
 

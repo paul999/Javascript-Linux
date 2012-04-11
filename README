@@ -22,10 +22,14 @@ the Free Software Foundation.
 
 The Terminal is written by http://www.masswerk.at/termlib/
 
+Building JavaScript Sources:
+To build the JavaScript sources from the coffeescript files you should use cake in the root directory of the git repository. Currently coffeescript 1.3.1 is used during development to build the sources, other versions are not tested. There are several options to build the file (Again, see cake), however cake build will be in most cases sufficient to test.
+
 
 Running tests:
 To run the tests included with the emulator you will need to download the QUnit files seperatly, and place them in the src/ directory. Without these files the emulator will not run at all.
 After that, open test.html in a browser (Not file the file:// protocol, the test will fail!)
+The tests are currently only tested in Chrome, it is known that the tests dont work in Opera (Causing high CPU load/memory usage).
 
 Generating start.js/kernel.js:
 wget http://bellard.org/jslinux/linuxstart.bin && php conv.php linuxstart.bin src/start.js start

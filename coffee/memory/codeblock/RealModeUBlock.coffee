@@ -190,7 +190,7 @@ class RealModeUBlock extends MicrocodeSet
 						@outsb_a16(reg0, seg0)
 					when @LOAD0_MEM_DWORD
 						reg0 = seg0.getDoubleWord(addr0)
-					when @BOUND_O16
+#					when @BOUND_O16
 						#geen idee nog...
 
 #		short lower = (short)reg0;
@@ -300,18 +300,18 @@ class RealModeUBlock extends MicrocodeSet
 						proc.eax = (proc.eax) | (reg1)
 					when @LOOP_CX
 						proc.ecx = (proc.ecx) | ((proc.ecx - 1))
-						if ((0xffff & proc.ecx) != 0)
+						if ((proc.ecx) != 0)
 							@jump_o8(byte(reg0))
 					when @STORE0_DS
 						proc.ds.setSelector(reg0)
 					when @STORE0_ES
-						proc.es.setSelector(0xffff & reg0)
+						proc.es.setSelector(reg0)
 					when @STORE0_FS
-						proc.fs.setSelector(0xffff & reg0)
+						proc.fs.setSelector(reg0)
 					when @STORE0_GS
-						proc.gs.setSelector(0xffff & reg0)
+						proc.gs.setSelector(reg0)
 					when @STORE0_SS
-						proc.ss.setSelector(0xffff & reg0)
+						proc.ss.setSelector(reg0)
 					when @LOAD0_ADDR
 						reg0 = addr0
 					when @STORE0_DI
@@ -343,7 +343,7 @@ class RealModeUBlock extends MicrocodeSet
 						seg0.setDoubleWord(addr0, reg0)
 					when @LOOPNZ_CX
 						proc.ecx = (proc.ecx) | ((proc.ecx - 1))
-						if (((0xffff & proc.ecx) != 0) && !proc.getZeroFlag())
+						if (((proc.ecx) != 0) && !proc.getZeroFlag())
 							@jump_o8(byte(reg0))
 					when @LOAD1_CX
 						reg1 = proc.ecx
@@ -353,7 +353,7 @@ class RealModeUBlock extends MicrocodeSet
 						@jump_o16(reg0) #short
 					when @LOOPZ_CX
 						proc.ecx = (proc.ecx) | ((proc.ecx - 1))
-						if (((0xffff & proc.ecx) != 0) && proc.getZeroFlag())
+						if (((proc.ecx) != 0) && proc.getZeroFlag())
 							@jump_o8(byte(reg0))
 					when @REP_STOSW_A16
 						@rep_stosw_a16(reg0)
@@ -367,13 +367,65 @@ class RealModeUBlock extends MicrocodeSet
 						reg0 = proc.ioports.ioPortReadByte(reg0)
 					when @LOAD0_DI
 						reg0 = proc.edi
-					when @LOAD0_DR7
-						reg0 = proc.getDR7() #komt van protected.
+#					when @LOAD0_DR7
+#						reg0 = proc.getDR7() #komt van protected.
 
 					when @SBB_O16_FLAGS
 						@sbb_o16_flags(reg0, reg2, reg1)
-					when @SLDT
-						reg0 = proc.ldtr.getSelector() # alleen protected?
+#					when @SLDT
+#						reg0 = proc.ldtr.getSelector() # alleen protected?
+					when @CALL_ABS_O16_A16
+						@call_abs_o16_a16(reg0)
+					when @INC_O8_FLAGS
+						@inc_flags_byte(byte(reg0))
+					when @INC_O16_FLAGS
+						@inc_flags_short(short(reg0))
+					when @INC_O32_FLAGS
+						@inc_flags_int(reg0)
+
+					when @CLC
+						proc.setCarryFlagBool(false)
+					when @STC
+						proc.setCarryFlagBool(true)
+					when @STI
+						proc.eflagsInterruptEnableSoon = true
+					when @CLI
+						proc.eflagsInterruptEnable = proc.eflagsInterruptEnableSoon = false
+					when @STD
+						proc.eflagsDirection = true
+
+					when @LOAD0_AH
+						reg0 = (proc.eax >> 8)
+					when @LOAD0_CH
+						reg0 = (proc.ecx >> 8)
+					when @LOAD0_DH
+						reg0 = (proc.edx >> 8)
+					when @LOAD0_BH
+						reg0 = (proc.ebx >> 8)
+
+					when @STORE0_AH
+						proc.eax = (proc.eax) | ((reg0 << 8))
+					when @STORE0_CH
+						proc.ecx = (proc.ecx) | ((reg0 << 8))
+					when @STORE0_DH
+						proc.edx = (proc.edx) | ((reg0 << 8))
+					when @STORE0_BH
+						proc.ebx = (proc.ebx) | ((reg0 << 8))
+
+					when @SIGN_EXTEND_8_16
+						reg0 = 0xffff & byte(reg0)
+					when @SIGN_EXTEND_8_32
+						reg0 = byte(reg0)
+					when @SIGN_EXTEND_16_32
+						reg0 = short(reg0)
+
+					when @LOAD1_MEM_WORD
+						reg1 = seg0.getWord(addr0)
+
+					when @CALL_FAR_O16_A16
+						@call_far_o16_a16(reg0, reg1)
+
+
 					else
 						throw "Possible missing microcode: #{mc}"
 		catch e
@@ -484,7 +536,7 @@ class RealModeUBlock extends MicrocodeSet
 		tempAL = 0xff & proc.eax
 
 		if (((tempAL & 0xf) > 0x9) || proc.getAuxiliaryCarryFlag())
-			proc.setAuxiliaryCarryFlag(true)
+			proc.setAuxiliaryCarryFlagBool(true)
 			proc.eax = (proc.eax & ~0xff) | ((proc.eax - 0x06) & 0xff)
 			tempCF = ( tempAL < 0x06) || proc.getCarryFlag()
 		if (tempAL > 0x99) || proc.getCarryFlag()
@@ -660,3 +712,42 @@ class RealModeUBlock extends MicrocodeSet
 	sbb_o16_flags: (result, operand1, operand2) ->
 		proc.setOverflowFlag3(result, operand1, operand2, proc.OF_SUB_SHORT)
 		@arithmetic_flags_o16(result, operand1, operand2)
+
+	call_abs_o16_a16: (target) ->
+		if ((proc.esp < 2) && (proc.esp > 0))
+			throw ProcessorException.STACK_SEGMENT_0
+
+		proc.ss.setWord(proc.esp - 2, short(proc.eip))
+
+		proc.esp -= 2
+		proc.eip = target
+	inc_flags_int: (result) ->
+		@_inc_flags(result, proc.OF_MIN_INT)
+
+	inc_flags_short: (result) ->
+		@_inc_flags(result, proc.OF_MIN_SHORT)
+
+	inc_flags_byte: (result) ->
+		@_inc_flags(result, proc.OF_MIN_BYTE)
+
+	_inc_flags: (result, type) ->
+		proc.setZeroFlagBool(result)
+		proc.setParityFlagBool(result)
+		proc.setSignFlagBool(result)
+		proc.setOverflowFlag1(result, type)
+		proc.setAuxiliaryCarryFlag1(result, proc.AC_LNIBBLE_ZERO)
+
+	call_far_o16_a16: (targetEIP, targetSelector) ->
+
+		if (proc.esp < 4 && proc.esp > 0)
+			throw ProcessorException.STACK_SEGMENT_0
+
+		proc.ss.setWord(proc.esp - 2, short(proc.cs.getSelector()))
+		proc.ss.setWord(proc.esp - 4, short(proc.eip))
+
+		proc.esp = (proc.esp) | (proc.esp - 4)
+
+		log "oldEIP: #{proc.eip} targetEIP: #{targetEIP} targetSelector: #{targetSelector}"
+
+		proc.eip = targetEIP
+		proc.cs.setSelector(targetSelector)

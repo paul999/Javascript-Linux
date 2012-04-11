@@ -25,6 +25,7 @@ processor/segment/DescriptorTableSegment
 processor/segment/factory
 processor/ProcessorException
 processor/processor
+timer
 clock
 pc
 test
