@@ -16,7 +16,7 @@
 class Timer
 	constructor: (@callback, @myOwner) ->
 		console.log "timer created"
-		@enabled = false
+		@enable = false
 		@expireTime = 0
 
 	getType: ->
@@ -24,7 +24,7 @@ class Timer
 
 
 	enabled: ->
-		return @enabled
+		return @enable
 
 	disable: ->
 		@setStatus(false)
@@ -32,11 +32,12 @@ class Timer
 	setExpiry: (@expireTime) ->
 		@setStatus(true)
 
-	setStatus: (@enabled) ->
+	setStatus: (@enable) ->
 		@myOwner.update(@)
 
 	check: (time) ->
-		if (@enabled && time >= @expireTime)
+		log "Check #{time}"
+		if (@enable && time >= @expireTime)
 			@disable()
 			@callback.callback()
 			return true

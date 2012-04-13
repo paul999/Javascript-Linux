@@ -48,6 +48,12 @@ class PC
 
 		rtc = new RTC(0x70, 8)
 
+		tmp = 0x1000
+
+		tmp2 = tmp & 0xff
+		log tmp
+		log tmp2
+
 		@add(proc)
 		@add(Clock)
 		@add(new IOPortHandler)

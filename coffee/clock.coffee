@@ -55,7 +55,7 @@ class clock
 		@timers.remove(object);
 
 		if (object.enabled())
-			@timers.offer(object)
+			@timers.add(object)
 
 	getTime: ->
 		if (@ticksEnabled)
