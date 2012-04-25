@@ -148,17 +148,17 @@ class RTC
 		@cmosData[0x3d] = byte(0x02) #harddrive boot
 
 
-	ioPortReadByet:(address) ->
-		return @cmosIOPortRead(address)
+	ioPortReadByte:(address) ->
+		return 0xff & @cmosIOPortRead(address)
 
 	ioPortReadWord: (address) ->
-		return @ioPortReadByte(address) | (@ioPortReadByte(address + 1) << 8)
+		return (0xff & @ioPortReadByte(address)) | (0xff00 & (@ioPortReadByte(address + 1) << 8))
 
 	ioPortReadLong: (address) ->
-		return @ioPortReadWord(address) | (@ioPortReadWord(address + 2)	<< 16)
+		return (0xffff & @ioPortReadWord(address)) | (0xffff0000 & (@ioPortReadWord(address + 2)<< 16))
 
 	ioPortWriteByte: (address, data) ->
-		@cmosIOPortWrite(address, data)
+		@cmosIOPortWrite(address, 0xff & data)
 
 	ioPortWriteWord: (address, data) ->
 		@ioPortWriteByte(address, data)

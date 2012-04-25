@@ -27,14 +27,14 @@ class RealModeSegment extends Segment
 		log "Base of this: " + @base
 
 	translateAddressRead: (offset) ->
-		#return @base + offset
+		return @base + offset
 		return offset
 
 	getDefaultSizeFlag: ->
 		return @defaultSize
 
 	translateAddressWrite: (offset) ->
-#		return @base + offset
+		return @base + offset
 		return offset
 
 	checkAddress: (offset) ->

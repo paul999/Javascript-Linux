@@ -31,7 +31,7 @@ class clock
 	process: ->
 		tempTimer = @timers.peek()
 
-		if ((tempTimer == null) || !tempTimer.check(getTime()))
+		if ((tempTimer == null) || !tempTimer.check(@getTime()))
 			return false
 		else
 			return true

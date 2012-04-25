@@ -254,7 +254,7 @@ class DMAController
 		r.currentWordCount = 0
 
 	ioPortReadWord: (address) ->
-		return (@ioPortReadByte(address) | (@ioPortReadByte(address) << 8))
+		return (0xff & @ioPortReadByte(address) | ((@ioPortReadByte(address) << 8) & 0xff))
 
 	ioPortReadByte: (address) ->
 		switch ((address - @ioBase) >>> @dShift)

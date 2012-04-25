@@ -403,34 +403,25 @@ class processor
 	createDescriptorTableSegment: (base, limit) ->
 		return sgm.createDescriptorTableSegment(base, limit)
 
-	getSegment: (segmentSelector) ->
 
-		segmentDescriptor = 0
+#	getSegment: (segmentSelector) ->
 
-		if ((segmentSelector & 0x4) != 0)
-			segmentDescriptor = @ldtr.getQuadWord(segmentSelector & 0xfff8)
+#		segmentDescriptor = 0
 
-		else
-		if (segmentSelector < 0x4) # removed comments.
-			return sgm.NULL_SEGMENT
-			segmentDescriptor = @gdtr.getQuadWord(segmentSelector & 0xfff8)
+#		if ((segmentSelector & 0x4) != 0)
+#			segmentDescriptor = @ldtr.getQuadWord(segmentSelector & 0xfff8)
 
-		result = sgm.createProtectedModeSegment(segmentSelector, segmentDescriptor)
+#		else
+#		if (segmentSelector < 0x4) # removed comments.
+#			return sgm.NULL_SEGMENT
+#			segmentDescriptor = @gdtr.getQuadWord(segmentSelector & 0xfff8)
 
-		if (@alignmentChecking)
-			if ((result.getType() & 0x18) == 0x10)
-				result.setAddressSpace(alignmentCheckedMemory)
-		return result
+#		result = sgm.createProtectedModeSegment(segmentSelector, segmentDescriptor)
 
-
-
-	setZeroFlagBool: (value) ->
-		@zeroCalculated = true
-		@eflagsZero = value
-
-	setZeroFlagInt: (data) ->
-		@zeroCalculated = false
-		@zeroOne = data
+#		if (@alignmentChecking)
+#			if ((result.getType() & 0x18) == 0x10)
+#				result.setAddressSpace(alignmentCheckedMemory)
+#		return result
 
 	setParityFlagBool: (value) ->
 		@parityCalculcated = true
@@ -440,72 +431,69 @@ class processor
 		@parityCalculated = false
 		@parityOne = data
 
-	setSignFlagBool: (value) ->
-		@signCalculated = true
-		@eflagsSign = value
+	# CarryLong doesnt seem to be supported now?
+	setCarryFlag: (data..., value) ->
+		if (data.length == 0)
+			@carryCalculated = true
+			@eflagsCarry = value
+		else
+			@carryCalculated = false
+			@carryOne = data[0]
+			@carryMethod = value
+			if (data[1])
+				@carryTwo = data[1]
 
-	setSignFlagInt: (data) ->
-		@signCalculated = false
-		@signOne = data
+	setAuxiliaryCarryFlag: (data..., value) ->
+		if (data.length == 0)
+			@AuxiliaryCarryCalculated = true
+			@eflagsAuxiliaryCarry = value
+		else
+			@AuxiliaryCarryCalculated = false
+			@AuxiliaryCarryOne = data[0]
+			@AuxiliaryCarryMethod = value
+			if (data[1])
+				@AuxiliaryCarryTwo = data[1]
 
-	setCarryFlagBool: (value) ->
-		@carryCalculated = true
-		@eflagsCarry = value
+			if (data[2])
+				@AuxiliaryCarryThree = data[2]
 
-	setCarryFlagLong: (dataOne, method) ->
-		@carryCalculated = false
-		@carryLong = dataOne
-		@carryMethod = method
+	setOverflowFlag: (data..., value) ->
+		if (data.length == 0)
+			@overflowCalculated = true
+			@eflagsOverflow = value
+		else
+			@overflowwCalculated = false
+			@overflowOne = data[0]
+			@overflowMethod = value
+			if (data[1])
+				@overflowTwo = data[1]
 
-	setCarryFlag1: (dataOne, method) ->
-		@carryCalculated = false
-		@carryOne = dataOne
-		@carryMethod = method
+			if (data[2])
+				@overflowThree = data[2]
 
-	setCarryFlag2: (dataOne, dataTwo, method) ->
-		@carryCalculated = false
-		@carryOne = dataOne
-		@carryTwo = dataTwo
-		@carryMethod = method
-	setAuxiliaryCarryFlag3: (@auxiliaryCarryOne, @auxiliaryCarryTwo, @auxiliaryCarryThree, @auxiliaryCarryMethod) ->
-		@auxiliaryCarryCalculated = false
-
-	setAuxiliaryCarryFlag2: (@auxiliaryCarryOne, @auxiliaryCarryTwo, @auxiliaryCarryMethod) ->
-		@auxiliaryCarryCalculated = false
-
-	setAuxiliaryCarryFlag1: (@auxiliaryCarryOne, @auxiliaryCarryMethod) ->
-		@auxiliaryCarryCalculated = false
-
-	setAuxiliaryCarryFlagBool: (@eflagsAuxiliaryCarry) ->
-		@auxiliaryCarryCalculated = true
-
-	setOverflowFlagBool: (@eflagsOverflow) ->
-		@overflowCalculated = true
-
-	setOverflowFlagLong: (@overflowLong, @overflowMethod) ->
-		@overflowCalculated = false
-
-	setOverflowFlag1: (@overflowOne, @overflowMethod) ->
-		@overflowCalculated = false
-
-	setOverflowFlag2: (@overflowOne, @overflowTwo, @overflowMethod) ->
-		@overflowCalculated = false
-
-	setOverflowFlag3: (@overflowOne, @overflowTwo, @overflowThree, @overflowMethod) ->
-		@overflowCalculated = false
-
-	setCarryFlag: (value) ->
-		throw new IllegalStateException("Use the type specific functions. (Carry)")
 	setZeroFlag: (value) ->
-		throw new IllegalStateException("Use the type specific functions. (Zero)")
+		if (typeof value == "number")
+			@ZeroCalculated = false
+			@ZeroOne = value
+		else
+			@ZeroCalculated = true
+			@eflagsZero = value
+
 	setParityFlag: (value) ->
-		throw new IllegalStateException("Use the type specific functions. (Parity)")
+		if (typeof value == "number")
+			@ParityCalculated = false
+			@ParityOne = value
+		else
+			@ParityCalculated = true
+			@eflagsParity = value
+
 	setSignFlag: (value) ->
-		throw new IllegalStateException("Use the type specific functions. (Sign)")
-	setAuxiliaryCarryFlag: () ->
-		throw new IllegalStateException("Use the type specific functions. (Auxiliary)")
-	setOverflowFlag: ->
-		throw new IllegalStateException("Use the type specific functions. (Overflow)")
+		if (typeof value == "number")
+			@signCalculated = false
+			@signOne = value
+		else
+			@signCalculated = true
+			@eflagsSign = value
 
 	getCarryFlag: ->
 		if (@carryCalculated)
@@ -636,7 +624,7 @@ class processor
 		else if (@overflowMethod == @OF_MAX_SHORT)
 			return (@eflagsoverflow = (@overflowOne == 0x7fff))
 		else if (@overflowMethod == @OF_MIN_SHORT)
-			return (@eflagsoverflow = (@overflowOne == 0x8000))#short
+			return (@eflagsoverflow = (@overflowOne == short(0x8000)))#short
 		else if (@overflowMethod == @OF_BIT15_XOR_CARRY)
 			return (@eflagsoverflow = (((@overflowOne & 0x8000) != 0) ^ getCarryFlag()))
 		else
@@ -644,11 +632,11 @@ class processor
 				when @OF_NZ
 					return (@eflagsoverflow = (@overflowOne != 0))
 				when @OF_NOT_BYTE
-					return (@eflagsoverflow = (@overflowOne != @overflowOne)) #byte
+					return (@eflagsoverflow = (@overflowOne != byte(@overflowOne))) #byte
 				when @OF_NOT_SHORT
-					return (@eflagsoverflow = (@overflowOne != @overflowOne)) #short
+					return (@eflagsoverflow = (@overflowOne != short(@overflowOne))) #short
 				when @OF_NOT_INT
-					return (@eflagsoverflow = (@overflowLong != @overflowLong)) #int
+					return (@eflagsoverflow = (@overflowLong != int(@overflowLong))) #int
 
 				when @OF_LOW_WORD_NZ
 					return (@eflagsoverflow = ((@overflowOne & 0xffff) != 0))
@@ -677,7 +665,7 @@ class processor
 					return (@eflagsoverflow = (@overflowOne == 0x7fffffff))
 
 				when @OF_MIN_BYTE
-					return (@eflagsoverflow = (@overflowOne == 0x80)) #byte
+					return (@eflagsoverflow = (@overflowOne == byte(0x80))) #byte
 				when @OF_MIN_INT
 					return (@eflagsoverflow = (@overflowOne == 0x80000000))
 

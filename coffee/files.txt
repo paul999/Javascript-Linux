@@ -1,6 +1,7 @@
 general
 specific/load
 memory/codeblock/MicroCodeSet
+memory/codeblock/helper
 memory/codeblock/ByteSourceWrappedMemory
 memory/codeblock/ProtectedModeCodeBlockWrapper
 memory/codeblock/DefaultCodeBlockFactory

@@ -129,7 +129,7 @@ class InterruptController
 				return 0xff & @slave.elcrRead()
 			else
 				return 0
-	iopPortReadWord: (address) ->
+	ioPortReadWord: (address) ->
 		return (0xff & @ioPortReadByte(address)) | (0xff00 & (@ioPortReadByte(address + 1) << 8))
 
 	ioPortReadLong: (address) ->
