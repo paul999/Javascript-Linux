@@ -24,6 +24,22 @@ log = (message) =>
 		term.write(message + "\n")
 	return
 
+input = () ->
+	@newLine
+	inp = @lineBuffer
+
+	@prompt()
+
+	console.log "Got input: #{inp}"
+
+	# Nice hack, so we can start :)
+	if (inp == "start")
+		log("Starting PC...")
+		window.pc.start()
+		return
+
+	serial.receive(inp)
+
 # Copy of the java method Systemarraycopy
 arraycopy = (buf, offset, buffer, address, len) ->
 	log "Buf:  offset: #{offset} buffer: #{buffer} address: #{address} len #{len} old length: #{buffer.length}"

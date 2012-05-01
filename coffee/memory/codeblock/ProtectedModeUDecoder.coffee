@@ -236,11 +236,14 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 			switch (opcode)
 				when 0x0f
+					log "Old opcode: #{opcode}"
 					opcodePrefix = (opcodePrefix << 8) | opcode
 					opcode = 0xff & @source.getByte()
 					log "new opcode #{opcode}"
 					bytesRead += 1
 					modrm = opcode
+#					throw "t"
+
 				when 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf
 					opcodePrefix = (opcodePrefix << 8) | opcode
 					opcode = 0
@@ -299,6 +302,9 @@ class ProtectedModeUDecoder extends MicrocodeSet
 #			throw "bla"
 
 		opcode = (opcodePrefix << 8) | opcode
+
+		if (opcode != 0)
+			log "Opcode found: #{opcode}"
 
 		switch opcodePrefix
 			when 0x00

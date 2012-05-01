@@ -34,7 +34,7 @@ class RealModeUBlock extends MicrocodeSet
 
 		@cumulativeX86Length = x86lengths
 
-		if (@cumulativeX86Length.length == 0)
+		if @cumulativeX86Length.length == 0
 			@x86Count = 0
 		else
 			count = 1
@@ -48,7 +48,7 @@ class RealModeUBlock extends MicrocodeSet
 		return @x86Count
 
 	execute: ->
-		seg0 = null
+		seg0 = new n()
 		addr0 = 0
 		reg0 = 0
 		reg1 = 0
@@ -64,23 +64,24 @@ class RealModeUBlock extends MicrocodeSet
 		position = 0
 
 		try
-			while (position < @microcodes.length)
+			while position < @microcodes.length
 				if @uCodeXferLoaded
 					@uCodeXferLoaded = false
 					reg0 = @uCodeXferReg0
 					reg1 = @uCodeXferReg1
 					reg2 = @uCodeXferReg2
 				mc = @microcodes[position++]
-				switch (mc)
+				switch mc
 					when @MEM_RESET
 						addr0 = 0
-						seg0 = null
+						seg0 = new n()
 					when @ADDR_MASK16
 						addr0 &= 0xffff
 					when @EIP_UPDATE
 						if !eipUpdated
+							log "EIP update: #{proc.getEIP()} toevoeging: #{@cumulativeX86Length[position - 1]}"
 							eipUpdated = true
-							proc.eip += @cumulativeX86Length[position - 1]
+							proc.incEIP(@cumulativeX86Length[position - 1])
 					when @ADDR_IB
 						addr0 += (byte(@microcodes[position++]))
 					when @PUSH_O16_A16
@@ -157,7 +158,7 @@ class RealModeUBlock extends MicrocodeSet
 					when @ADD_O16_FLAGS
 						@add_o16_flags(reg0, reg2, reg1)
 					when @SUB_O16_FLAGS
-						@sub_o16_flags(reg0, reg2, reg1)
+						sub_o16_flags(reg0, reg2, reg1)
 					when @STORE0_DS
 						proc.ds.setSelector(0xffff & reg0)
 					when @LOAD0_DX
@@ -174,7 +175,7 @@ class RealModeUBlock extends MicrocodeSet
 					when @ADDR_SI
 						addr0 += short(proc.esi)
 					when @SUB_O8_FLAGS
-						@sub_o8_flags(reg0, reg2, reg1)
+						sub_o8_flags(reg0, reg2, reg1)
 					when @JZ_O8
 						@jz_o8(byte(reg0))
 					when @LOAD0_AH
@@ -280,7 +281,7 @@ class RealModeUBlock extends MicrocodeSet
 					when @LOAD1_CL
 						reg1 = proc.ecx & 0xff
 					when @JUMP_ABS_O16
-						proc.eip = reg0
+						proc.setEIP(reg0)
 					when @STORE0_CL
 						proc.ecx = (proc.ecx & ~0xff) | (reg0 & 0xff)
 					when @ADDR_DI
@@ -289,7 +290,7 @@ class RealModeUBlock extends MicrocodeSet
 						reg2 = reg0
 						reg0 >>>= reg1
 					when @SHR_O16_FLAGS
-						@shr_flags(short(reg0), reg2, reg1)
+						shr_flags(short(reg0), reg2, reg1, "short")
 					when @JA_O8
 						@ja_o8(byte(reg0))
 					when @JNA_O8
@@ -747,7 +748,7 @@ class RealModeUBlock extends MicrocodeSet
 						jump_far_o32(reg0, reg1)
 
 					when @JUMP_ABS_O16
-						proc.eip = reg0
+						proc.setEIP(reg0)
 
 					when @CALL_FAR_O16_A16
 						call_far_o16_a16(reg0, reg1)
@@ -1214,7 +1215,7 @@ class RealModeUBlock extends MicrocodeSet
 					when @REP_MOVSB_A16
 						@rep_movsb_a16(seg0)
 					when @REP_MOVSW_A16
-						@rep_movsw_a16(seg0)
+						rep_movsw_a16(seg0)
 					when @REP_MOVSD_A16
 						@rep_movsd_a16(seg0)
 					when @MOVSB_A32
@@ -1515,9 +1516,9 @@ class RealModeUBlock extends MicrocodeSet
 						bitwise_flags(reg0)
 
 					when @SUB_O8_FLAGS
-						@sub_o8_flags(reg0, reg2, reg1)
+						sub_o8_flags(reg0, reg2, reg1)
 					when @SUB_O16_FLAGS
-						@sub_o16_flags(reg0, reg2, reg1)
+						sub_o16_flags(reg0, reg2, reg1)
 					when @SUB_O32_FLAGS
 						@sub_o32_flags(reg0l, reg2, reg1)
 
@@ -1569,11 +1570,11 @@ class RealModeUBlock extends MicrocodeSet
 						@shl_flags(reg0, reg2, reg1)
 
 					when @SHR_O8_FLAGS
-						@shr_flags(byte(reg0), reg2, reg1)
+						shr_flags(byte(reg0), reg2, reg1, "byte")
 					when @SHR_O16_FLAGS
-						@shr_flags(short(reg0), reg2, reg1)
+						shr_flags(short(reg0), reg2, reg1, "short")
 					when @SHR_O32_FLAGS
-						@shr_flags(reg0, reg2, reg1)
+						shr_flags(reg0, reg2, reg1, "int")
 
 					when @SAR_O8_FLAGS
 						@sar_flags(byte(reg0), byte(reg2), reg1)
@@ -1627,7 +1628,7 @@ class RealModeUBlock extends MicrocodeSet
 
 	push_o16_a16: (data) ->
 		data = short(data)
-		if (((proc.esp & 0xffff) < 2) && ((proc.esp & 0xffff) > 0))
+		if ((proc.esp & 0xffff) < 2) && ((proc.esp & 0xffff) > 0)
 			throw ProcessorException.STACK_SEGMENT_0
 
 		offset = (proc.esp - 2) & 0xffff
@@ -1636,13 +1637,66 @@ class RealModeUBlock extends MicrocodeSet
 
 	jump_o8: (offset) ->
 		offset = byte(offset)
-		proc.eip += offset
 
-		if ((proc.eip & 0xffff0000) != 0)
-#			proc.eip -= offset
-			log "Hier (Wat niet hoort...). Offset: #{offset} new eip :#{proc.eip}"
-#			throw ProcessorException.GENERAL_PROTECTION_0
+		if (proc.getEIP() & 0xffff0000) != 0
+			log "Oude EIP ook niet geldig?... #{proc.getEIP()}"
+
+		proc.incEIP(offset)
+
+		if (proc.getEIP() & 0xffff0000) != 0
+			log "Hier (Wat niet hoort...). Offset: #{offset} new eip :#{proc.getEIP()}"
+			proc.setEIP(proc.getEIP() - offset)
+
+#			if @a
+#				throw ProcessorException.GENERAL_PROTECTION_0
+#			@a = true
+#		else
+#			@a = false
 
 
 	jump_o16: (offset) ->
-		proc.eip = (proc.eip + short(offset)) & 0xffff
+		eip = (proc.getEIP() + short(offset)) & 0xffff
+		proc.setEIP(eip)
+
+	rep_stosw_a16: (data) ->
+		count = proc.ecx & 0xffff
+		addr = proc.edi & 0xffff
+
+
+		@executeCount += count
+
+		try
+			if proc.eflagsDirection
+				proc.es.setWord(addr & 0xffff, short(data))
+				count--
+				addr -= 2
+
+			else
+				proc.es.setWord(addr & 0xffff, short(data))
+				count--
+				addr += 2
+		finally
+			proc.ecx = (proc.ecx & ~0xffff) | (count & 0xffff)
+			proc.edi = (proc.edi & ~0xffff) | (addr & 0xffff)
+
+	call_o16_a16: (target) ->
+		target = short(target)
+
+		if ((proc.esp & 0xffff) < 2) && ((proc.esp & 0xffff) > 0)
+			throw ProcessorException.STACK_SEGMENT_0
+
+
+		offset = (proc.esp - 2) & 0xffff
+		proc.ss.setWord(offset, short(proc.eip))
+		proc.esp = (proc.esp * 0xffff0000) | offset
+		proc.setEIP((proc.getEIP() + target) & 0xffff)
+
+class n
+	getByte: ->
+		return 0xff
+	getWord: ->
+		return 0xffff
+	getDoubleWord: ->
+		return 0xffffff
+	getQuadWord: ->
+		return 0xffffffff

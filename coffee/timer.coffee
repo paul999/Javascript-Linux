@@ -15,7 +15,7 @@
 
 class Timer
 	constructor: (@callback, @myOwner) ->
-		console.log "timer created"
+		log "timer created"
 		@enable = false
 		@expireTime = 0
 

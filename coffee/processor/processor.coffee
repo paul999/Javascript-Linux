@@ -243,10 +243,10 @@ class processor
 		return @eflagsVirtual8086Mode
 
 	getInstructionPointer: ->
-		tmp = @cs.translateAddressRead(@eip)
+		tmp = @cs.translateAddressRead(@getEIP())
 
-		if (isNaN(tmp) || isNaN(@eip))
-			throw new LengthIncorrectError("EIP cant be NaN. Value: " + @eip)
+		if (isNaN(tmp) || isNaN(@getEIP()))
+			throw new LengthIncorrectError("EIP cant be NaN. Value: " + @getEIP())
 
 		return tmp
 
@@ -265,11 +265,11 @@ class processor
 
 		@alignmentChecking = false
 
-		@eip = 0x10000 # Controle nodig, zie wiki
+		@setEIP(0x10000) # Controle nodig, zie wiki
 
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0
-		@cr0 = @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH |  0x10
+		@cr0 = @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH |  0x10# | 0x1
 		@cr2 = @cr3 = @cr4 = 0x0
 
 		@dr0 = @dr1 = @dr2 = @dr3 = 0x0
@@ -339,7 +339,7 @@ class processor
 
 	handleProtectedModeException: (pe) ->
 		savedESP = @esp
-		savedEIP = @eip
+		savedEIP = @getEIP()
 		savedCS = @cs
 		savedSS = @ss
 
@@ -350,7 +350,7 @@ class processor
 				log "Double fault" + e
 
 				@esp = savedESP
-				@eip = savedEIP
+				@setEIP savedEIP
 				@cs = savedCS
 				@ss = savedSS
 
@@ -806,3 +806,14 @@ class processor
 
 	getCPL: ->
 		return @currentPrivilegeLevel
+
+	getEIP: ->
+		return @ip
+
+	incEIP: (i) ->
+		i = @getEIP() + i
+		@setEIP(i)
+
+	setEIP: (i) ->
+		log "EIP update: Old: #{@getEIP()} new #{i}"
+		@ip = i

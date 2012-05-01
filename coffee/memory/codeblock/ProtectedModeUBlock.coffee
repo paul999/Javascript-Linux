@@ -45,7 +45,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if (@opcodeCounter && @opcodeCounter != null)
 			opcodeCounter.addBlock(@getMicrocodes())
 
-		seg0 = null
+		seg0 = new n()
 #		seg0 = proc.ecx
 		addr0 = 0
 		reg0 = 0
@@ -72,14 +72,14 @@ class ProtectedModeUBlock extends MicrocodeSet
 					when @EIP_UPDATE
 						if (!eipUpdated)
 							eipUpdated = true
-							proc.eip += @cumulativeX86Length[position - 1]
+							proc.incEIP(@cumulativeX86Length[position - 1])
 					when @UNDEFINED
 
 						throw ProcessorException.UNDEFINED
 
 					when @MEM_RESET
 						addr0 = 0
-						seg0 = null
+						seg0 = new n()
 
 					when @LOAD0_EAX
 						reg0 = proc.eax
@@ -1436,7 +1436,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					when @REP_MOVSB_A16
 						@rep_movsb_a16(seg0)
 					when @REP_MOVSW_A16
-						@rep_movsw_a16(seg0)
+						rep_movsw_a16(seg0)
 					when @REP_MOVSD_A16
 						@rep_movsd_a16(seg0)
 					when @MOVSB_A32
@@ -1617,9 +1617,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 						reg1 = int(tsc >>> 32)
 
 					when @CMPXCHG_O8_FLAGS
-						@sub_o8_flags(reg2 - reg1, reg2, reg1)
+						sub_o8_flags(reg2 - reg1, reg2, reg1)
 					when @CMPXCHG_O16_FLAGS
-						@sub_o16_flags(reg2 - reg1, reg2, reg1)
+						sub_o16_flags(reg2 - reg1, reg2, reg1)
 					when @CMPXCHG_O32_FLAGS
 						@sub_o32_flags((0xffffffff & reg2) - (0xffffffff & reg1), reg2, reg1)
 
@@ -1631,9 +1631,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 						bitwise_flags(reg0)
 
 					when @SUB_O8_FLAGS
-						@sub_o8_flags(reg0, reg2, reg1)
+						sub_o8_flags(reg0, reg2, reg1)
 					when @SUB_O16_FLAGS
-						@sub_o16_flags(reg0, reg2, reg1)
+						sub_o16_flags(reg0, reg2, reg1)
 					when @SUB_O32_FLAGS
 						@sub_o32_flags(reg0, reg2, reg1)
 
@@ -1768,7 +1768,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.esi = addrOne
 		proc.edi = addrTwo
 
-		@sub_o8_flags(dataOne - dataTwo, dataOne, dataTwo)
+		sub_o8_flags(dataOne - dataTwo, dataOne, dataTwo)
 
 
 	cmpsw_a32: (seg0) ->
@@ -1787,7 +1787,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.esi = addrOne
 		proc.edi = addrTwo
 
-		@sub_o16_flags(dataOne - dataTwo, dataOne, dataTwo)
+		sub_o16_flags(dataOne - dataTwo, dataOne, dataTwo)
 
 	cmpsd_a32: (seg0) ->
 
@@ -1807,7 +1807,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.esi = addrOne
 		proc.edi = addrTwo
 
-		@sub_o32_flags((0xffffffff & dataOne) - (0xffffffff & dataTwo), dataOne, dataTwo)
+		sub_o32_flags((0xffffffff & dataOne) - (0xffffffff & dataTwo), dataOne, dataTwo)
 
 
 	repe_cmpsb_a16: (seg0) ->
@@ -1846,7 +1846,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.edi = (proc.edi & ~0xFFFF)|(addrTwo & 0xFFFF)
 
 			if (used)
-				@sub_o8_flags(dataOne - dataTwo, dataOne, dataTwo)
+				sub_o8_flags(dataOne - dataTwo, dataOne, dataTwo)
 
 	repe_cmpsb_a32: (seg0) ->
 
@@ -1885,7 +1885,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.edi = addrTwo
 
 			if (used)
-				@sub_o8_flags(dataOne - dataTwo, dataOne, dataTwo)
+				sub_o8_flags(dataOne - dataTwo, dataOne, dataTwo)
 
 	repe_cmpsw_a32: (seg0) ->
 		count = proc.ecx
@@ -1923,7 +1923,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.edi = addrTwo
 
 			if (used)
-				@sub_o16_flags(dataOne - dataTwo, dataOne, dataTwo)
+				sub_o16_flags(dataOne - dataTwo, dataOne, dataTwo)
 
 
 	repe_cmpsd_a32: (seg0) ->
@@ -1962,7 +1962,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.edi = addrTwo
 
 			if (used)
-				@sub_o32_flags((0xffffffff & dataOne) - (0xffffffff & dataTwo), dataOne, dataTwo)
+				sub_o32_flags((0xffffffff & dataOne) - (0xffffffff & dataTwo), dataOne, dataTwo)
 
 	repne_cmpsb_a32: (seg0) ->
 
@@ -2002,7 +2002,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.edi = addrTwo
 
 			if (used)
-				@sub_o8_flags(dataOne - dataTwo, dataOne, dataTwo)
+				sub_o8_flags(dataOne - dataTwo, dataOne, dataTwo)
 
 	repne_cmpsw_a32: (seg0) ->
 		count = proc.ecx
@@ -2039,7 +2039,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.edi = addrTwo
 
 			if (used)
-				@sub_o16_flags(dataOne - dataTwo, dataOne, dataTwo)
+				sub_o16_flags(dataOne - dataTwo, dataOne, dataTwo)
 
 	repne_cmpsd_a32: (seg0) ->
 		count = proc.ecx
@@ -2077,7 +2077,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.edi = addrTwo
 
 			if (used)
-				@sub_o32_flags((0xffffffff & dataOne) - (0xffffffff & dataTwo), dataOne, dataTwo)
+				sub_o32_flags((0xffffffff & dataOne) - (0xffffffff & dataTwo), dataOne, dataTwo)
 
 	insb_a32: (port) ->
 		if (!@checkIOPermissionsByte(port))
@@ -2399,33 +2399,6 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.ecx = (proc.ecx & ~0xffff) | (count & 0xffff)
 			proc.edi = (proc.edi & ~0xffff) | (inAddr & 0xffff)
 			proc.esi = (proc.esi & ~0xffff) | (outAddr & 0xffff)
-
-	rep_movsw_a16: (outSegment) ->
-		count = proc.ecx & 0xffff
-		inAddr = proc.edi & 0xffff
-		outAddr = proc.esi & 0xffff
-		@executeCount += count
-
-		try
-			if (proc.eflagsDirection)
-				while (count != 0)
-					#check hardware interrupts
-					proc.es.setWord(inAddr & 0xffff, outSegment.getWord(outAddr & 0xffff))
-					count--
-					outAddr -= 2
-					inAddr -= 2
-			else
-				while (count != 0)
-					#check hardware interrupts
-					proc.es.setWord(inAddr & 0xffff, outSegment.getWord(outAddr & 0xffff))
-					count--
-					outAddr += 2
-					inAddr += 2
-		finally
-			proc.ecx = (proc.ecx & ~0xffff) | (count & 0xffff)
-			proc.edi = (proc.edi & ~0xffff) | (inAddr & 0xffff)
-			proc.esi = (proc.esi & ~0xffff) | (outAddr & 0xffff)
-
 
 	rep_movsd_a16: (outSegment) ->
 		count = proc.ecx & 0xffff
@@ -2848,7 +2821,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			addr += 1
 
 		proc.edi = (proc.edi & ~0xFFFF) | (0xFFFF & addr)
-		@sub_o8_flags(data - input, data, input);
+		sub_o8_flags(data - input, data, input);
 
 	scasb_a32: (data) ->
 		addr = proc.edi
@@ -2860,7 +2833,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			addr += 1
 
 		proc.edi = addr
-		@sub_o8_flags(data - input, data, input)
+		sub_o8_flags(data - input, data, input)
 
 	scasw_a32: (data) ->
 		addr = proc.edi
@@ -2872,7 +2845,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			addr += 2
 
 		proc.edi = addr
-		@sub_o16_flags(data - input, data, input)
+		sub_o16_flags(data - input, data, input)
 
 	scasd_a32: (data) ->
 
@@ -2885,7 +2858,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			addr += 4
 
 		proc.edi = addr
-		@sub_o32_flags((0xffffffff & data) - (0xffffffff & input), data, input)
+		sub_o32_flags((0xffffffff & data) - (0xffffffff & input), data, input)
 
 	repe_scasb_a16: (data) ->
 		count = 0xffff & proc.ecx
@@ -2914,7 +2887,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.ecx = (proc.ecx & ~0xffff) | (0xffff & count)
 			proc.edi = (proc.edi & ~0xffff) | (0xffff & addr)
 			if (used)
-				@sub_o8_flags(data - input, data, input)
+				sub_o8_flags(data - input, data, input)
 
 	repe_scasb_a32: (data) ->
 		count = proc.ecx
@@ -2969,7 +2942,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.ecx = count
 			proc.edi = addr
 			if (used)
-				@sub_o16_flags(data - input, data, input)
+				sub_o16_flags(data - input, data, input)
 
 	repe_scasd_a32: (data) ->
 		count = proc.ecx
@@ -3025,7 +2998,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.ecx = (proc.ecx & ~0xFFFF) | (0xFFFF & count)
 			proc.edi = (proc.edi & ~0xFFFF) | (0xFFFF & addr)
 			if (used)
-				@sub_o8_flags(data - input, data, input)
+				sub_o8_flags(data - input, data, input)
 
 	repne_scasb_a32: (data) ->
 		count = proc.ecx
@@ -3053,7 +3026,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.ecx = count
 			proc.edi = addr
 			if (used)
-				@sub_o8_flags(data - input, data, input)
+				sub_o8_flags(data - input, data, input)
 
 	repne_scasw_a32: (data) ->
 		count = proc.ecx
@@ -3082,7 +3055,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.ecx = count
 			proc.edi = addr
 			if (used)
-				@sub_o16_flags(data - input, data, input)
+				sub_o16_flags(data - input, data, input)
 
 	repne_scasd_a32: (data) ->
 		count = proc.ecx
@@ -3110,7 +3083,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.ecx = count
 			proc.edi = addr
 			if (used)
-				@sub_o32_flags((0xffffffff & data) - (0xffffffff & input), data, input)
+				sub_o32_flags((0xffffffff & data) - (0xffffffff & input), data, input)
 
 	stosb_a16: (data) ->
 		addr = 0xFFFF & proc.edi
@@ -3878,25 +3851,25 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if (offset == 0)
 			return; #first protected mode throws on a jump 0 (some segment problem?)
 
-		tempEIP = proc.eip + offset
+		tempEIP = proc.getEIP() + offset
 		proc.cs.checkAddress(tempEIP) # check whether eip is outside cs limit
-		proc.eip = tempEIP
+		proc.incEIP(offset)
 
 	jump_o16: (offset) ->
 		offset = short(offset)
-		tempEIP = (proc.eip + offset) & 0xffff
+		tempEIP = (proc.getEIP() + offset) & 0xffff
 		proc.cs.checkAddress(tempEIP) # check whether eip is outside cs limit
-		proc.eip = tempEIP
+		proc.setEIP(tempEIP)
 
 	jump_o32: (offset) ->
 		offset = int(offset)
-		tempEIP = proc.eip + offset
+		tempEIP = proc.getEIP() + offset
 		proc.cs.checkAddress(tempEIP) # check whether eip is outside cs limit
-		proc.eip = tempEIP
+		proc.incEIP(offset)
 
 	jump_abs: (offset) ->
 		proc.cs.checkAddress(offset) # check whether eip is outside cs limit
-		proc.eip = offset
+		proc.setEIP(offset)
 
 	jump_far: (targetEIP, targetSelector) ->
 		newSegment = proc.getSegment(targetSelector)
@@ -3978,7 +3951,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 				proc.setCR0(proc.getCR0() | 0x8) # set TS flag in CR0;
 				proc.tss = newSegment
 				proc.tss.restoreCPUState(cpu)
-				proc.cs.checkAddress(proc.eip)
+				proc.cs.checkAddress(proc.getEIP())
 
 				return
 			when 0x0c # Call Gate
@@ -3993,7 +3966,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 				newSegment.checkAddress(targetEIP)
 				newSegment.setRPL(proc.getCPL())
 				proc.cs = newSegment
-				proc.eip = targetEIP
+				proc.setEIP(targetEIP)
 				return
 
 			when 0x1c, 0x1d, 0x1e, 0x1f
@@ -4006,7 +3979,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 				newSegment.checkAddress(targetEIP)
 				newSegment.setRPL(proc.getCPL())
 				proc.cs = newSegment
-				proc.eip = targetEIP
+				proc.setEIP(targetEIP)
 				return
 
 			else
@@ -4015,56 +3988,56 @@ class ProtectedModeUBlock extends MicrocodeSet
 				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
 
 	call_o32_a32: (target) ->
-		tempEIP = proc.eip + target
+		tempEIP = proc.getEIP() + target
 
 		proc.cs.checkAddress(tempEIP)
 
 		if ((proc.esp < 4) && (proc.esp > 0))
 			throw ProcessorException.STACK_SEGMENT_0
 
-		proc.ss.setDoubleWord(proc.esp - 4, proc.eip )
+		proc.ss.setDoubleWord(proc.esp - 4, proc.getEIP() )
 		proc.esp -= 4
 
-		proc.eip = tempEIP
+		proc.setEIP(tempEIP)
 
 	call_o16_a16: (target) ->
-		tempEIP = 0xFFFF & (proc.eip + target)
+		tempEIP = 0xFFFF & (proc.getEIP() + target)
 
 		proc.cs.checkAddress(tempEIP)
 
 		if ((0xffff & proc.esp) < 2)
 			throw ProcessorException.STACK_SEGMENT_0
 
-		proc.ss.setWord((proc.esp - 2) & 0xffff, (short) (0xFFFF & proc.eip))
+		proc.ss.setWord((proc.esp - 2) & 0xffff, (short) (0xFFFF & proc.getEIP()))
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 2) & 0xffff)
 
-		proc.eip = tempEIP
+		proc.setEIO(tempEIP)
 
 	call_o16_a32: (target) ->
-		tempEIP = 0xFFFF & (proc.eip + target)
+		tempEIP = 0xFFFF & (proc.getEIP() + target)
 
 		proc.cs.checkAddress(tempEIP)
 
 		if ((proc.esp < 2) && (proc.esp > 0))
 			throw ProcessorException.STACK_SEGMENT_0
 
-		proc.ss.setWord(proc.esp - 2, short(0xFFFF & proc.eip))
+		proc.ss.setWord(proc.esp - 2, short(0xFFFF & proc.getEIP()))
 		proc.esp -= 2
 
-		proc.eip = tempEIP
+		proc.getEIP(tempEIP)
 
 	call_o32_a16: (target) ->
-		tempEIP = proc.eip + target
+		tempEIP = proc.getEIP() + target
 
 		proc.cs.checkAddress(tempEIP)
 
 		if ((0xffff & proc.esp) < 4)
 			throw ProcessorException.STACK_SEGMENT_0
 
-		proc.ss.setDoubleWord((proc.esp - 4) & 0xffff, proc.eip)
+		proc.ss.setDoubleWord((proc.esp - 4) & 0xffff, proc.getEIP())
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 4) & 0xffff)
 
-		proc.eip = tempEIP
+		proc.getEIP(tempEIP)
 
 	call_abs_o16_a16: (target) ->
 		proc.cs.checkAddress(target & 0xFFFF)
@@ -4072,10 +4045,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if ((proc.esp & 0xffff) < 2)
 			throw ProcessorException.STACK_SEGMENT_0
 
-		proc.ss.setWord((proc.esp - 2) & 0xffff, short(0xFFFF & proc.eip))
+		proc.ss.setWord((proc.esp - 2) & 0xffff, short(0xFFFF & proc.getEIP()))
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 2) & 0xffff)
 
-		proc.eip = target & 0xFFFF
+		proc.setEIP(target & 0xFFFF)
 
 	call_abs_o16_a32: (target) ->
 		proc.cs.checkAddress(target & 0xFFFF)
@@ -4083,10 +4056,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if ((proc.esp < 2) && (proc.esp > 0))
 			throw ProcessorException.STACK_SEGMENT_0
 
-		proc.ss.setWord(proc.esp - 2, short(0xFFFF & proc.eip))
+		proc.ss.setWord(proc.esp - 2, short(0xFFFF & proc.getEIP()))
 		proc.esp -= 2
 
-		proc.eip = target & 0xFFFF
+		proc.getEIP(target & 0xFFFF)
 
 	call_abs_o32_a32: (target) ->
 		proc.cs.checkAddress(target)
@@ -4094,10 +4067,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if ((proc.esp < 4) && (proc.esp > 0))
 			throw ProcessorException.STACK_SEGMENT_0
 
-		proc.ss.setDoubleWord(proc.esp - 4, proc.eip)
+		proc.ss.setDoubleWord(proc.esp - 4, proc.getEIP())
 		proc.esp -= 4
 
-		proc.eip = target
+		proc.getEIP(target)
 
 	call_abs_o32_a16: (target) ->
 		proc.cs.checkAddress(target)
@@ -4105,10 +4078,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if ((proc.esp & 0xffff) < 4)
 			throw ProcessorException.STACK_SEGMENT_0
 
-		proc.ss.setDoubleWord((proc.esp - 4) & 0xffff, proc.eip)
+		proc.ss.setDoubleWord((proc.esp - 4) & 0xffff, proc.getEIP())
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 4) & 0xffff)
 
-		proc.eip = target
+		proc.getEIP(target)
 
 	call_far_o16_a32: (targetEIP, targetSelector) ->
 		newSegment = proc.getSegment(targetSelector)
@@ -4189,12 +4162,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 				newSegment.checkAddress(targetEIP&0xFFFF)
 
 				proc.ss.setWord(proc.esp - 2, short(0xFFFF & proc.cs.getSelector()))
-				proc.ss.setWord(proc.esp - 4, short(0xFFFF & proc.eip))
+				proc.ss.setWord(proc.esp - 4, short(0xFFFF & proc.getEIP()))
 				proc.esp -= 4
 
 				proc.cs = newSegment
 				proc.cs.setRPL(proc.getCPL())
-				proc.eip = targetEIP & 0xFFF
+				proc.setEIP(targetEIP & 0xFFF)
 				return
 
 			when 0x1c, 0x1d, 0x1e, 0x1f
@@ -4308,9 +4281,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 							oldCS = proc.cs.getSelector()
 							int oldEIP
 							if (proc.cs.getDefaultSizeFlag())
-								oldEIP = proc.eip
+								oldEIP = proc.getEIP()
 							else
-								oldEIP = proc.eip & 0xffff
+								oldEIP = proc.getEIP() & 0xffff
 							proc.ss = newStackSegment
 							proc.esp = newESP
 							proc.ss.setRPL(targetSegment.getDPL())
@@ -4346,7 +4319,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 							targetSegment.checkAddress(targetOffset)
 							proc.cs = targetSegment
-							proc.eip = targetOffset
+							proc.setEIP(targetOffset)
 							proc.setCPL(proc.ss.getDPL())
 							proc.cs.setRPL(proc.getCPL())
 
@@ -4384,12 +4357,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 					tempESP = proc.esp & 0xffff
 
 				proc.ss.setWord((tempESP - 2), short(0xFFFF & proc.cs.getSelector()))
-				proc.ss.setWord((tempESP - 4), short(0xFFFF & proc.eip))
+				proc.ss.setWord((tempESP - 4), short(0xFFFF & proc.getEIP()))
 				proc.esp = (proc.esp & ~0xFFFF) | ((proc.esp-4) & 0xFFFF)
 
 				proc.cs = newSegment
 				proc.cs.setRPL(proc.getCPL())
-				proc.eip = targetEIP & 0xFFFF
+				proc.setEIP( targetEIP & 0xFFFF)
 				return
 			when 0x1c, 0x1d, 0x1e, 0x1f
 				log "Conforming code segment not implemented"
@@ -4472,12 +4445,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 				newSegment.checkAddress(targetEIP)
 
 				proc.ss.setDoubleWord(proc.esp - 4, proc.cs.getSelector())
-				proc.ss.setDoubleWord(proc.esp - 8, proc.eip)
+				proc.ss.setDoubleWord(proc.esp - 8, proc.getEIP())
 				proc.esp -= 8
 
 				proc.cs = newSegment
 				proc.cs.setRPL(proc.getCPL())
-				proc.eip = targetEIP
+				proc.setEIP(targetEIP)
 				return
 
 			when 0x1c, 0x1d, 0x1e, 0x1f
@@ -4561,12 +4534,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 				newSegment.checkAddress(targetEIP)
 
 				proc.ss.setDoubleWord((proc.esp - 4) & 0xffff, proc.cs.getSelector())
-				proc.ss.setDoubleWord((proc.esp - 8) & 0xffff, proc.eip)
+				proc.ss.setDoubleWord((proc.esp - 8) & 0xffff, proc.getEIP())
 				proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 8) & 0xffff)
 
 				proc.cs = newSegment
 				proc.cs.setRPL(proc.getCPL())
-				proc.eip = targetEIP
+				proc.setEIP(targetEIP)
 				return
 			when 0x1c, 0x1d, 0x1e, 0x1f
 				log "Conforming code segment not implemented"
@@ -4579,25 +4552,25 @@ class ProtectedModeUBlock extends MicrocodeSet
 	ret_o16_a32: ->
 	# TODO:  supposed to throw SS exception
 	# "if top 6 bytes of stack not within stack limits"
-		proc.eip = proc.ss.getWord(proc.esp) & 0xffff
+		proc.setEIP(proc.ss.getWord(proc.esp) & 0xffff)
 		proc.esp = proc.esp + 2
 
 	ret_o16_a16: ->
 	# TODO:  supposed to throw SS exception
 	# "if top 6 bytes of stack not within stack limits"
-		proc.eip = proc.ss.getWord(proc.esp & 0xffff) & 0xffff
+		proc.setEIP(proc.ss.getWord(proc.esp & 0xffff) & 0xffff)
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp + 2) & 0xffff)
 
 	ret_o32_a32: ->
 	# TODO:  supposed to throw SS exception
 	# "if top 6 bytes of stack not within stack limits"
-		proc.eip = proc.ss.getDoubleWord(proc.esp)
+		proc.setEIP(proc.ss.getDoubleWord(proc.esp))
 		proc.esp = proc.esp + 4
 
 	ret_o32_a16: ->
 	# TODO:  supposed to throw SS exception
 	# "if top 6 bytes of stack not within stack limits"
-		proc.eip = proc.ss.getDoubleWord(0xffff & proc.esp)
+		proc.setEIP(proc.ss.getDoubleWord(0xffff & proc.esp))
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp + 4) & 0xffff)
 
 	ret_iw_o16_a32: (offset) ->
@@ -4664,7 +4637,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 					returnSegment.checkAddress(tempEIP)
 
-					proc.eip = tempEIP
+					proc.setEIP(tempEIP)
 					proc.cs = returnSegment
 
 					proc.ss = returnStackSegment
@@ -4707,7 +4680,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(tempEIP)
 
 					proc.esp = (proc.esp & ~0xFFFF)| ((proc.esp + 4 + stackdelta) &0xFFFF)
-					proc.eip = tempEIP
+					proc.setEIP(tempEIP)
 					proc.cs = returnSegment
 			when 0x1c, 0x1d, 0x1e, 0x1f
 				if (returnSegment.getDPL() > returnSegment.getRPL())
@@ -4726,7 +4699,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(tempEIP)
 
 					proc.esp = (proc.esp & ~0xFFFF)| ((proc.esp + 4 + stackdelta) &0xFFFF)
-					proc.eip = tempEIP
+					proc.setEIP(tempEIP)
 					proc.cs = returnSegment
 			else
 				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
@@ -4763,7 +4736,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(tempEIP)
 
 					proc.esp = proc.esp + 4 + stackdelta
-					proc.eip = tempEIP
+					proc.setEIP(tempEIP)
 					proc.cs = returnSegment
 
 			when 0x1c, 0x1d, 0x1e, 0x1f
@@ -4787,7 +4760,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(tempEIP & 0xFFFF)
 
 					proc.esp = proc.esp + 4 + stackdelta
-					proc.eip = (0xFFFF & tempEIP)
+					proc.setEIP(0xFFFF & tempEIP)
 					proc.cs = returnSegment
 
 			else
@@ -4826,7 +4799,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(tempEIP)
 
 					proc.esp = (proc.esp & ~0xFFFF)| ((proc.esp + 8 + stackdelta) &0xFFFF)
-					proc.eip = tempEIP
+					proc.setEIP(tempEIP)
 					proc.cs = returnSegment
 
 			when 0x1c, 0x1d, 0x1e, 0x1f
@@ -4849,7 +4822,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(tempEIP)
 
 					proc.esp = (proc.esp & ~0xFFFF)| ((proc.esp + 8 + stackdelta) &0xFFFF)
-					proc.eip = tempEIP
+					proc.setEIP(tempEIP)
 					proc.cs = returnSegment
 
 			else
@@ -4862,7 +4835,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			throw ProcessorException.STACK_SEGMENT_0
 
 		proc.cs = SegmentFactory.createVirtual8086ModeSegment(proc.linearMemory, newCS, true)
-		proc.eip = newEIP & 0xffff
+		proc.setEIP(newEIP & 0xffff)
 		int newESP = proc.ss.getDoubleWord(proc.esp & 0xffff)
 		int newSS = 0xffff & proc.ss.getDoubleWord((proc.esp + 4) & 0xffff)
 		proc.es = SegmentFactory.createVirtual8086ModeSegment(proc.linearMemory, 0xffff & proc.ss.getDoubleWord((proc.esp + 8) & 0xffff), false)
@@ -4910,7 +4883,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(newEIP)
 
 					#proc.esp += 20; #includes the 12 from earlier
-					proc.eip = newEIP
+					proc.setEIP(newEIP)
 					proc.cs = returnSegment
 
 					proc.ss = returnStackSegment
@@ -4967,7 +4940,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 					# 		    proc.esp = (proc.esp & ~0xFFFF) | ((proc.esp+12)&0xFFFF)
 					proc.cs = returnSegment
-					proc.eip = newEIP
+					proc.setEIP(newEIP)
 
 					#Set EFlags
 					eflags = proc.getEFlags()
@@ -5042,7 +5015,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION,0,true)
 
 		proc.cs = SegmentFactory.createVirtual8086ModeSegment(proc.linearMemory, newCS, true)
-		proc.eip = newEIP & 0xffff
+		proc.setEIP(newEIP & 0xffff)
 		int newESP = proc.ss.getDoubleWord(proc.esp)
 		int newSS = 0xffff & proc.ss.getDoubleWord(proc.esp + 4)
 		proc.es = SegmentFactory.createVirtual8086ModeSegment(proc.linearMemory, 0xffff & proc.ss.getDoubleWord(proc.esp + 8), false)
@@ -5091,7 +5064,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(newEIP)
 
 					#proc.esp += 20; //includes the 12 from earlier
-					proc.eip = newEIP
+					proc.setEIP(newEIP)
 					proc.cs = returnSegment
 
 					proc.ss = returnStackSegment
@@ -5145,7 +5118,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(newEIP)
 
 					proc.cs = returnSegment
-					proc.eip = newEIP
+					proc.setEIP(newEIP)
 
 					#Set EFlags
 					eflags = proc.getEFlags()
@@ -5180,7 +5153,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 				else
 					#SAME PRIVILEGE-LEVEL
 					returnSegment.checkAddress(newEIP)
-					proc.eip = newEIP
+					proc.setEIP(newEIP)
 					proc.cs = returnSegment #do descriptor as well
 					proc.setCarryFlag((newEFlags & 1) != 0)
 					proc.setParityFlag((newEFlags & (1 << 2)) != 0)
@@ -5297,7 +5270,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(newEIP)
 
 					#proc.esp += 20; //includes the 12 from earlier
-					proc.eip = newEIP
+					proc.setEIP(newEIP)
 					proc.cs = returnSegment
 
 					proc.ss = returnStackSegment
@@ -5354,7 +5327,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(newEIP)
 
 					proc.cs = returnSegment
-					proc.eip = newEIP
+					proc.setEIP(newEIP)
 
 					#Set EFlags
 					int eflags = proc.getEFlags()
@@ -5429,7 +5402,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(newEIP)
 
 					#proc.esp += 20; //includes the 12 from earlier
-					proc.eip = newEIP
+					proc.setEIP(newEIP)
 					proc.cs = returnSegment
 
 					proc.ss = returnStackSegment
@@ -5484,7 +5457,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnSegment.checkAddress(newEIP)
 
 					proc.cs = returnSegment
-					proc.eip = newEIP
+					proc.setEIP(newEIP)
 
 					#Set EFlags
 					int eflags = proc.getEFlags()
@@ -5537,7 +5510,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.ss = SegmentFactory.createProtectedModeSegment(proc.linearMemory, (csSelector + 8) & 0xfffc, 0x00cf93000000ffff)
 
 		proc.esp = int(proc.getMSR(proc.SYSENTER_ESP_MSR))
-		proc.eip = int(proc.getMSR(proc.SYSENTER_EIP_MSR))
+		proc.setEIP(int(proc.getMSR(proc.SYSENTER_EIP_MSR)))
 
 	sysexit: (esp, eip) ->
 		int csSelector= int(proc.getMSR(proc.SYSENTER_CS_MSR))
@@ -5552,7 +5525,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.correctAlignmentChecking(proc.ss)
 
 		proc.esp = esp
-		proc.eip = eip
+		proc.setEIP(eip)
 
 	in_o8: (port) ->
 		if (@checkIOPermissionsByte(port))
@@ -6130,59 +6103,30 @@ class ProtectedModeUBlock extends MicrocodeSet
 		result = (0xffffffff & operand1) + (0xffffffff & operand2) + carry
 
 		if (proc.getCarryFlag() && (operand2 == 0xffffffff))
-			@arithmetic_flags_o32(result, operand1, operand2)
+			arithmetic_flags_o32(result, operand1, operand2)
 			proc.setOverflowFlag(false)
 			proc.setCarryFlag(true)
 		else
 			proc.setOverflowFlag(int(result), operand1, operand2, proc.OF_ADD_INT)
-			@arithmetic_flags_o32(result, operand1, operand2)
+			arithmetic_flags_o32(result, operand1, operand2)
 
 	adc_o16_flags: (result, operand1, operand2) ->
 		if (proc.getCarryFlag() && (operand2 == 0xffff))
-			@arithmetic_flags_o16(result, operand1, operand2)
+			arithmetic_flags_o16(result, operand1, operand2)
 			proc.setOverflowFlag(false)
 			proc.setCarryFlag(true)
 		else
 			proc.setOverflowFlag(result, operand1, operand2, proc.OF_ADD_SHORT)
-			@arithmetic_flags_o16(result, operand1, operand2)
+			arithmetic_flags_o16(result, operand1, operand2)
 
 	adc_o8_flags: (result, operand1, operand2) ->
 		if (proc.getCarryFlag() && (operand2 == 0xff))
-			@arithmetic_flags_o8(result, operand1, operand2)
+			arithmetic_flags_o8(result, operand1, operand2)
 			proc.setOverflowFlag(false)
 			proc.setCarryFlag(true)
 		else
 			proc.setOverflowFlag(result, operand1, operand2, proc.OF_ADD_BYTE)
-			@arithmetic_flags_o8(result, operand1, operand2)
-
-	sub_o32_flags: (result, operand1, operand2) ->
-		result = (0xffffffff & operand1) - (0xffffffff & operand2)
-
-		@arithmetic_flags_o32(result, operand1, operand2)
-		proc.setOverflowFlag(int(result), operand1, operand2, proc.OF_SUB_INT)
-
-	sub_o16_flags: (result, operand1, operand2) ->
-		@arithmetic_flags_o16(result, operand1, operand2)
-		proc.setOverflowFlag(result, operand1, operand2, proc.OF_SUB_SHORT)
-
-	sub_o8_flags: (result, operand1, operand2) ->
-		@arithmetic_flags_o8(result, operand1, operand2)
-		proc.setOverflowFlag(result, operand1, operand2, proc.OF_SUB_BYTE)
-
-	sbb_o32_flags: (result, operand1, operand2) ->
-		carry = (proc.getCarryFlag() ? 1 : 0)
-		result = (0xffffffff & operand1) - ((0xffffffff & operand2) + carry)
-
-		proc.setOverflowFlag(int(result), operand1, operand2, proc.OF_SUB_INT)
-		@arithmetic_flags_o32(result, operand1, operand2)
-
-	sbb_o16_flags: (result, operand1, operand2) ->
-		proc.setOverflowFlag(result, operand1, operand2, proc.OF_SUB_SHORT)
-		@arithmetic_flags_o16(result, operand1, operand2)
-
-	sbb_o8_flags: (result, operand1, operand2) ->
-		proc.setOverflowFlag(result, operand1, operand2, proc.OF_SUB_BYTE)
-		@arithmetic_flags_o8(result, operand1, operand2)
+			arithmetic_flags_o8(result, operand1, operand2)
 
 	dec_flags: (result, type = "") ->
 		if (type == "")
@@ -6234,28 +6178,6 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 			if (count == 1)
 				proc.setOverflowFlag(result, proc.OF_BIT7_XOR_CARRY)
-
-			proc.setZeroFlag(result)
-			proc.setParityFlag(result)
-			proc.setSignFlag(result)
-
-	shr_flags: (result, initial, count, type = "") ->
-		if (count > 0)
-			if (type == "")
-				throw new IllegalStateException("Execute Failed")
-			else if (type == "byte")
-				initial = byte(initial)
-				result = byte(result)
-				proc.setCarryFlag(initial, count, proc.CY_SHR_OUTBIT_BYTE)
-			else if (type == "short")
-				initial = short(initial)
-				result = short(result)
-				proc.setCarryFlag(initial, count, proc.CY_SHR_OUTBIT_SHORT)
-			else if (type == "int")
-				proc.setCarryFlag(initial, count, proc.CY_SHR_OUTBIT_INT)
-
-			if (count == 1)
-				proc.setOverflowFlag(result, proc.OF_BIT7_DIFFERENT)
 
 			proc.setZeroFlag(result)
 			proc.setParityFlag(result)

@@ -14,3 +14,4 @@
 # the Free Software Foundation.
 
 window.pc = new PC
+window.pc.create()

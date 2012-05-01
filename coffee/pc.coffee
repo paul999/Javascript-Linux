@@ -17,7 +17,7 @@
 # of vars kopieert.
 
 SYS_RAM_SIZE = 1024 * 1024 * 32
-proc = manager = Clock = sgm = term = rtc = null
+proc = manager = Clock = sgm = term = rtc = serial = null
 
 log "Memory size: #{SYS_RAM_SIZE}"
 
@@ -39,6 +39,7 @@ class PC
 		sgm = new SegmentFactory()
 
 		proc= new processor()
+		serial = new SerialPort(0)
 		Clock = new clock
 		try
 			manager = new CodeBlockManager
@@ -62,6 +63,7 @@ class PC
 		@add(new DMAController(false, false))
 		@add(rtc)
 		@add(new IntervalTimer(0x40, 0))
+		@add(serial)
 #		@add(new GateA20Handler()) #Needed?, Yes
 
 #		@add(new Keyboard)
@@ -73,7 +75,7 @@ class PC
 		try
 
 			if (!term || term.closed) && !!Terminal
-				tmp = {x: 220, y: 70, termDiv: 'termDiv', bgColor: '#232e45', greeting: '', wrapping: true}
+				tmp = {x: 220, y: 70, termDiv: 'termDiv', bgColor: '#232e45', greeting: '', wrapping: true, handler: input}
 				#handler: termHandler, exitHandler: termExitHandler,
 				term = new Terminal(tmp)
 				term.open()
@@ -153,16 +155,18 @@ class PC
 
 			execCount -= @execute()
 			execCount -= 1
+			return;
 			if (execCount > 0)
 				continue
 
 			totalExec += (COUNTDOWN - execCount)
 			execCount = COUNTDOWN
+
 			if (@updateMHz(markTime, totalExec))
 				markTime = 0 #System.currentTimeMillis()
 				totalExec = 0
 #				return
-
+		log "Stopping"
 		@stop()
 		log "PC stopped"
 
