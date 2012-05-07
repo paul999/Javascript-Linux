@@ -152,11 +152,11 @@ task 'build', 'Build a single JavaScript file from src files', ->
 					util.log message
 
 
-				exec "/usr/local/bin/coffee #{CoffeeOptsDebug} ", (err, stdout, stderr) ->
-					handleError(err) if err
-					message = "Compiled #{TargetJsFileDebug}"
-					displayNotification message
-					util.log message
+#				exec "/usr/local/bin/coffee #{CoffeeOptsDebug} ", (err, stdout, stderr) ->
+#					handleError(err) if err
+#					message = "Compiled #{TargetJsFileDebug}"
+#					displayNotification message
+#					util.log message
 task 'uglify', 'Minify and obfuscate', ->
 	#Compiler: http://code.google.com/closure/compiler/
 	exec "java -jar ../compiler-latest/compiler.jar --language_in=ECMASCRIPT5_STRICT --compilation_level=ADVANCED_OPTIMIZATIONS --manage_closure_dependencies --js=src/emulator.js --js_output_file=src/emulator-min.js", (err, stdout, stderr) ->

@@ -305,6 +305,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 		if (opcode != 0)
 			log "Opcode found: #{opcode}"
+			log "Opcode Hex Found: 0x" + opcode.toString(16)
 
 		switch opcodePrefix
 			when 0x00
@@ -2168,15 +2169,22 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					@working.write(@OUT_O16)
 
 			when 0xe8
+				log "0xe8 jaja"
 				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
 					when 0
+						log "0"
 						@working.write(@CALL_O16_A16)
 					when @PREFICES_OPERAND
+						log "1"
 						@working.write(@CALL_O32_A16)
 					when @PREFICES_ADDRESS
+						log "2"
 						@working.write(@CALL_O16_A32)
 					when @PREFICES_ADDRESS | @PREFICES_OPERAND
+						log "3"
 						@working.write(@CALL_O32_A32)
+					else
+						log "Wrong value for 0xe8?"
 
 			when 0xe9
 				if ((prefices & @PREFICES_OPERAND) != 0)
@@ -4161,6 +4169,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			when 0x0f22
 				return true
 			when 0x0f01
+				log "Possible mode switch "
+				log ((modrm & 0x38) == 0x30)
 				return ((modrm & 0x38) == 0x30)
 			else
 				return false
@@ -4332,6 +4342,10 @@ class ProtectedModeUDecoder extends MicrocodeSet
 	load0_M: (prefices, modrm, sib, displacement) ->
 		@decodeM(prefices, modrm, sib, displacement)
 		@working.write(@LOAD0_ADDR)
+
+	load0_Ow: (prefices, displacement) ->
+		@decodeO(prefices, displacement)
+		@working.write(@LOAD0_MEM_WORD)
 
 	decodingAddressMode: ->
 		if (!@addressModeDecoded)

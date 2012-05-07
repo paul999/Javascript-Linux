@@ -80,14 +80,14 @@ class DMAController
 		port = (portNumber >>> @dShift) & 0x0f
 		channelNumber = port >>> 1
 
-		r = dmaChannels[channelNumber]
+		r = @dmaChannels[channelNumber]
 
-		if (getFlipFlop())
+		if (@getFlipFlop())
 			if ((port & 1) == 0) # orgineel DMACHannel.ADDRESS
 				r.baseAddress = (r.baseAddress & 0xff) | ((data << 8) & 0xff00)
 			else
 				r.baseWordCount = (r.baseWordCount & 0xff) | ((data << 8) & 0xff00)
-			initChannel(channelNumber)
+			@initChannel(channelNumber)
 		else if ((port & 1) == 0) #orgineel DMAChanel.ADDRESS
 			r.baseAddress = (r.baseAddress & 0xff00) | (data & 0xff)
 		else
@@ -204,11 +204,11 @@ class DMAController
 
 		swit = address - @pageLowBase
 		if (swit == @pagePortList0 || swit == @pagePortList1 || swit == @pagePortList2 || swit == @pagePortList3)
-			writePageLow(address, data)
+			@writePageLow(address, data)
 		else
 			swit = address - @pageHighBase
 			if (swit == @pagePortList0 || swit == @pagePortList1 || swit == @pagePortList2 || swit == @pagePortList3)
-				writePageHigh(address, data)
+				@writePageHigh(address, data)
 	ioPortWriteWord: (address, data) ->
 		@ioPortWriteByte(address, data)
 		@ioPortWriteByte(address + 1, data >>> 8)

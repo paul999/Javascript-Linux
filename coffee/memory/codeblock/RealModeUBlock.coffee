@@ -1700,3 +1700,5 @@ class n
 		return 0xffffff
 	getQuadWord: ->
 		return 0xffffffff
+	setByte: ->
+		log "NULL set byte!"

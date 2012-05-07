@@ -1,0 +1,35 @@
+diff --git a/buckets.js b/buckets.js
+index 3cf9979..f5508af 100644
+--- a/buckets.js
++++ b/buckets.js
+@@ -1234,6 +1234,19 @@ buckets.Heap.prototype.removeRoot = function() {
+     }
+     return undefined;
+ };
++
++buckets.Heap.prototype.remove = function(element)
++{
++       for(i=0;i < this.data.length; i++)
++       {
++               if(this.compare(element, this.data[i]))
++               {
++                       this.data.splice(i, 1);
++                       return
++               }
++       }
++}
++
+ /**
+  * Returns true if this heap contains the specified element.
+  * @param {Object} element element to search for.
+@@ -1562,6 +1575,10 @@ buckets.PriorityQueue.prototype.peek = function() {
+     return this.heap.peek();
+ };
+
++buckets.PriorityQueue.prototype.remove = function(element) {
++       return this.heap.remove(element);
++};
++
+ /**
+  * Returns true if this priority queue contains the specified element.
+  * @param {Object} element element to search for.

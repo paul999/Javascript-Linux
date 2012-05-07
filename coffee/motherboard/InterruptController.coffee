@@ -119,7 +119,7 @@ class InterruptController
 	ioPortReadByte: (address) ->
 		log "ioport read #{address}"
 		switch address
-			when 0x20, 0x20
+			when 0x20, 0x21
 				return 0xff & @master.ioPortRead(address)
 			when 0xa0, 0xa1
 				return 0xff & @slave.ioPortRead(address)

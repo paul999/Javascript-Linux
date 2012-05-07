@@ -266,10 +266,11 @@ class processor
 		@alignmentChecking = false
 
 		@setEIP(0x10000) # Controle nodig, zie wiki
+#		@setEIP(-917504)
 
 		# @CR0_PROTECTION_ENABLE is to set directly into protected mode.
 		@cr0 = 0
-		@cr0 = @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH |  0x10# | 0x1
+		@cr0 = @CR0_CACHE_DISABLE | @CR0_NOT_WRITETHROUGH |  0x10 | @CR0_PROTECTION_ENABLE
 		@cr2 = @cr3 = @cr4 = 0x0
 
 		@dr0 = @dr1 = @dr2 = @dr3 = 0x0
@@ -287,6 +288,7 @@ class processor
 		@eflagsInterruptEnableSoon = false
 
 		@cs = sgm.createRealModeSegment(0xf000)
+		@cs = sgm.createRealModeSegment(0)
 		@ds = sgm.createRealModeSegment(0)
 		@ss = sgm.createRealModeSegment(0)
 		@es = sgm.createRealModeSegment(0)
@@ -811,9 +813,19 @@ class processor
 		return @ip
 
 	incEIP: (i) ->
+		log "Increate EIP with #{i}"
 		i = @getEIP() + i
 		@setEIP(i)
 
 	setEIP: (i) ->
 		log "EIP update: Old: #{@getEIP()} new #{i}"
+		log "Address value: "
+		log window.pc.getMemoryOffset(8, i)
+
+		if (i == 995326)
+			log "995326 recevied."
+			a.a()
+#			throw "dead"
+#			return
+
 		@ip = i

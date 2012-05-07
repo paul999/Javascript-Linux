@@ -1,0 +1,15 @@
+diff --git a/src/jdataview.js b/src/jdataview.js
+index 1bb5874..3b78f65 100644
+--- a/src/jdataview.js
++++ b/src/jdataview.js
+@@ -89,8 +89,8 @@ jDataView.createBuffer = function () {
+                return buffer;
+        }
+        if (compatibility.ArrayBuffer) {
+-               var buffer = new ArrayBuffer(arguments.length);
+-               var view = new Int8Array(buffer);
++               var buffer = new ArrayBuffer(arguments.length*4);
++               var view = new Int32Array(buffer);
+                for (var i = 0; i < arguments.length; ++i) {
+                        view[i] = arguments[i];
+                }

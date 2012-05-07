@@ -27,6 +27,9 @@ class PC
 		proc = null
 		sgm = null
 	create: ->
+		if (@created)
+			return
+		@created = true
 		log "pc.create"
 		@items = new Array()
 		@count = 0
@@ -123,6 +126,7 @@ class PC
 	start: ->
 		@create()
 		@configure()
+		log "In protected mode: " + proc.isProtectedMode()
 
 		if (!@configured)
 			return
@@ -132,6 +136,7 @@ class PC
 		data = window.kernel
 		@saveMemory(data, data.length, 0x00100000)
 
+		log "Saving console parameters."
 		st = "console=ttyS0 root=/dev/hda ro init=/sbin/init notsc=1"
 		loc = 0xf800 #& 0xff
 		for i in [0...st.length]
@@ -155,7 +160,7 @@ class PC
 
 			execCount -= @execute()
 			execCount -= 1
-			return;
+
 			if (execCount > 0)
 				continue
 
@@ -279,6 +284,7 @@ class PC
 	getMemoryOffset: (type = "", offset = null) =>
 		if !offset || offset == null
 			return false
+
 		switch type
 #			when ""
 #				tmp = @mem[offset]
@@ -289,11 +295,11 @@ class PC
 			when 32
 				tmp = @mem32[offset]
 			else
-				return false
+				throw "Wrong value for type."
 		if (tmp == null || tmp == 'undefined' || isNaN(tmp))
 			log "getMemoryOffset: read null/undefined (type; #{type}, offset: #{offset}"
-
-		tmp = parseInt tmp
+#		log "getMemoryOffset (#{type}, #{offset}): #{tmp};"
+#		tmp = parseInt tmp
 		return tmp
 
 	setMemory: (type = "err", offset = "err", data = "err") =>
@@ -320,17 +326,22 @@ class PC
 			#tmp.getError()
 			return false
 
+#		log "Saving memory type: #{type}, offset: #{offset}, data: #{data}"
+
 		switch type
 			when ""
 				return false
 			when 8
 				@mem8[offset] = data
+
 			when 16
 				@mem16[offset] = data
+
 			when 32
 				@mem32[offset] = data
+
 			else
-				return false
+				throw "Invalid operation"
 		return true
 	resetMemory: =>
 		@mem = new ArrayBuffer(SYS_RAM_SIZE + 16);
@@ -342,6 +353,10 @@ class PC
 			throw new LengthIncorrectError("Memory length is not correct.")
 		else
 			log "Memlength is OK, size: #{SYS_RAM_SIZE}, real: #{@mem.byteLength}"
+		log "saving memory to 0"
+#		for i in [0...@mem.byteLength]
+#			@setMemory 8, i, 0
+		log "savving memory done."
 
 
 	printStackTrace: (e) ->

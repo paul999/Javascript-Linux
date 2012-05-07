@@ -19,6 +19,8 @@ class ByteSourceWrappedMemory
 		@startingPosition = null
 
 	set: (@offset) ->
+		log "ByteSourceWrappedMemory: offset: #{@offset}"
+
 		@startingPosition = @offset
 
 		if (isNaN(@offset))
