@@ -16,7 +16,7 @@
    "main": "./tempus.js",
 
    "dependencies": {
-   	"coffeescript": "*"
+   	"coffee-script": "*"
    },
 
    "devDependencies": {
