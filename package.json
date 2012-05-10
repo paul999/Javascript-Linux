@@ -1,0 +1,28 @@
+{
+   "name": "Javascript Linux",
+   "version": "0.0.1",
+   "description": "",
+   "homepage": "http://www.github.com/paul999/Javascript Linux",
+   "keywords": [ ],
+   "maintainers": [
+        {
+            "name": "Paul @sohier",
+            "email": "jslinux@sohier.me",
+            "web": "http://www.paulsohier.nl"
+        }
+   ],
+   "licenses": [ { "type": "GPLv2", "url": "http://www.gnu.org/licenses/gpl-2.0.html" } ],
+   "repositories": [ { "type": "git", "url": "https://github.com/paul999/Javascript-Linux/" } ],
+   "main": "./tempus.js",
+
+   "dependencies": {
+   	"coffeescript": "*"
+   },
+
+   "devDependencies": {
+ 		"qunit": "0.2.x"
+   },
+   "scripts": {
+   		"test": "node test/index.js"
+   }
+}

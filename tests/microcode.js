@@ -1,11 +1,11 @@
-module("Test microcode execution")
-test("Simple microcode", function()
+QUnit.module("Test microcode execution")
+QUnit.test("Simple microcode", function()
 {
 	ok(window.testMicroCodes, "Microcodes are required to run the tests for the CPU")
 
 });
 
-test("Large microcode", function()
+QUnit.test("Large microcode", function()
 {
 	ok(window.testMicroCodes, "Microcodes are required to run the tests for the CPU")
 });

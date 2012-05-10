@@ -1,6 +1,6 @@
-module("Test PC memory")
+QUnit.module("Test PC memory")
 
-test("Memory Length", function()
+QUnit.test("Memory Length", function()
 {
 	setup()
 
@@ -12,7 +12,7 @@ test("Memory Length", function()
 	equal(window.pc.getMemoryLength(32), 0x2000010/4, 'Memory length uint32')
 });
 
-test("Check emptyness", function()
+QUnit.test("Check emptyness", function()
 {
 	setup()
 	window.pc.create()
@@ -21,7 +21,7 @@ test("Check emptyness", function()
 	equal(window.pc.getMemoryOffset(8, 512), 0, "Test memory 512")
 	equal(window.pc.getMemoryOffset(8, 0x10000), 0, "Test memory 0x00000")
 });
-test("Save memory", function()
+QUnit.test("Save memory", function()
 {
 	setup()
 	window.pc.create()

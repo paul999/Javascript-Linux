@@ -1,7 +1,6 @@
 module("Casting");
 test("Test casting of bytes", function()
 {
-console.log("Testing cast bytes");
 equal(byte(-1024), 0, "Test byte if -1024 becomes 0.")
 equal(byte(-1023), 1, "Test byte if -1023 becomes 1.")
 equal(byte(-1022), 2, "Test byte if -1022 becomes 2.")

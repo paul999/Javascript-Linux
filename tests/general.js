@@ -1,15 +1,15 @@
 function setup()
 {
-	console.log("RESET")
 	proc = null
 	window.pc = null
 	window.pc = new PC
 }
 
 
-module("PC object test");
-test("PC object exists", function()
+QUnit.module("PC object test");
+QUnit.test("PC object exists", function()
 {
+	console.log("PC Object exists here...");
 	expect(5);
 
 	notEqual(PC, undefined, 'Expect PC to be defined')
@@ -20,14 +20,14 @@ test("PC object exists", function()
 	notEqual(jDataView, undefined, 'Check for required BinaryReader.')
 });
 
-test("PC object creation" , function()
+QUnit.test("PC object creation" , function()
 {
 	expect(1)
 
 	equal(window.pc.create(), true, 'PC creation without expections')
 });
 
-test("PC real mode exceptions", function()
+QUnit.test("PC real mode exceptions", function()
 {
 	raises(function(){window.pc.executeReal()}, "Test if real mode throws a exception")
 });

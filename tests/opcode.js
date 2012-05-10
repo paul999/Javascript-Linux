@@ -1,6 +1,6 @@
-module("Test opcode convertor")
+QUnit.module("Test opcode convertor")
 
-test("Simple opcode", function()
+QUnit.test("Simple opcode", function()
 {
 	ok(window.testOpCodes, "Opcodes are required to run the tests for the CPU")
 
@@ -21,8 +21,6 @@ function runCode(cd, cd2)
 
 		window.pc.resetMemory()
 
-		console.log("saving: " + cd[i])
-
 		window.pc.saveMemory(cd[i], cd[i].length, 0x10000)
 
 		bt = new ByteSourceWrappedMemory()
@@ -31,10 +29,6 @@ function runCode(cd, cd2)
 		var p = new ProtectedModeUDecoder()
 
 		p = p.decodeProtected(bt, true, 1)
-
-
-
-		console.log("Length: " + p.getLength())
 
 		var t = new OptimisedCompiler()
 
@@ -52,7 +46,7 @@ function runCode(cd, cd2)
 	SYS_RAM_SIZE = oldram
 }
 
-test("Large opcode", function()
+QUnit.test("Large opcode", function()
 {
 	ok(window.testOpCodes, "Opcodes are required to run the tests for the CPU")
 
