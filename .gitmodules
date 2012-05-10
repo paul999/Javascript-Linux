@@ -4,6 +4,3 @@
 [submodule "src/lib/qunit"]
 	path = src/lib/qunit
 	url = git://github.com/jquery/qunit.git
-[submodule "src/lib/jdataview"]
-	path = src/lib/jdataview
-	url = git://github.com/vjeux/jDataView.git
