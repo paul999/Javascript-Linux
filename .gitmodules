@@ -1,6 +1,3 @@
-[submodule "src/lib/buckets"]
-	path = src/lib/buckets
-	url = git://github.com/mauriciosantos/buckets.git
 [submodule "src/lib/qunit"]
 	path = src/lib/qunit
 	url = git://github.com/jquery/qunit.git
