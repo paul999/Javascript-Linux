@@ -188,7 +188,7 @@ task 'builddebug', 'Build a single Debug JavaScript file from src files', ->
 					handleError(err) if err
 					util.log "Copied"
 
-				exec "/usr/local/bin/coffee #{CoffeeOptsDebug} ", (err, stdout, stderr) ->
+				exec "coffee #{CoffeeOptsDebug} ", (err, stdout, stderr) ->
 					handleError(err) if err
 					message = "Compiled #{TargetJsFileDebug}"
 					displayNotification message
