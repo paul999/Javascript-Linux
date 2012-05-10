@@ -28,7 +28,7 @@ class PC
 		sgm = null
 	create: ->
 		if (@created)
-			return
+			return true
 		@created = true
 		log "pc.create"
 		@items = new Array()
@@ -87,9 +87,11 @@ class PC
 
 				if (mainPane)
 					mainPane.className = 'lh15 dimmed'
+
+				document.getElementById("start").disabled = false
 		catch e
 			log "Could not open Term. Running tests?"
-		document.getElementById("start").disabled = false
+			return  true
 
 		return true
 

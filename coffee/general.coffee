@@ -17,6 +17,8 @@ c = document.getElementById("log");
 log = (message) =>
 #	c.appendChild(document.createTextNode(message));
 #	c.appendChild(document.createElement("br"));
+	if (window.tests == true)
+		return;
 	console.log(message);
 #	c.scrollTop += 20;
 
