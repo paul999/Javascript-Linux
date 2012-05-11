@@ -1690,15 +1690,3 @@ class RealModeUBlock extends MicrocodeSet
 		proc.ss.setWord(offset, short(proc.eip))
 		proc.esp = (proc.esp * 0xffff0000) | offset
 		proc.setEIP((proc.getEIP() + target) & 0xffff)
-
-class n
-	getByte: ->
-		return 0xff
-	getWord: ->
-		return 0xffff
-	getDoubleWord: ->
-		return 0xffffff
-	getQuadWord: ->
-		return 0xffffffff
-	setByte: ->
-		log "NULL set byte!"

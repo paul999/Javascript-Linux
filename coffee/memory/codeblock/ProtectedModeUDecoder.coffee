@@ -4347,6 +4347,10 @@ class ProtectedModeUDecoder extends MicrocodeSet
 		@decodeO(prefices, displacement)
 		@working.write(@LOAD0_MEM_WORD)
 
+	store0_Ow: (prefices, displacement) ->
+		@decodeO(prefices, displacement)
+		@working.write(@STORE0_MEM_WORD)
+
 	decodingAddressMode: ->
 		if (!@addressModeDecoded)
 			@addressModeDecoded = true

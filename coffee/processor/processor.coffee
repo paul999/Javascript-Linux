@@ -813,7 +813,11 @@ class processor
 		return @ip
 
 	incEIP: (i) ->
-		log "Increate EIP with #{i}"
+		if (i == 2000)
+			log "2000 increase"
+			a.a()
+			return
+		log "Increase EIP with #{i}"
 		i = @getEIP() + i
 		@setEIP(i)
 
@@ -822,10 +826,10 @@ class processor
 		log "Address value: "
 		log window.pc.getMemoryOffset(8, i)
 
-		if (i == 995326)
-			log "995326 recevied."
+		if (i == 82803)
+			log "82803 recevied."
 			a.a()
-#			throw "dead"
-#			return
+			throw "dead"
+			return
 
 		@ip = i

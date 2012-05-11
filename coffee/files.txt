@@ -7,7 +7,6 @@ memory/codeblock/ProtectedModeCodeBlockWrapper
 memory/codeblock/DefaultCodeBlockFactory
 memory/codeblock/ProtectedModeUBlock
 memory/codeblock/ProtectedModeUDecoder
-memory/codeblock/RealModeUBlock
 memory/codeblock/CachedCodeBlockCompiler
 memory/codeblock/BackgroundCompiler
 memory/codeblock/OptimisedCompiler

@@ -45,8 +45,6 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if (@opcodeCounter && @opcodeCounter != null)
 			opcodeCounter.addBlock(@getMicrocodes())
 
-#		seg0 = new n()
-#		seg0 = proc.ecx
 		seg0 = null
 		addr0 = 0
 		reg0 = 0
@@ -81,7 +79,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 					when @MEM_RESET
 						addr0 = 0
-						seg0 = new n()
+						seg0 = null
 
 					when @LOAD0_EAX
 						reg0 = proc.eax
