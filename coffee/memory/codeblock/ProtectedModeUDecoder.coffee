@@ -217,8 +217,12 @@ class ProtectedModeUDecoder extends MicrocodeSet
 	decodeOpcode: (operandSizeIs32Bit) ->
 		opcode = 0
 		opcodePrefix = 0
-		tmp = (@PREFICES_OPERAND | @PREFICES_ADDRESS)
-		prefices = operandSizeIs32Bit && proc.isProtectedMode() ? tmp : 0x00 # If in real mode it always is 0x00
+
+		prefices = 0x00 # If in real mode it always is 0x00
+
+		if (operandSizeIs32Bit && proc.isProtectedMode())
+			prefices = (@PREFICES_OPERAND | @PREFICES_ADDRESS)
+
 		bytesRead = 0
 		modrm = -1
 		sib = -1
@@ -233,6 +237,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			opcode = read
 
 			bytesRead += 1
+
+			log "Readed opcode: #{opcode.toString(16)}"
 
 			switch (opcode)
 				when 0x0f
@@ -272,7 +278,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					continue
 				when 0x65
 					prefices &= ~@PREFICES_SG
-					prefices |= @PREFICS_GS
+					prefices |= @PREFICES_GS
 					continue
 				when 0x66
 					if @operandSizeIs32Bit
@@ -298,14 +304,9 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					continue
 			break
 
-#		if (opcode == 0x30)
-#			throw "bla"
-
 		opcode = (opcodePrefix << 8) | opcode
 
-		if (opcode != 0)
-			log "Opcode found: #{opcode}"
-			log "Opcode Hex Found: 0x" + opcode.toString(16)
+		log "Opcode Hex Found: 0x" + opcode.toString(16)
 
 		switch opcodePrefix
 			when 0x00
@@ -315,7 +316,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				else
 					modrm = -1
 
-				if (modrm == -1) || ((prefices & @PREFICES_ADDRESS) == 0)
+				if (modrm == -1)# || ((prefices & @PREFICES_ADDRESS) == 0)
 					sib = -1
 				else
 					if (@sibArray[modrm])
@@ -410,7 +411,13 @@ class ProtectedModeUDecoder extends MicrocodeSet
 	operationHasDisplacement: (prefices, opcode, modrm,sib) ->
 		switch opcode
 			when 0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0a, 0x0b, 0x10, 0x11, 0x12, 0x13, 0x18, 0x19, 0x1a, 0x1b, 0x20, 0x21, 0x22, 0x23, 0x28, 0x29, 0x2a, 0x2b, 0x30, 0x31, 0x32, 0x33, 0x38, 0x39, 0x3a, 0x3b, 0x62, 0x69, 0x6b, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f, 0xc0, 0xc1, 0xc4, 0xc5, 0xc6, 0xc7, 0xd0, 0xd1, 0xd2, 0xd3, 0xf6, 0xf7, 0xfe, 0xff, 0xf00, 0xf01, 0xf20, 0xf22, 0xf40, 0xf41, 0xf42, 0xf43, 0xf44, 0xf45, 0xf46, 0xf47, 0xf48, 0xf49, 0xf4a, 0xf4b, 0xf4c, 0xf4d, 0xf4e, 0xf4f, 0xf90, 0xf91, 0xf92, 0xf93, 0xf94, 0xf95, 0xf96, 0xf97, 0xf98, 0xf99, 0xf9a, 0xf9b, 0xf9c, 0xf9d, 0xf9e, 0xf9f, 0xfa3, 0xfa4, 0xfa5, 0xfab, 0xfac, 0xfad, 0xfaf, 0xfb0, 0xfb1, 0xfb2, 0xfb3, 0xfb4, 0xfb5, 0xfb6, 0xfb7, 0xfba, 0xfbb, 0xfbc, 0xfbd, 0xfbe, 0xfbf, 0xfc0, 0xfc1, 0xfc7
-				return @modrmHasDisplacement(prefices, modrm, sib)
+				val = @modrmHasDisplacement(prefices, modrm, sib)
+
+				if opcode == 0xc7
+					log "returned value: " + val
+					return 2
+				return val
+
 			when 0xd800, 0xd900, 0xda00, 0xdb00, 0xdc00, 0xdd00, 0xde00, 0xdf00
 				if ((modrm & 0xc0) != 0xc0)
 					return @modrmHasDisplacement(prefices, modrm, sib)
@@ -424,9 +431,12 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			else
 				return 0
 
+
 	modrmHasDisplacement: (prefices, modrm, sib) ->
+
 		if ((prefices & @PREFICES_ADDRESS) != 0)
-			switch (modrm & 0xc0)
+			#32 bit address size
+			switch(modrm & 0xc0)
 				when 0x00
 					switch (modrm & 0x7)
 						when 0x4
@@ -437,21 +447,24 @@ class ProtectedModeUDecoder extends MicrocodeSet
 						when 0x5
 							return 4
 				when 0x40
-					return 1
+					return 1 #IB
 				when 0x80
-					return 4
+					return 4 #ID
 		else
-			switch (modrm & 0xc0)
+			#16 bit address size
+			switch(modrm & 0xc0)
 				when 0x00
 					if ((modrm & 0x7) == 0x6)
 						return 2
 					else
 						return 0
 				when 0x40
-					return 1
+					return 1 #IB
 				when 0x80
-					return 2
+					return 2 #IW
+
 		return 0
+
 
 	operationHasImmediate: (prefices, opcode, modrm) ->
 		switch opcode
@@ -1014,6 +1027,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 						@working.write(@ADDR_uAL)
 						@working.write(@ADDR_MASK16)
 
+				log "LOAD0_MEM_BYTE a"
 				@working.write(@LOAD0_MEM_BYTE)
 
 
@@ -2169,19 +2183,14 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					@working.write(@OUT_O16)
 
 			when 0xe8
-				log "0xe8 jaja"
 				switch (prefices & (@PREFICES_OPERAND | @PREFICES_ADDRESS))
 					when 0
-						log "0"
 						@working.write(@CALL_O16_A16)
 					when @PREFICES_OPERAND
-						log "1"
 						@working.write(@CALL_O32_A16)
 					when @PREFICES_ADDRESS
-						log "2"
 						@working.write(@CALL_O16_A32)
 					when @PREFICES_ADDRESS | @PREFICES_OPERAND
-						log "3"
 						@working.write(@CALL_O32_A32)
 					else
 						log "Wrong value for 0xe8?"
@@ -3175,6 +3184,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				if ((prefices & @PREFICES_OPERAND) != 0)
 					@store0_Od(prefices, displacement)
 				else
+					log "PREF" + prefices
 					@store0_Ow(prefices, displacement)
 
 			when 0xff
@@ -3817,7 +3827,15 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				@working.write(@LOAD0_BH)
 			else
 				@decodeM(prefices, modrm, sib, displacement)
+				log "LOAD0_MEM_BYTE b"
 				@working.write(@LOAD0_MEM_BYTE)
+
+				if (!@bla)
+					@bla = 1
+				else
+					@bla++
+#				if @bla > 12
+#					a.a();
 	load1_Gb: (modrm) ->
 		val = modrm & 0x38
 
@@ -3841,7 +3859,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			else
 				throw "Unknown Byte Register Operand #{val}"
 	load0_Ew: (prefices, modrm, sib, displacement) ->
-		log "modrm: #{modrm} modrm & 0xc7 #{modrm&0xc7}"
 		switch (modrm & 0xc7)
 			when 0xc0
 				@working.write(@LOAD0_AX)
@@ -4169,8 +4186,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 			when 0x0f22
 				return true
 			when 0x0f01
-				log "Possible mode switch "
-				log ((modrm & 0x38) == 0x30)
 				return ((modrm & 0x38) == 0x30)
 			else
 				return false
@@ -4183,12 +4198,14 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 	decodeM: (prefices, modrm, sib, displacement) ->
 		if (!@decodingAddressMode())
-#			a.a();
+			log "already decoded"
+			a.a()
 			return
 
 		if ((prefices & @PREFICES_ADDRESS) != 0)
-			# 32 bit address
+			#32 bit address size
 
+			#Segment load
 			switch (prefices & @PREFICES_SG)
 				when @PREFICES_CS
 					@working.write(@LOAD_SEG_CS)
@@ -4205,12 +4222,14 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				else
 					switch (modrm & 0xc7)
 						when 0x04, 0x44, 0x84
-							break
+							break #segment working.write will occur in decodeSIB
 						when 0x45, 0x85
 							@working.write(@LOAD_SEG_SS)
 						else
 							@working.write(@LOAD_SEG_DS)
-			switch (modrm & 0x7)
+
+			# Address Load
+			switch(modrm & 0x7)
 				when 0x0
 					@working.write(@ADDR_EAX)
 				when 0x1
@@ -4220,9 +4239,9 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				when 0x3
 					@working.write(@ADDR_EBX)
 				when 0x4
-					@decodeSIB(prefices, modrm, displacement)
+					@decodeSIB(prefices, modrm, sib, displacement)
 				when 0x5
-					if ((modrm & 0xc0) == 0x00)
+					if((modrm & 0xc0) == 0x00)
 						@working.write(@ADDR_ID)
 						@working.write(displacement)
 					else
@@ -4231,16 +4250,19 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					@working.write(@ADDR_ESI)
 				when 0x7
 					@working.write(@ADDR_EDI)
-			switch (modrm & 0xc0)
+
+			switch(modrm & 0xc0)
 				when 0x40
 					@working.write(@ADDR_IB)
 					@working.write(displacement)
-
 				when 0x80
 					@working.write(@ADDR_ID)
 					@working.write(displacement)
 
 		else
+			#16 bit address size
+			#Segment load
+
 			switch (prefices & @PREFICES_SG)
 				when @PREFICES_CS
 					@working.write(@LOAD_SEG_CS)
@@ -4256,10 +4278,11 @@ class ProtectedModeUDecoder extends MicrocodeSet
 					@working.write(@LOAD_SEG_GS)
 				else
 					switch (modrm & 0xc7)
-						when 0x02, 0x03, 0x42, 0x43, 0x46, 0x82, 0x83, 0x86
+						when 0x02, 0x03, 0x42, 0x43, 0x46, 0x82, 0x83,0x86
 							@working.write(@LOAD_SEG_SS)
 						else
 							@working.write(@LOAD_SEG_DS)
+
 			switch (modrm & 0x7)
 				when 0x0
 					@working.write(@ADDR_BX)
@@ -4285,6 +4308,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 						@working.write(@ADDR_BP)
 				when 0x7
 					@working.write(@ADDR_BX)
+
+
 			switch (modrm & 0xc0)
 				when 0x40
 					@working.write(@ADDR_IB)
@@ -4312,6 +4337,7 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				@working.write(@LOAD_SEG_DS)
 	load0_Ob: (prefices, displacement) ->
 		@decodeO(prefices, displacement)
+		log "LOAD0_MEM_BYTE c"
 		@working.write(@LOAD0_MEM_BYTE)
 
 	decodeO: (prefices, displacement) ->
@@ -4328,6 +4354,13 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				@working.write(@LOAD_SEG_FS)
 			when @PREFICES_GS
 				@working.write(@LOAD_SEG_GS)
+			else
+				log "Invalid option?"
+				log prefices
+				log prefices & @PREFICES_SG
+
+				#a.a()
+				@working.write(@LOAD_SEG_SS)
 
 		if ((prefices & @PREFICES_ADDRESS) != 0)
 			if (@decodingAddressMode())
@@ -4372,6 +4405,9 @@ class Operation
 		if ((!microcode && microcode != 0) || microcode == null)
 			throw new NotImplementedError("Cant set a undefined/null microcode: " + microcode)
 
+#		if (microcode == @LOAD0_MEM_BYTE)
+#			a.a();
+
 		try
 #			log "Adding microcode #{microcode} to @microcodes[#{@microcodesLength}]"
 			@microcodes[@microcodesLength] = microcode
@@ -4400,6 +4436,7 @@ class Operation
 		@readOffset = 0;
 		@decoded = false;
 		@terminal = false;
+		@microcodes = new Array()
 
 	getMicrocodeAt: (offset) ->
 		return @microcodes[offset]

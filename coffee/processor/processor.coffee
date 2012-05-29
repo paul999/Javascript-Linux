@@ -823,13 +823,24 @@ class processor
 
 	setEIP: (i) ->
 		log "EIP update: Old: #{@getEIP()} new #{i}"
-		log "Address value: "
-		log window.pc.getMemoryOffset(8, i)
 
 		if (i == 82803)
 			log "82803 recevied."
 			a.a()
 			throw "dead"
 			return
+
+		if (@nextstop)
+			log "78904 received"
+			a.a();
+			throw "dead"
+			return
+		if (i == 78096)
+			@nextstop = true
+		else
+			@nextstop = false
+
+		if (i == 12312)
+			a.a();
 
 		@ip = i

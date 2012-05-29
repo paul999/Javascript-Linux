@@ -32,6 +32,8 @@ class OptimisedCompiler
 
 	buildCodeBlockBuffers: (source) ->
 		@bufferOffset = 0
+		@bufferMicrocodes = new Array()
+		@bufferPositions = new Array()
 		position = 0
 
 		while (source.getNext())

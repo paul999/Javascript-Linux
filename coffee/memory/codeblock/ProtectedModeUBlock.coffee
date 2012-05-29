@@ -45,20 +45,19 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if (@opcodeCounter && @opcodeCounter != null)
 			opcodeCounter.addBlock(@getMicrocodes())
 
+		log "Starting to execute ticks: " + @x86Count
+
 		seg0 = null
 		addr0 = 0
 		reg0 = 0
 		reg1 = 0
 		reg2 = 0
-		reg0l = 0
 		freg0 = 0.0
 		greg1 = 0.0
+		use = false
 		@executeCount = @x86Count
 		eipUpdated = false
 		@position = 0
-
-		log "Going to execute the next microcodes: "
-		log @microcodes
 
 #		for i in [position...@microcodes.length]
 #			log @microcodes[i]
@@ -67,6 +66,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 		try
 			while @position < @microcodes.length
 				code = @microcodes[@position]
+
+#				log "Executing " + code
+
 				@position++
 				switch code
 					when @EIP_UPDATE
@@ -80,6 +82,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					when @MEM_RESET
 						addr0 = 0
 						seg0 = null
+						use = false
 
 					when @LOAD0_EAX
 						reg0 = proc.eax
@@ -418,16 +421,22 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 					when @LOAD_SEG_ES
 						seg0 = proc.es
+						use = true
 					when @LOAD_SEG_CS
 						seg0 = proc.cs
+						use = true
 					when @LOAD_SEG_SS
 						seg0 = proc.ss
+						use = true
 					when @LOAD_SEG_DS
 						seg0 = proc.ds
+						use = true
 					when @LOAD_SEG_FS
 						seg0 = proc.fs
+						use = true
 					when @LOAD_SEG_GS
 						seg0 = proc.gs
+						use = true
 
 					when @ADDR_REG1
 						 addr0 += reg1
@@ -540,35 +549,61 @@ class ProtectedModeUBlock extends MicrocodeSet
 						reg0 = addr0
 
 					when @LOAD0_MEM_BYTE
-						 reg0 = 0xff & seg0.getByte(addr0)
+						if (!use)
+							log "use not set."
+						reg0 = 0xff & seg0.getByte(addr0)
 					when @LOAD0_MEM_WORD
-						 reg0 = 0xffff & seg0.getWord(addr0)
+						if (!use)
+							log "use not set."
+						reg0 = 0xffff & seg0.getWord(addr0)
 					when @LOAD0_MEM_DWORD
+						if (!use)
+							log "use not set."
 						reg0 = seg0.getDoubleWord(addr0)
 					when @LOAD0_MEM_QWORD
+						if (!use)
+							log "use not set."
 						reg0l = seg0.getQuadWord(addr0)
 
 					when @LOAD1_MEM_BYTE
-						 reg1 = 0xff & seg0.getByte(addr0)
+						if (!use)
+							log "use not set."
+						reg1 = 0xff & seg0.getByte(addr0)
 					when @LOAD1_MEM_WORD
-						 reg1 = 0xffff & seg0.getWord(addr0)
+						if (!use)
+							log "use not set."
+						reg1 = 0xffff & seg0.getWord(addr0)
 					when @LOAD1_MEM_DWORD
+						if (!use)
+							log "use not set."
 						reg1 = seg0.getDoubleWord(addr0)
 
 					when @STORE0_MEM_BYTE
-						 seg0.setByte(addr0, byte(reg0))
+						if (!use)
+							log "use not set."
+						seg0.setByte(addr0, byte(reg0))
 					when @STORE0_MEM_WORD
-						 seg0.setWord(addr0, short(reg0))
+						if (!use)
+							log "use not set."
+						seg0.setWord(addr0, short(reg0))
 					when @STORE0_MEM_DWORD
 						seg0.setDoubleWord(addr0, reg0)
 					when @STORE0_MEM_QWORD
+						if (!use)
+							log "use not set."
 						seg0.setQuadWord(addr0, reg0l)
 
 					when @STORE1_MEM_BYTE
-						 seg0.setByte(addr0, byte(reg1))
+						if (!use)
+							log "use not set."
+						seg0.setByte(addr0, byte(reg1))
 					when @STORE1_MEM_WORD
-						 seg0.setWord(addr0, short(reg1))
+						if (!use)
+							log "use not set."
+						seg0.setWord(addr0, short(reg1))
 					when @STORE1_MEM_DWORD
+						if (!use)
+							log "use not set."
 						seg0.setDoubleWord(addr0, reg1)
 
 					when @XOR
@@ -576,7 +611,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					when @AND
 						reg0 &= reg1
 					when @OR
-						 reg0 |= reg1
+						reg0 |= reg1
 					when @NOT
 						reg0 = ~reg0
 
@@ -634,12 +669,20 @@ class ProtectedModeUBlock extends MicrocodeSet
 						reg0 = @bsr(reg1, reg0)
 
 					when @BT_MEM
+						if (!use)
+							log "use not set."
 						@bt_mem(reg1, seg0, addr0)
 					when @BTS_MEM
+						if (!use)
+							log "use not set."
 						@bts_mem(reg1, seg0, addr0)
 					when @BTR_MEM
+						if (!use)
+							log "use not set."
 						@btr_mem(reg1, seg0, addr0)
 					when @BTC_MEM
+						if (!use)
+							log "use not set."
 						@btc_mem(reg1, seg0, addr0)
 
 					when @BT_O32
@@ -983,7 +1026,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 						@loopnz_ecx(byte(reg0))
 
 					when @JUMP_O8
-						@jump_o8(byte(reg0))
+						log "Reg0 waarde: #{reg0} byte waarde: #{byte(reg0)}"
+#						@jump_o8(byte(reg0))
+						@jump_o8(reg0)
 					when @JUMP_O16
 						log "Hier"
 						@jump_o16(short(reg0))
@@ -1002,10 +1047,11 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 
 					when @CALL_O16_A16, @CALL_O16_A32
-						if (proc.ss.getDefaultSizeFlag())
-							@call_o16_a32(reg0)
-						else
-							@call_o16_a16(reg0)
+						#if (proc.ss.getDefaultSizeFlag())
+						#	log "o16_a32"
+						#	@call_o16_a32(reg0)
+						#else
+						@call_o16_a16(reg0)
 
 					when @CALL_O32_A32, @CALL_O32_A16
 						if (proc.ss.getDefaultSizeFlag())
@@ -1273,7 +1319,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 						if (proc.ss.getDefaultSizeFlag())
 							@push_o32_a32(reg0)
 						else
-							@push_o32_a16(reg0)
+						byte(reg0)	@push_o32_a16(reg0)
 
 					when @PUSH_O16_A16, @PUSH_O16_A32
 
@@ -1738,7 +1784,19 @@ class ProtectedModeUBlock extends MicrocodeSet
 						throw "File: ProtectedModeUBlock: Not added microcode yet? #{@microcodes[@position - 1]}"
 
 		catch e
+			log "Exception during microcode executing, the next microcodes were executing: "
+
+			tmp = ""
+
+			for i in [0...@microcodes.length]
+				tmp += ", " + @microcodes[i]
+			log tmp
+
+			tmp = @position - 1
+			log "I was busy with executing microcode number #{tmp}: #{@microcodes[tmp]}"
+
 			throw e
+		log "Done"
 
 		return @executeCount
 
@@ -3848,7 +3906,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 	jump_o8: (offset) ->
 		log "jump_o8"
-		offset = byte(offset)
+#		offset = byte(offset)
 		if (offset == 0)
 			log "Offset is 0"
 			return; #first protected mode throws on a jump 0 (some segment problem?)
@@ -4016,8 +4074,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.setEIP(tempEIP)
 
 	call_o16_a16: (target) ->
-		log "call_o16_a16"
+		log "call_o16_a16(#{target})"
 		t = (proc.getEIP() + target)
+
+		# Wrong readout?
+		if (proc.getEIP() == 77848)
+			t++
+
 		tempEIP = t#0xffff & t
 		log "Target EIP: #{target}, old: #{proc.getEIP()} new: #{tempEIP} t: #{t}"
 
@@ -4027,7 +4090,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if ((0xffff & proc.esp) < 2)
 			throw ProcessorException.STACK_SEGMENT_0
 
-		proc.ss.setWord((proc.esp - 2) & 0xffff, short(0xFFFF & proc.getEIP()))
+		proc.ss.setDoubleWord((proc.esp - 2) & 0xffff, proc.getEIP())
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 2) & 0xffff)
 
 		proc.setEIP(tempEIP)
@@ -4038,12 +4101,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.cs.checkAddress(tempEIP)
 
 		if ((proc.esp < 2) && (proc.esp > 0))
+			log "Exception!"
 			throw ProcessorException.STACK_SEGMENT_0
 
 		proc.ss.setWord(proc.esp - 2, short(0xFFFF & proc.getEIP()))
 		proc.esp -= 2
 
-		proc.getEIP(tempEIP)
+		proc.setEIP(tempEIP)
 
 	call_o32_a16: (target) ->
 		tempEIP = proc.getEIP() + target
@@ -4577,6 +4641,11 @@ class ProtectedModeUBlock extends MicrocodeSet
 	ret_o16_a16: ->
 	# TODO:  supposed to throw SS exception
 	# "if top 6 bytes of stack not within stack limits"
+		proc.setEIP(proc.ss.getDoubleWord(proc.esp))
+		proc.esp = proc.esp + 4
+
+		return
+		#
 		proc.setEIP(proc.ss.getWord(proc.esp & 0xffff) & 0xffff)
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp + 2) & 0xffff)
 

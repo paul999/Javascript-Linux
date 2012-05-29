@@ -1,7 +1,8 @@
 <?php
-
 if (php_sapi_name() != 'cli')
+{
 	die("This script works on cli only.");
+}
 
 if ($argc != 4)
 {
@@ -18,10 +19,12 @@ $var = $argv[3];
 $open = $argv[1];
 $save = $argv[2];
 
-$rs = fopen ($open, 'r+');
+$rs = @fopen ($open, 'r+');
 
 if (!$rs)
+{
 	die("Coulnt open $open.");
+}
 
 $tmp = "window.{$var} = [";
 
@@ -34,5 +37,3 @@ while (!feof ($rs))
 $tmp .= "]";
 
 file_put_contents($save, $tmp);
-
-?>

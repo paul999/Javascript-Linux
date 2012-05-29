@@ -184,7 +184,7 @@ class InterruptControllerElement
 	getIRQ: () ->
 		mask = cpr = pr = null
 
-		mask = @interruptRequestRegister & ~interruptMaskRegister
+		mask = @interruptRequestRegister & ~@interruptMaskRegister
 
 		pr = @getPriority(mask)
 

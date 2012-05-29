@@ -23,6 +23,7 @@ class RealModeSegment extends Segment
 		@rpl = 0
 		@type = @TYPE_DATA_WRITABLE | @TYPE_ACCESSED
 		@defaultSize = false
+#		@defaultSize = true
 
 		log "Base of this: " + @base
 

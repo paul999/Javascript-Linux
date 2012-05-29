@@ -4,6 +4,8 @@ linuxstart.bin:     file format binary
 
 Disassembly of section .data:
 
+3000 == 77822
+
 00000000 <.data>:
        0:	bc 00 30 01 00       	mov    $0x13000,%esp
        5:	51                   	push   %ecx
@@ -24,9 +26,9 @@ Disassembly of section .data:
     300e:	c7 04 24 0c 39 01 00 	movl   $0x1390c,(%esp)
     3015:	e8 f6 00 00 00       	call   0x3110
     301a:	c7 44 24 08 80 19 00 	movl   $0x1980,0x8(%esp)
-    3021:	00 
+    3021:	00
     3022:	c7 44 24 04 00 00 00 	movl   $0x0,0x4(%esp)
-    3029:	00 
+    3029:	00
     302a:	c7 04 24 00 00 09 00 	movl   $0x90000,(%esp)
     3031:	e8 7a 02 00 00       	call   0x32b0
     3036:	89 d8                	mov    %ebx,%eax
@@ -38,9 +40,9 @@ Disassembly of section .data:
     3048:	a3 e0 01 09 00       	mov    %eax,0x901e0
     304d:	8b 45 10             	mov    0x10(%ebp),%eax
     3050:	66 c7 05 f2 01 09 00 	movw   $0x0,0x901f2
-    3057:	00 00 
+    3057:	00 00
     3059:	c7 05 28 02 09 00 00 	movl   $0x90800,0x90228
-    3060:	08 09 00 
+    3060:	08 09 00
     3063:	c7 04 24 00 08 09 00 	movl   $0x90800,(%esp)
     306a:	89 44 24 04          	mov    %eax,0x4(%esp)
     306e:	e8 2d 03 00 00       	call   0x33a0
@@ -48,19 +50,19 @@ Disassembly of section .data:
     3075:	c6 05 10 02 09 00 01 	movb   $0x1,0x90210
     307c:	7e 10                	jle    0x308e
     307e:	c7 05 18 02 09 00 00 	movl   $0x400000,0x90218
-    3085:	00 40 00 
+    3085:	00 40 00
     3088:	89 35 1c 02 09 00    	mov    %esi,0x9021c
     308e:	c6 05 0e 00 09 00 19 	movb   $0x19,0x9000e
     3095:	8d 45 f2             	lea    -0xe(%ebp),%eax
     3098:	c6 05 07 00 09 00 50 	movb   $0x50,0x90007
     309f:	c7 05 10 10 09 00 ff 	movl   $0xffff,0x91010
-    30a6:	ff 00 00 
+    30a6:	ff 00 00
     30a9:	c7 05 14 10 09 00 00 	movl   $0xcf9a00,0x91014
-    30b0:	9a cf 00 
+    30b0:	9a cf 00
     30b3:	c7 05 18 10 09 00 ff 	movl   $0xffff,0x91018
-    30ba:	ff 00 00 
+    30ba:	ff 00 00
     30bd:	c7 05 1c 10 09 00 00 	movl   $0xcf9200,0x9101c
-    30c4:	92 cf 00 
+    30c4:	92 cf 00
     30c7:	66 c7 45 f2 00 08    	movw   $0x800,-0xe(%ebp)
     30cd:	c7 45 f4 00 10 09 00 	movl   $0x91000,-0xc(%ebp)
     30d4:	0f 01 10             	lgdtl  (%eax)
@@ -68,7 +70,7 @@ Disassembly of section .data:
     30da:	5b                   	pop    %ebx
     30db:	5e                   	pop    %esi
     30dc:	5d                   	pop    %ebp
-    30dd:	c3                   	ret    
+    30dd:	c3                   	ret
     30de:	90                   	nop
     30df:	90                   	nop
     30e0:	55                   	push   %ebp
@@ -83,7 +85,7 @@ Disassembly of section .data:
     30fb:	89 c8                	mov    %ecx,%eax
     30fd:	ee                   	out    %al,(%dx)
     30fe:	5d                   	pop    %ebp
-    30ff:	c3                   	ret    
+    30ff:	c3                   	ret
     3100:	55                   	push   %ebp
     3101:	ba 64 00 00 00       	mov    $0x64,%edx
     3106:	89 e5                	mov    %esp,%ebp
@@ -122,7 +124,7 @@ Disassembly of section .data:
     3151:	5e                   	pop    %esi
     3152:	5f                   	pop    %edi
     3153:	5d                   	pop    %ebp
-    3154:	c3                   	ret    
+    3154:	c3                   	ret
     3155:	8d 74 26 00          	lea    0x0(%esi,%eiz,1),%esi
     3159:	8d bc 27 00 00 00 00 	lea    0x0(%edi,%eiz,1),%edi
     3160:	55                   	push   %ebp
@@ -202,7 +204,7 @@ Disassembly of section .data:
     3254:	ee                   	out    %al,(%dx)
     3255:	5b                   	pop    %ebx
     3256:	5d                   	pop    %ebp
-    3257:	c3                   	ret    
+    3257:	c3                   	ret
     3258:	b8 0d 00 00 00       	mov    $0xd,%eax
     325d:	ee                   	out    %al,(%dx)
     325e:	eb d0                	jmp    0x3230
@@ -248,7 +250,7 @@ Disassembly of section .data:
     32d2:	89 d8                	mov    %ebx,%eax
     32d4:	5b                   	pop    %ebx
     32d5:	5d                   	pop    %ebp
-    32d6:	c3                   	ret    
+    32d6:	c3                   	ret
     32d7:	89 f6                	mov    %esi,%esi
     32d9:	8d bc 27 00 00 00 00 	lea    0x0(%edi,%eiz,1),%edi
     32e0:	55                   	push   %ebp
@@ -271,7 +273,7 @@ Disassembly of section .data:
     3308:	5b                   	pop    %ebx
     3309:	5e                   	pop    %esi
     330a:	5d                   	pop    %ebp
-    330b:	c3                   	ret    
+    330b:	c3                   	ret
     330c:	8d 74 26 00          	lea    0x0(%esi,%eiz,1),%esi
     3310:	55                   	push   %ebp
     3311:	89 e5                	mov    %esp,%ebp
@@ -297,7 +299,7 @@ Disassembly of section .data:
     3341:	5e                   	pop    %esi
     3342:	5f                   	pop    %edi
     3343:	5d                   	pop    %ebp
-    3344:	c3                   	ret    
+    3344:	c3                   	ret
     3345:	8d 76 00             	lea    0x0(%esi),%esi
     3348:	85 f6                	test   %esi,%esi
     334a:	74 f2                	je     0x333e
@@ -317,7 +319,7 @@ Disassembly of section .data:
     336e:	5e                   	pop    %esi
     336f:	5f                   	pop    %edi
     3370:	5d                   	pop    %ebp
-    3371:	c3                   	ret    
+    3371:	c3                   	ret
     3372:	8d b4 26 00 00 00 00 	lea    0x0(%esi,%eiz,1),%esi
     3379:	8d bc 27 00 00 00 00 	lea    0x0(%edi,%eiz,1),%edi
     3380:	55                   	push   %ebp
@@ -334,7 +336,7 @@ Disassembly of section .data:
     3398:	89 d0                	mov    %edx,%eax
     339a:	29 c8                	sub    %ecx,%eax
     339c:	5d                   	pop    %ebp
-    339d:	c3                   	ret    
+    339d:	c3                   	ret
     339e:	66 90                	xchg   %ax,%ax
     33a0:	55                   	push   %ebp
     33a1:	31 c9                	xor    %ecx,%ecx
@@ -366,7 +368,7 @@ Disassembly of section .data:
     33e0:	5b                   	pop    %ebx
     33e1:	5e                   	pop    %esi
     33e2:	5d                   	pop    %ebp
-    33e3:	c3                   	ret    
+    33e3:	c3                   	ret
     33e4:	8d b6 00 00 00 00    	lea    0x0(%esi),%esi
     33ea:	8d bf 00 00 00 00    	lea    0x0(%edi),%edi
     33f0:	55                   	push   %ebp
@@ -479,7 +481,7 @@ Disassembly of section .data:
     353c:	5e                   	pop    %esi
     353d:	5f                   	pop    %edi
     353e:	5d                   	pop    %ebp
-    353f:	c3                   	ret    
+    353f:	c3                   	ret
     3540:	83 c1 01             	add    $0x1,%ecx
     3543:	0f b6 01             	movzbl (%ecx),%eax
     3546:	3c 25                	cmp    $0x25,%al
@@ -725,7 +727,7 @@ Disassembly of section .data:
     3856:	8d 54 10 07          	lea    0x7(%eax,%edx,1),%edx
     385a:	83 e2 f8             	and    $0xfffffff8,%edx
     385d:	89 15 c4 39 01 00    	mov    %edx,0x139c4
-    3863:	c3                   	ret    
+    3863:	c3                   	ret
     3864:	8d 74 26 00          	lea    0x0(%esi,%eiz,1),%esi
     3868:	b8 c9 39 01 00       	mov    $0x139c9,%eax
     386d:	83 e0 f8             	and    $0xfffffff8,%eax
@@ -736,7 +738,7 @@ Disassembly of section .data:
     3880:	55                   	push   %ebp
     3881:	89 e5                	mov    %esp,%ebp
     3883:	5d                   	pop    %ebp
-    3884:	c3                   	ret    
+    3884:	c3                   	ret
     3885:	8d 74 26 00          	lea    0x0(%esi,%eiz,1),%esi
     3889:	8d bc 27 00 00 00 00 	lea    0x0(%edi,%eiz,1),%edi
     3890:	55                   	push   %ebp
@@ -750,7 +752,7 @@ Disassembly of section .data:
     38a3:	8b 45 08             	mov    0x8(%ebp),%eax
     38a6:	8d 9d f4 fb ff ff    	lea    -0x40c(%ebp),%ebx
     38ac:	c7 44 24 04 00 04 00 	movl   $0x400,0x4(%esp)
-    38b3:	00 
+    38b3:	00
     38b4:	89 1c 24             	mov    %ebx,(%esp)
     38b7:	89 44 24 08          	mov    %eax,0x8(%esp)
     38bb:	e8 30 fb ff ff       	call   0x33f0
@@ -782,14 +784,14 @@ Disassembly of section .data:
     3907:	5e                   	pop    %esi
     3908:	5f                   	pop    %edi
     3909:	5d                   	pop    %ebp
-    390a:	c3                   	ret    
+    390a:	c3                   	ret
     390b:	00 53 74             	add    %dl,0x74(%ebx)
-    390e:	61                   	popa   
+    390e:	61                   	popa
     390f:	72 74                	jb     0x3985
     3911:	69 6e 67 20 4c 69 6e 	imul   $0x6e694c20,0x67(%esi),%ebp
     3918:	75 78                	jne    0x3992
     391a:	0a 00                	or     (%eax),%al
-    391c:	f4                   	hlt    
+    391c:	f4                   	hlt
     391d:	36 01 00             	add    %eax,%ss:(%eax)
     3920:	00 35 01 00 00 35    	add    %dh,0x35000001
     3926:	01 00                	add    %eax,(%eax)
@@ -831,16 +833,16 @@ Disassembly of section .data:
     39a2:	32 33                	xor    (%ebx),%dh
     39a4:	34 35                	xor    $0x35,%al
     39a6:	36                   	ss
-    39a7:	37                   	aaa    
+    39a7:	37                   	aaa
     39a8:	38 39                	cmp    %bh,(%ecx)
-    39aa:	61                   	popa   
+    39aa:	61                   	popa
     39ab:	62 63 64             	bound  %esp,0x64(%ebx)
     39ae:	65                   	gs
     39af:	66                   	data16
     39b0:	00 30                	add    %dh,(%eax)
     39b2:	31 32                	xor    %esi,(%edx)
     39b4:	33 34 35 36 37 38 39 	xor    0x39383736(,%esi,1),%esi
-    39bb:	61                   	popa   
+    39bb:	61                   	popa
     39bc:	62 63 64             	bound  %esp,0x64(%ebx)
     39bf:	65                   	gs
     39c0:	66                   	data16

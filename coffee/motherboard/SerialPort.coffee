@@ -70,6 +70,8 @@ class SerialPort
 		@interruptIORegister = @UART_IIR_NO_INT
 		@irqDevice = null
 
+		@data = ""
+
 	canReceive: ->
 		if (@lineStatusRegister & @UART_LSR_DR) == 0
 			return true
@@ -215,3 +217,23 @@ class SerialPort
 		if (component instanceof IOPortHandler) && component.initialised()
 			component.registerIOPortCapable(@)
 			@ioportRegistered = true
+
+	print: (dat) ->
+		log "First string data: #{dat}"
+		dat = String.fromCharCode(dat)
+		log "Serial data: " + dat # Need to do this nicer...
+
+		if dat == "\n" || dat == "\r"
+			if (term)
+				log "Writing to term"
+				term.write(@data + "\n")
+			else
+				log "No term found"
+				log @data
+		else
+			log "Saving data internally..."
+			@data += dat
+			return
+
+#		a = null
+#		a.a()

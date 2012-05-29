@@ -48,12 +48,18 @@ class Segment
 		return result
 
 	setByte: (offset, data) ->
+		if offset == 12240
+			log "Writing B to 12240 with " + data
 		pc.setMemory(8, @translateAddressRead(offset), data)
 
 	setWord: (offset, data) ->
+		if offset == 12240
+			log "Writing W to 12240 with " + data
 		pc.setMemory(16, @translateAddressRead(offset), data)
 
 	setDoubleWord: (offset, data) ->
+		if offset == 12240
+			log "Writing D to 12240 with " + data
 		pc.setMemory(32, @translateAddressRead(offset), data)
 
 	setQuadWord: (offset, data) ->

@@ -52,7 +52,7 @@ class InterruptController
 	updateIRQ: ->
 		slaveIRQ = masterIRQ = null
 
-		slaveIRQ = @slave.IRQ()
+		slaveIRQ = @slave.getIRQ()
 
 		if (slaveIRQ >= 0)
 			@master.setIRQ(2,1)

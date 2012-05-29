@@ -22,8 +22,6 @@ log = (message) =>
 	console.log(message);
 #	c.scrollTop += 20;
 
-	if (term)
-		term.write(message + "\n")
 	return
 
 input = () ->
@@ -76,6 +74,8 @@ arraycopy = (buf, offset, buffer, address, len) ->
 # Functie heeft geen support voor negatief, gaat van 0-128.
 # Results > 128 geven 128 terug.
 byte = (x) =>
+	if (x == 'undefined')
+		throw new IllegalStateException('Undefined cant be casted')
 	convert = new jDataView(jDataView.createBuffer(x), undefined, undefined)
 
 	result =  convert.getInt8()
@@ -83,6 +83,8 @@ byte = (x) =>
 	return result
 
 short = (x) =>
+	if (x == 'undefined')
+		throw new IllegalStateException('Undefined cant be casted')
 	convert = new jDataView(jDataView.createBuffer(x), undefined, undefined)
 
 	result =  convert.getInt16()
@@ -90,6 +92,8 @@ short = (x) =>
 	return result
 
 int = (x) =>
+	if (x == 'undefined')
+		throw new IllegalStateException('Undefined cant be casted')
 	convert = new jDataView(jDataView.createBuffer(x), undefined, undefined)
 
 	result =  convert.getInt32()
