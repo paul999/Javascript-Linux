@@ -48,7 +48,6 @@ function runCode(cd, cd2)
 			{
 				rt[ct] = t[k];
 				ct++;
-				console.log("result: " + t[k]);
 			}
 		}
 
