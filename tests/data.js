@@ -61,7 +61,7 @@ window.testOpCodes[0][17] = [0x8b, 0x75, 0x0c]
 window.resultOpCodes[0][17] = [14, 95, 3, 12, 1, 9, 40, 0, 2]
 
 window.testOpCodes[0][18] = [0xc7, 0x04, 0x24, 0xa4]
-window.resultOpCodes[0][18] = [13, 42020, 14, 43, 1, 21, 0, 2]
+window.resultOpCodes[0][18] = [13, 0, 14, 43, 1, 21, 0, 2]
 
 window.testOpCodes[0][19] = [0x90] //nop
 window.resultOpCodes[0][19] = [0, 2]
@@ -72,8 +72,8 @@ window.resultOpCodes[0][] = []
 */
 
 
-window.testOpCodes[1][0] = [0xbc,0x00, 0x30] //BC0030
-window.resultOpCodes[1][0] = [13,12288,33,2]
+window.testOpCodes[1][0] = [0xbc,0x00, 0x30, 0x51, 0x53, 0x50, 0xe8, 0xf3, 0x2f, 0x00, 0x00] //BC0030
+window.resultOpCodes[1][0] = [13, 12288, 33, 2, 30, 4, 2, 25, 4, 2, 6, 4, 2, 2, 13, 12275, 28, 14, 18, 43, 1, 22, 73, 20, 14, 18, 43, 1, 66, 62, 0, 2]
 
 window.testMicroCodes = []
 window.resultMicroCodes = []

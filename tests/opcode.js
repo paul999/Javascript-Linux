@@ -21,26 +21,44 @@ function runCode(cd, cd2)
 
 		window.pc.resetMemory()
 
-		window.pc.saveMemory(cd[i], cd[i].length, 0x10000)
+		start = 0x10000;
+
+		window.pc.saveMemory(cd[i], cd[i].length, start)
 
 		bt = new ByteSourceWrappedMemory()
-		bt.set(0x10000)
+		bt.set(start)
 
-		var p = new ProtectedModeUDecoder()
+		var rt = new Array()
+		var ct = 0
 
-		p = p.decodeProtected(bt, true, 1)
+		var b = cd[i].length + start;
 
-		var t = new OptimisedCompiler()
-
-		t.buildCodeBlockBuffers(p)
-		t = t.bufferMicrocodes
-
-		ok(t.length != 0, "Testing microcode length for test + " + i)
-		equal(t.length, cd2[i].length, "Total microcode length for test + " + i)
-
-		for (var j = 0; j < t.length; j++)
+		while ((bt.getOffset()) < b)
 		{
-			equal(t[j], cd2[i][j], "Testing microcode result for opcode for test + " + i + " set " + j)
+			var p = new ProtectedModeUDecoder()
+
+			p = p.decodeProtected(bt, true, 1)
+
+			var t = new OptimisedCompiler()
+
+			t.buildCodeBlockBuffers(p)
+			t = t.bufferMicrocodes
+
+			for (k = 0; k < t.length; k++)
+			{
+				rt[ct] = t[k];
+				ct++;
+				console.log("result: " + t[k]);
+			}
+		}
+
+		console.log(rt);
+		ok(rt.length != 0, "Testing microcode length for test + " + i)
+		equal(rt.length, cd2[i].length, "Total microcode length for test + " + i)
+
+		for (var j = 0; j < rt.length; j++)
+		{
+			equal(rt[j], cd2[i][j], "Testing microcode result for opcode for test + " + i + " set " + j)
 		}
 	}
 	SYS_RAM_SIZE = oldram
