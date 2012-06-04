@@ -15,21 +15,24 @@
 
 class clock
 	constructor: ->
-		log "create clock"
 		@IPS = proc.IPS
 		@NSPI = 10*1000000000/@IPS
-		@ticksEnabled = false
+		@ticksEnabled = true
 		@ticksOffset = 0
 		@ticksStatic = 0
 		@currentTime = @getSystemTimer();
 		@totalTicks = 0
 		@timers = new buckets.PriorityQueue();
 
+		log "Current time: #{@currentTime}"
+
 	initialised: ->
 		return true
 
 	process: ->
 		tempTimer = @timers.peek()
+
+		log "Ik ben een tempTimer: #{tempTimer}"
 
 		if ((tempTimer == null) || !tempTimer.check(@getTime()))
 			return false
@@ -38,9 +41,11 @@ class clock
 
 
 	updateAndProcess: (instructions) ->
+		log "updateAndProcess(#{instructions})"
 		@totalTicks += instructions
 		@currentTime += instructions * @NSPI
 		@process()
+
 
 	newTimer: (object) ->
 		if ( !(object instanceof TimerResponsive))
@@ -59,12 +64,14 @@ class clock
 
 	getTime: ->
 		if (@ticksEnabled)
+			log "real: #{@getRealTime()} + offset: #{@ticksOffset}"
+
 			return @getRealTime() + @ticksOffset
 		else
 			return @ticksStatic
 
 	getRealTime: ->
-		return @realTime
+		return @currentTime
 
 	getTickRate: ->
 		return @IPS * 10
@@ -87,8 +94,13 @@ class clock
 		@ticksOffset = 0
 		@ticksStatic = 0
 
+	# Looks like there is a small round issue with this function
 	getSystemTimer: ->
-		#return System.nanoTime()
+		time = parseInt(new Date().getTime())
+		time *= 1000
+		time *= 1000
+		time = parseInt(time)
+		return time
 
 
 ###

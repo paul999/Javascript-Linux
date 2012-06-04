@@ -15,7 +15,6 @@
 
 class InterruptControllerElement
 	constructor: (@master, @parent) ->
-		log "create InteruptControllerElement"
 		@lastInterruptRequestRegister = null
 		@interruptRequestRegister = null
 		@interruptMaskRegister = null

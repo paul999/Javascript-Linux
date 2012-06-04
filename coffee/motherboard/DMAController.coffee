@@ -15,7 +15,6 @@
 
 class DMAController
 	constructor: (@highPageEnable, @primary) ->
-		log "DMA create with HighPageEnable #{highPageEnable} and primary #{primary}"
 		@pagePortList0 = 0x1
 		@pagePortList1 = 0x2
 		@pagePortList2 = 0x3
@@ -333,15 +332,12 @@ class DMAController
 		if (tmp == undefined)
 			tmp = false
 
-		log "DMA -> initialised: " + tmp
 		return tmp
 
 	updated: ->
 		@memory.updated() && @ioportRegistered
 
 	acceptComponent: (component) ->
-		log "accept component: " + component
-
 		if (component instanceof IOPortHandler)
 			component.registerIOPortCapable(this)
 			@ioportRegistered = true
@@ -355,13 +351,10 @@ class DMAController
 
 class dmaChannel
 	constructor: () ->
-		log "create dmaChannel"
 		@MODE_CHANNEL_SELECT = 0x03
 		@MODE_ADDRESS_INCREMENT = 0x20
 		@ADDRESS = 0
 		@COUNT = 1
-
-
 
 	readMemory: (buffer, offset, position, length) ->
 		address = (@pageHigh << 24) | (@pageLow << 16) | @currentAddress

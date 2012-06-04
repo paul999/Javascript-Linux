@@ -15,6 +15,7 @@ memory/codeblock/CodeBlockReplacementException
 motherboard/DMAController
 motherboard/InterruptControllerElement
 motherboard/InterruptController
+motherboard/TimerChannel
 motherboard/IntervalTimer
 motherboard/IOPortHandler
 motherboard/RTC

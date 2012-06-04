@@ -16,7 +16,6 @@
 class RealModeSegment extends Segment
 	constructor: (@selector) ->
 		super()
-		log "create realmodesegment"
 
 		@base = @selector << 4
 		@limit = 0xffff

@@ -93,11 +93,12 @@ class PC
 			log "Could not open Term. Running tests?"
 			return  true
 
+
+		@configure()
+
 		return true
 
 	saveMemory: (data, len, address) =>
-		log "saving file data at #{address} with length #{data.length}"
-
 		if typeof data == "string"
 			for i in [0...len]
 				rs = parseInt(data.charCodeAt(i))
@@ -127,24 +128,11 @@ class PC
 
 	start: ->
 		@create()
-		@configure()
+
 		log "In protected mode: " + proc.isProtectedMode()
 
 		if (!@configured)
 			return
-
-		data = window.start
-		@saveMemory(data, data.length, 0x10000)
-		data = window.kernel
-		@saveMemory(data, data.length, 0x00100000)
-
-		log "Saving console parameters."
-		st = "console=ttyS0 root=/dev/hda ro init=/sbin/init notsc=1"
-		loc = 0xf800 #& 0xff
-		for i in [0...st.length]
-			if (!window.pc.setMemory(8, loc+i, (st.charCodeAt(i) & 0xff)))
-				throw new memoryOutOfBound()
-			loc++
 
 		@running = true
 
@@ -198,7 +186,6 @@ class PC
 				continue
 
 			for inner in @items
-				log "acceptComponent on " + part
 				part.acceptComponent(inner)
 
 			init &= part.initialised()
@@ -210,10 +197,7 @@ class PC
 		count = 1
 		init = @_configure()
 
-		log "Init: " + init
-
 		while !init && count < 100
-			log "init loop"
 			init = @_configure()
 			count++
 
@@ -227,6 +211,22 @@ class PC
 			log errors
 			alert errors
 			return false
+
+		data = window.start
+		@saveMemory(data, data.length, 0x10000)
+		data = window.kernel
+		@saveMemory(data, data.length, 0x00100000)
+
+		log "Saving console parameters."
+		st = "console=ttyS0 root=/dev/hda ro init=/sbin/init notsc=1"
+		loc = 0xf800 #& 0xff
+		for i in [0...st.length]
+			if (!window.pc.setMemory(8, loc+i, (st.charCodeAt(i) & 0xff)))
+				throw new memoryOutOfBound()
+			loc++
+
+
+		log "Ready to start..."
 		@configured = true
 
 	execute: ->
@@ -355,10 +355,8 @@ class PC
 			throw new LengthIncorrectError("Memory length is not correct.")
 		else
 			log "Memlength is OK, size: #{SYS_RAM_SIZE}, real: #{@mem.byteLength}"
-		log "saving memory to 0"
 #		for i in [0...@mem.byteLength]
 #			@setMemory 8, i, 0
-		log "savving memory done."
 
 
 	printStackTrace: (e) ->

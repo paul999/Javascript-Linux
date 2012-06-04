@@ -21,7 +21,6 @@ class Segment
 		@TYPE_DATA_EXPAND_DOWN = 0x4
 		@TYPE_CODE_READABLE = 0x2
 		@TYPE_CODE_CONFIRMMING = 0x4
-		log "create segment"
 
 	setAddressSpace: () ->
 

@@ -15,7 +15,6 @@
 
 class SegmentFactory
 	constructor: ->
-		log "Create SegmentFactory"
 		@DESCRIPTOR_TYPE = 0x100000000000
 		@SEGMENT_TYPE = 0xf0000000000
 		@NULL_SEGMENT = new NullSegment()

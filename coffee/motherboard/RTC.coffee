@@ -15,7 +15,6 @@
 
 class RTC
 	constructor: (@ioPort, @irq) ->
-		log "Created RTC with Port #{ioPort} and irq #{irq}"
 
 		@RTC_SECONDS = 0
 		@RTC_SECONDS_ALARM = 1
@@ -99,24 +98,22 @@ class RTC
 			component.registerIOPortCapable(@)
 			@ioPortRegistered = true
 
-		if (component instanceof clock)
-			@timeSource = component
-
 		if (@initialised())
 			@init()
 
-			@periodicTimer = @timeSource.newTimer(@periodicCallback);
-			@secondTimer = @timeSource.newTimer(@secondCallback);
-			@delayedSecondTimer = @timeSource.newTimer(@delayedSecondCallback);
+			@periodicTimer = Clock.newTimer(@periodicCallback);
+			@secondTimer = Clock.newTimer(@secondCallback);
+			@delayedSecondTimer = Clock.newTimer(@delayedSecondCallback);
 
-			@nextSecondTime = @timeSource.getTime() + (99 * @timeSource.getTickRate()) / 100;
+			@nextSecondTime = Clock.getTime() + (99 * Clock.getTickRate()) / 100;
 			@delayedSecondTimer.setExpiry(@nextSecondTime);
 
 	init: ->
-#        Calendar now = Calendar.getInstance();
-#        this.setTime(now);
-#        int val = this.toBCD(now.get(Calendar.YEAR) / 100);
-		val = null
+		now = new Date()
+		@setTime(now)
+
+		val = @toBCD(now.getFullYear())
+
 		@cmosData[@RTC_REG_IBM_CENTURY_BYTE] = val
 		@cmosData[@RTC_REG_IBM_PS2_CENTURY_BYTE] = val
 
@@ -176,7 +173,7 @@ class RTC
 
 	secondUpdate: ->
 		if (@cmosData[@RTC_REG_A] & 0x70) != 0x20
-			@nextSecondTime += @timeSource.getTickRate()
+			@nextSecondTime += Clock.getTickRate()
 			@secondTimer.setExpiry(@nextSecondTime)
 		else
 			@nextSecond()
@@ -184,23 +181,24 @@ class RTC
 			if (@cmosData[@RTC_REG_B] & @REG_B_SET) == 0
 				@cmosData[@RTC_REG_A] |= @REG_A_UIP
 
-			delay = @timeSource.getTickRate() * 1 / 100
+			delay = Clock.getTickRate() * 1 / 100
 
 			if (delay < 1)
 				delay = 1
 
 			@delayedSecondTimer.setExpiry(@nextSecondTimer + delay)
 	delayedSecondUpdate: ->
+		log "DelayedSecondUpdate"
 		if (@cmosData[@RTC_REG_B] & @REG_B_SET) == 0
 			@timeToMemory()
 
-		if (@cmosData[@RTC_REG_B] & @REG_B_AIE) != 0 #note, hier beneden moeten bij iedere nog een parameter voor currentTime.get()
-			if (((@cmosData[@RTC_SECONDS_ALARM] & 0xc0) == 0xc0 || @cmosData[@RTC_SECONDS_ALARM] == @currentTime.get()) && ((@cmosData[@RTC_MINUTES_ALARM] & 0xc0) == 0xc0 || @cmosData[@RTC_MINUTES_ALARM] == @currentTime.get()) && (( @cmosData[@RTC_HOURS_ALARM] & 0xc0) == 0xc0 || @cmosData[@RTC_HOURS_ALARM] == @currentTime.get()))
+		if (@cmosData[@RTC_REG_B] & @REG_B_AIE) != 0
+			if (((@cmosData[@RTC_SECONDS_ALARM] & 0xc0) == 0xc0 || @cmosData[@RTC_SECONDS_ALARM] == @currentTime.getSeconds()) && ((@cmosData[@RTC_MINUTES_ALARM] & 0xc0) == 0xc0 || @cmosData[@RTC_MINUTES_ALARM] == @currentTime.getMinutes()) && (( @cmosData[@RTC_HOURS_ALARM] & 0xc0) == 0xc0 || @cmosData[@RTC_HOURS_ALARM] == @currentTime.getHours()))
 				@cmosData[@RTC_REG_C] |= 0xa0
 				@irqDevice.setIRQ(irq, 1)
 
 		@cmosData[@RTC_REG_A] &= ~@REG_A_UIP
-		@nextSecondTime += @timeSource.getTickRate()
+		@nextSecondTime += Clock.getTickRate()
 		@secondTimer.setExpiry(@nextSecondTime)
 
 	timerUpdate: (currentTime) ->
@@ -212,9 +210,9 @@ class RTC
 
 			period = 1 << (periodCode - 1)
 
-			currentClock = scale64(@currentTime, 32768, int(@timeSource.getTickRate()))
+			currentClock = scale64(@currentTime, 32768, int(Clock.getTickRate()))
 			nextIRQClock = (currentClock & ~(period - 1)) + period
-			@nextPeriodicTime = scale64(nextIRQClock, int(@timeSource.getTickRate()), 32768) + 1
+			@nextPeriodicTime = scale64(nextIRQClock, int(Clock.getTickRate()), 32768) + 1
 			@periodicTimer.setExpiry(@nextPeriodicTime)
 		else
 			@periodicTimer.disable()
@@ -239,8 +237,8 @@ class RTC
 				if (@cmosData[@RTC_REG_B] & @REG_B_SET) == 0
 					@memoryToTime()
 			when @RTC_REG_A
-				@cmosData[@RTC_REG_A] = byte((data & ~@REG_A_UIP) | (@cmosData[@RTC_REG_A] & REG_A_UIP))
-				@timerUpdate(@timeSource.getTime())
+				@cmosData[@RTC_REG_A] = byte((data & ~@REG_A_UIP) | (@cmosData[@RTC_REG_A] & @REG_A_UIP))
+				@timerUpdate(Clock.getTime())
 
 			when @RTC_REG_B
 				if (data & @REG_B_SET) == 0
@@ -281,6 +279,25 @@ class RTC
 		else
 			return ((a >> 4) * 10) + (a & 0x0f)
 
+	setTime: (date) ->
+		@currentTime = date
+
+		@timeToMemory()
+
+	timeToMemory: ->
+		@cmosData[@RTC_SECONDS] = byte(@toBCD(@currentTime.getSeconds()))
+		@cmosData[@RTC_MINUTES] = byte(@toBCD(@currentTime.getMinutes()))
+
+		if ((@cmosData[@RTC_REG_B] & 0x02) != 0)
+			@cmosData[@RTC_HOURS] = byte(@toBCD(@currentTime.getHours()))
+		else
+			log "Non supported action"
+
+		@cmosData[@RTC_DAY_OF_WEEK] = byte(@toBCD(@currentTime.getDay()))
+		@cmosData[@RTC_DAY_OF_MONTH] = byte(@toBCD(@currentTime.getDate()))
+		@cmosData[@RTC_MONTH] = byte(@toBCD(@currentTime.getMonth()))
+		@cmosData[@RTC_YEAR] = byte(@toBCD(@currentTime.getYear) % 100)
+
 class TimerResponsive
 
 
@@ -308,12 +325,7 @@ class DelayedSecondCallback extends TimerResponsive
 ###
 
 NOG in class RTC:
-    private void setTime(Calendar date)
-    {
-        this.currentTime = Calendar.getInstance(date.getTimeZone());
-        this.currentTime.setTime(date.getTime());
-        this.timeToMemory();
-    }
+
     private void memoryToTime()
     {
         currentTime.set(Calendar.SECOND, this.fromBCD(cmosData[RTC_SECONDS]));
@@ -328,22 +340,4 @@ NOG in class RTC:
         currentTime.set(Calendar.YEAR, this.fromBCD(cmosData[RTC_YEAR]) + 2000); //is this offset correct?
     }
 
-    private void timeToMemory()
-    {
-        cmosData[RTC_SECONDS] = (byte) this.toBCD(currentTime.get(Calendar.SECOND));
-        cmosData[RTC_MINUTES] = (byte) this.toBCD(currentTime.get(Calendar.MINUTE));
-
-        if (0 != (cmosData[RTC_REG_B] & 0x02)) / * 24 hour format * /
-            cmosData[RTC_HOURS] = (byte) this.toBCD(currentTime.get(Calendar.HOUR_OF_DAY));
-        else { / * 12 hour format * /
-            cmosData[RTC_HOURS] = (byte) this.toBCD(currentTime.get(Calendar.HOUR));
-            if (currentTime.get(Calendar.AM_PM) == Calendar.PM)
-                cmosData[RTC_HOURS] |= 0x80;
-        }
-
-        cmosData[RTC_DAY_OF_WEEK] = (byte) this.toBCD(currentTime.get(Calendar.DAY_OF_WEEK));
-        cmosData[RTC_DAY_OF_MONTH] = (byte) this.toBCD(currentTime.get(Calendar.DAY_OF_MONTH));
-        cmosData[RTC_MONTH] = (byte) this.toBCD(currentTime.get(Calendar.MONTH) + 1);
-        cmosData[RTC_YEAR] = (byte) this.toBCD(currentTime.get(Calendar.YEAR) % 100);
-    }
 ###

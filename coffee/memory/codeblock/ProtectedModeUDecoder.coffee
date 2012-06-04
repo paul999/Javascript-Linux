@@ -238,8 +238,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 			bytesRead += 1
 
-			log "Readed opcode: #{opcode.toString(16)}"
-
 			switch (opcode)
 				when 0x0f
 					log "Old opcode: #{opcode}"
@@ -1027,7 +1025,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 						@working.write(@ADDR_uAL)
 						@working.write(@ADDR_MASK16)
 
-				log "LOAD0_MEM_BYTE a"
 				@working.write(@LOAD0_MEM_BYTE)
 
 
@@ -3827,7 +3824,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				@working.write(@LOAD0_BH)
 			else
 				@decodeM(prefices, modrm, sib, displacement)
-				log "LOAD0_MEM_BYTE b"
 				@working.write(@LOAD0_MEM_BYTE)
 
 				if (!@bla)
@@ -4337,7 +4333,6 @@ class ProtectedModeUDecoder extends MicrocodeSet
 				@working.write(@LOAD_SEG_DS)
 	load0_Ob: (prefices, displacement) ->
 		@decodeO(prefices, displacement)
-		log "LOAD0_MEM_BYTE c"
 		@working.write(@LOAD0_MEM_BYTE)
 
 	decodeO: (prefices, displacement) ->

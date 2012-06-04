@@ -15,7 +15,6 @@
 
 class Timer
 	constructor: (@callback, @myOwner) ->
-		log "timer created"
 		@enable = false
 		@expireTime = 0
 
@@ -37,7 +36,11 @@ class Timer
 
 	check: (time) ->
 		log "Check #{time}"
+
+		log "Enabled: #{@enable}. Expire: #{@expireTime}"
+
 		if (@enable && time >= @expireTime)
+			log "Disabled, calling callback"
 			@disable()
 			@callback.callback()
 			return true

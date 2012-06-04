@@ -17,6 +17,6 @@
 class NullSegment extends Segment
 	constructor: ->
 		super
-		log "create NullSegment"
+
 	translateAddressRead: () ->
 		return

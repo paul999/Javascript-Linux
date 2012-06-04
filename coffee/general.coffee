@@ -116,6 +116,10 @@ scale64: (input,multiply,devide) ->
 
 	(resultHigh << 32) | resultLow
 
+class TimerResponsive
+	constructor: ->
+		return
+
 `
 Error.createCustromConstructor = (function() {
 

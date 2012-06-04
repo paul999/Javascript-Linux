@@ -16,8 +16,6 @@
 
 class processor
 	constructor: () ->
-		log "Processor created"
-
 		@STATE_VERSION = 1
 		@STATE_MINOR_VERSION = 0
 
@@ -304,8 +302,6 @@ class processor
 
 	initialised: ->
 		result = @ioports != undefined && @ioports != null && @interruptController != undefined && @interruptController != null
-
-		log "Init result: " + result
 
 		if (result && !@started)
 			log "Started"

@@ -15,7 +15,6 @@
 
 class InterruptController
 	constructor: ->
-		log "create InterruptController"
 		@master = null
 		@slave = null
 		@ioportRegistrered = false

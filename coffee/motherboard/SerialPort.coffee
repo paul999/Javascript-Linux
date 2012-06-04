@@ -237,3 +237,6 @@ class SerialPort
 
 #		a = null
 #		a.a()
+
+	toString: ->
+		return "SerialPort"
