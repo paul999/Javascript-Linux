@@ -298,7 +298,7 @@ class RealModeUBlock extends MicrocodeSet
 
 # Vanaf hier is uit executeFull
 					when @UNDEFINED
-						throw ProcessorException.UNDEFINED
+						throw UNDEFINED
 
 					when @MEM_RESET
 						addr0 = 0
@@ -1050,7 +1050,7 @@ class RealModeUBlock extends MicrocodeSet
 						upper = short(reg0 >> 16)
 						index = short(reg1)
 						if ((index < lower) || (index > (upper + 2)))
-							throw ProcessorException.BOUND_RANGE
+							throw BOUND_RANGE
 
 					when @LAHF
 						@lahf()
@@ -1629,7 +1629,7 @@ class RealModeUBlock extends MicrocodeSet
 	push_o16_a16: (data) ->
 		data = short(data)
 		if ((proc.esp & 0xffff) < 2) && ((proc.esp & 0xffff) > 0)
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		offset = (proc.esp - 2) & 0xffff
 		proc.ss.setWord(offset, data)
@@ -1648,7 +1648,7 @@ class RealModeUBlock extends MicrocodeSet
 			proc.setEIP(proc.getEIP() - offset)
 
 #			if @a
-#				throw ProcessorException.GENERAL_PROTECTION_0
+#				throw GENERAL_PROTECTION_0
 #			@a = true
 #		else
 #			@a = false
@@ -1683,7 +1683,7 @@ class RealModeUBlock extends MicrocodeSet
 		target = short(target)
 
 		if ((proc.esp & 0xffff) < 2) && ((proc.esp & 0xffff) > 0)
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 
 		offset = (proc.esp - 2) & 0xffff

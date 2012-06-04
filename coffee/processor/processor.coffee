@@ -342,7 +342,7 @@ class processor
 		savedSS = @ss
 
 		try
-			@followProtectedModeException(pe, false, false)
+			@followProtectedModeException(pe.getType(), pe.hasErrorCode, pe.errorCode, false, false)
 		catch e
 			if (e instanceof ProcessorException)
 				log "Double fault" + e
@@ -363,11 +363,14 @@ class processor
 					@handleProtectedModeException(e)
 			else
 				log "Different error: " + e
+				log e
+				throw e
 
-	followProtectedModeException: (error, hardware, software) ->
+	#int vector, boolean hasErrorCode, int errorCode, boolean hardware, boolean software
+	followProtectedModeException: (vector, hasErrorCode, errorCode, hardware, software) ->
 		log "followProtectedModeException"
 
-		if (error.type == Type.PAGE_FAULT)
+		if (vector == Type.PAGE_FAULT)
 			@setCR2(les.getLastWalkedAddress())
 
 			if (les.getLastWalkedAddress() == 0xbff9a3c0)
@@ -379,18 +382,15 @@ class processor
 		EXT = hardware ? 1:0
 
 		gate = null
-		isSup = les.isSupervisor()
 
 		try
-			les.setSupervisor(true)
 			descriptor = @idtr.getQuadWord(selector)
-			#gate = SegmentFactory.createProtectedModeSegment(linearMemory, selector, descriptor)
+			gate = sgm.createProtectedModeSegment(selector, descriptor)
 			#TODO FIX
 		catch e
+			throw e
 			log "failed to create gate"
-			les.setSupervisor(isSup)
 			throw new ProcessorException(Type.GENERAL_PROTECTION, selector+2+EXT, true)
-		les.setSupervisor(isSup)
 
 		switch gate.getType()
 			when 0x05
@@ -398,6 +398,10 @@ class processor
 			else
 				log "Invalid gate type for throwing interrupt 0x#{gate.getType()}"
 				throw new ProcessorException(Type.GENERAL_PROTECTION, selector + 2 + EXT, true)
+
+		a.a()
+
+
 	createDescriptorTableSegment: (base, limit) ->
 		return sgm.createDescriptorTableSegment(base, limit)
 

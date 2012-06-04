@@ -17,7 +17,7 @@ class CodeBlockManager
 	constructor: ->
 		log "CodeBlockManager start"
 
-		@BLOCK_LIMIT = 10
+		@BLOCK_LIMIT = 100
 		@protectedModeChain = null
 		@compilingProtectedModeChain = null
 		@byteSource = null

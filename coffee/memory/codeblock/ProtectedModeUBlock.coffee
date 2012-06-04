@@ -77,7 +77,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 							proc.incEIP(@cumulativeX86Length[@position - 1])
 					when @UNDEFINED
 
-						throw ProcessorException.UNDEFINED
+						throw UNDEFINED
 
 					when @MEM_RESET
 						addr0 = 0
@@ -355,7 +355,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 						temp = @loadSegment(reg0)
 						if (temp instanceof NULL_SEGMENT)
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 							proc.ss = temp
 							proc.eflagsInterruptEnable = false
 
@@ -373,7 +373,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 						temp = @loadSegment(reg1)
 						if (temp instsanceof NULL_SEGMENT)
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 						proc.ss = temp
 						proc.eflagsInterruptEnable = false
 
@@ -871,7 +871,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 								proc.eflagsInterruptEnableSoon = false
 							else
 								log("IOPL=" + proc.getIOPrivilegeLevel() + ", CPL=" + proc.getCPL())
-								throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+								throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 					when @STI
 						if (proc.getIOPrivilegeLevel() >= proc.getCPL())
@@ -881,7 +881,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 							if ((proc.getIOPrivilegeLevel() < proc.getCPL()) && (proc.getCPL() == 3) && ((proc.getEFlags() & (1 << 20)) == 0))
 								proc.eflagsInterruptEnableSoon = true
 							else
-								throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+								throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 					when @CLD
 						proc.eflagsDirection = false
@@ -904,7 +904,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 					when @HALT
 						if (proc.getCPL() != 0)
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 						else
 							proc.waitForInterrupt()
 
@@ -1266,7 +1266,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 						reg0 = proc.getCR0() & 0xffff
 					when @LMSW
 						if (proc.getCPL() != 0)
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 						proc.setCR0((proc.getCR0() & ~0xe) | (reg0 & 0xe))
 
 					when @CMPXCHG
@@ -1630,12 +1630,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 					when @CLTS
 						if (proc.getCPL() != 0)
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 						proc.setCR3(proc.getCR3() & ~0x4)
 
 					when @INVLPG
 						if (proc.getCPL() != 0)
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 						proc.linearMemory.invalidateTLBEntry(seg0.translateAddressRead(addr0))
 
@@ -1649,11 +1649,11 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 					when @WRMSR
 						if (proc.getCPL() != 0)
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 						proc.setMSR(reg0, (reg2 & 0xffffffff) | ((reg1 & 0xffffffff) << 32))
 					when @RDMSR
 						if (proc.getCPL() != 0)
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 						msr = proc.getMSR(reg0)
 						reg0 = msr
 						reg1 = int(msr >>> 32)
@@ -1778,7 +1778,15 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 					when @CPL_CHECK
 						if (proc.getCPL() != 0)
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
+					when @BOUND_O16
+						# This microcode doesnt exists in ProtectedModeUBlock?
+						lower = short(reg0)
+						upper = short(reg0 >> 16)
+						index = short(reg1)
+
+						if (index < lower) || (index > (upper + 2))
+							throw BOUND_RANGE
 
 					else
 						throw "File: ProtectedModeUBlock: Not added microcode yet? #{@microcodes[@position - 1]}"
@@ -2141,7 +2149,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	insb_a32: (port) ->
 		if (!@checkIOPermissionsByte(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		addr = proc.edi
 		proc.es.setByte(addr, byte(proc.ioports.ioPortReadByte(port)))
@@ -2155,7 +2163,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	insw_a32: (port) ->
 		if (!@checkIOPermissionsShort(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		addr = proc.edi
 		proc.es.setWord(addr, short(proc.ioports.ioPortReadWord(port)))
@@ -2169,7 +2177,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	insd_a32: (port) ->
 		if (!@checkIOPermissionsInt(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		addr = proc.edi
 		proc.es.setDoubleWord(addr, proc.ioports.ioPortReadLong(port))
@@ -2183,7 +2191,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	rep_insb_a32: (port) ->
 		if (!@checkIOPermissionsByte(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		count = proc.ecx
 		addr = proc.edi
@@ -2210,7 +2218,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	rep_insw_a32: (port) ->
 		if (!@checkIOPermissionsShort(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		count = proc.ecx
 		addr = proc.edi
@@ -2236,7 +2244,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	rep_insd_a32: (port) ->
 		if (!@checkIOPermissionsShort(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		count = proc.ecx
 		addr = proc.edi
@@ -2618,7 +2626,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		if (!@checkIOPermissionsByte(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		addr = proc.esi & 0xffff
 
@@ -2635,7 +2643,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		if (!@checkIOPermissionsShort(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		addr = proc.esi & 0xffff
 
@@ -2652,7 +2660,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		if (!@checkIOPermissionsInt(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		addr = proc.esi & 0xffff
 
@@ -2668,7 +2676,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	rep_outsb_a16: (port, storeSegment) ->
 		if (!@checkIOPermissionsByte(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		count = proc.ecx & 0xffff
 		addr = proc.esi & 0xffff
@@ -2694,7 +2702,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	rep_outsw_a16: (port, storeSegment) ->
 		if (!@checkIOPermissionsShort(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		count = proc.ecx & 0xffff
 		addr = proc.esi & 0xffff
@@ -2720,7 +2728,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	rep_outsd_a16: (port, storeSegment) ->
 		if (!@checkIOPermissionsInt(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		count = proc.ecx & 0xffff
 		addr = proc.esi & 0xffff
@@ -2746,7 +2754,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	outsb_a32: (port, storeSegment) ->
 		if (!@checkIOPermissionsByte(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		addr = proc.esi
 
@@ -2762,7 +2770,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	outsw_a32: (port, storeSegment) ->
 		if (!@checkIOPermissionsShort(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		addr = proc.esi
 
@@ -2778,7 +2786,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	outsd_a32: (port, storeSegment) ->
 		if (!@checkIOPermissionsInt(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		addr = proc.esi
 
@@ -2794,7 +2802,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	rep_outsb_a32: (port, storeSegment) ->
 		if (!@checkIOPermissionsByte(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		count = proc.ecx
 		addr = proc.esi
@@ -2820,7 +2828,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	rep_outsw_a32: (port, storeSegment) ->
 		if (!@checkIOPermissionsShort(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		count = proc.ecx
 		addr = proc.esi
@@ -2847,7 +2855,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		if (!@checkIOPermissionsInt(port))
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		count = proc.ecx
 		addr = proc.esi
@@ -3424,20 +3432,20 @@ class ProtectedModeUBlock extends MicrocodeSet
 	div_o8: (data) ->
 
 		if (data == 0)
-			throw ProcessorException.DIVIDE_ERROR;
+			throw DIVIDE_ERROR;
 
 		x = (proc.eax & 0xffff)
 
 		result = int(x / data)
 		if (result > 0xff)
-			throw ProcessorException.DIVIDE_ERROR
+			throw DIVIDE_ERROR
 
 		remainder = (x % data) << 8
 		proc.eax = (proc.eax & ~0xffff) | (0xff & result) | (0xff00 & remainder)
 
 	div_o16: (data) ->
 		if (data == 0)
-			throw ProcessorException.DIVIDE_ERROR
+			throw DIVIDE_ERROR
 
 		x = (proc.edx & 0xffff)
 		x <<= 16
@@ -3445,7 +3453,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		result = x / data
 		if (result > 0xffff)
-			throw ProcessorException.DIVIDE_ERROR
+			throw DIVIDE_ERROR
 
 		remainder = x % data
 		proc.eax = (proc.eax & ~0xffff) | (int)(result & 0xffff)
@@ -3455,7 +3463,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		d = 0xffffffff & data
 
 		if (d == 0)
-			throw ProcessorException.DIVIDE_ERROR
+			throw DIVIDE_ERROR
 
 		temp = proc.edx
 		temp <<= 32
@@ -3473,7 +3481,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		q += (r / d)
 		r %= d
 		if (q > 0xffffffff)
-			throw ProcessorException.DIVIDE_ERROR
+			throw DIVIDE_ERROR
 
 		proc.eax = int(q)
 		proc.edx = int(r)
@@ -3481,39 +3489,39 @@ class ProtectedModeUBlock extends MicrocodeSet
 	idiv_o8: (data) ->
 
 		if (data == 0)
-			throw ProcessorException.DIVIDE_ERROR
+			throw DIVIDE_ERROR
 
 		temp = short(proc.eax)
 		result = temp / data
 		remainder = temp % data
 	#if ((result > Byte.MAX_VALUE) || (result < Byte.MIN_VALUE))
-	#    throw ProcessorException.DIVIDE_ERROR;
+	#    throw DIVIDE_ERROR;
 
 		proc.eax = (proc.eax & ~0xffff) | (0xff & result) | ((0xff & remainder) << 8)# AH is remainder
 
 	idiv_o16: (data) ->
 		if (data == 0)
-			throw ProcessorException.DIVIDE_ERROR
+			throw DIVIDE_ERROR
 
 		temp = (proc.edx << 16) | (proc.eax & 0xffff)
 		result = temp / int(data)
 		remainder = temp % data
 
 	#if ((result > Short.MAX_VALUE) || (result < Short.MIN_VALUE))
-	#    throw ProcessorException.DIVIDE_ERROR;
+	#    throw DIVIDE_ERROR;
 
 		proc.eax = (proc.eax & ~0xffff) | (0xffff & result)# AX is result
 		proc.edx = (proc.edx & ~0xffff) | (0xffff & remainder)# DX is remainder
 
 	idiv_o32: (data) ->
 		if (data == 0)
-			throw ProcessorException.DIVIDE_ERROR
+			throw DIVIDE_ERROR
 
 		temp = 0xffffffff & proc.edx << 32
 		temp |= (0xffffffff & proc.eax)
 		result = temp / data
 		#if ((result > Integer.MAX_VALUE) || (result < Integer.MIN_VALUE))
-		#    throw ProcessorException.DIVIDE_ERROR;
+		#    throw DIVIDE_ERROR;
 
 		remainder = temp % data
 
@@ -3595,7 +3603,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	aam: (base) ->
 		tl = 0xff & proc.eax
 		if (base == 0)
-			throw ProcessorException.DIVIDE_ERROR
+			throw DIVIDE_ERROR
 		ah = 0xff & (tl / base)
 		al = 0xff & (tl % base)
 		proc.eax &= ~0xffff
@@ -3646,7 +3654,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			proc.eax = (proc.eax & ~0xff) | ((proc.eax - 0x60) & 0xff)
 			tempCF = true
 
-		bitwise_flags(byte(proc.eax))
+		@bitwise_flags(byte(proc.eax))
 		proc.setCarryFlag(tempCF)
 
 	lahf: ->
@@ -3948,7 +3956,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		newSegment = proc.getSegment(targetSelector)
 
 		if (newSegment instanceof NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		switch (newSegment.getType())
 			when 0x05
@@ -3957,13 +3965,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 			when 0x0b, 0x09
 				if ((newSegment.getDPL() < proc.getCPL()) || (newSegment.getDPL() < newSegment.getRPL()) )
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 				if (!newSegment.isPresent())
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSelector, true)
+					throw new ProcessorException(Type.NOT_PRESENT, targetSelector, true)
 				if (newSegment.getLimit() < 0x67) # large enough to read ?
-					throw new ProcessorException(ProcessorException.Type.TASK_SWITCH, targetSelector, true)
+					throw new ProcessorException(Type.TASK_SWITCH, targetSelector, true)
 				if ((newSegment.getType() & 0x2) != 0) # busy ? if yes,error
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 
 				newSegment.getByte(0) # new TSS paged into memory ?
 				proc.tss.getByte(0) # old TSS paged into memory ?
@@ -3977,12 +3985,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 				ldtSelector = 0xFFFF & newSegment.getWord(96)
 
 				if((ldtSelector & 0x4) !=0) # not in gdt
-					throw new ProcessorException(ProcessorException.Type.TASK_SWITCH, ldtSelector, true)
+					throw new ProcessorException(Type.TASK_SWITCH, ldtSelector, true)
 
 				proc.gdtr.checkAddress((ldtSelector & ~0x7) + 7 ) # check ldtr is valid
 
 				if(proc.readSupervisorByte(proc.gdtr, ((ldtSelector & ~0x7) + 5 )& 0xF) != 2) # not a ldt entry
-					throw new ProcessorException(ProcessorException.Type.TASK_SWITCH, ldtSelector, true)
+					throw new ProcessorException(Type.TASK_SWITCH, ldtSelector, true)
 
 				newLdtr = proc.getSegment(ldtSelector) # get new ldt
 
@@ -4032,9 +4040,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 				throw new IllegalStateException("Execute Failed (jump_far2)")
 			when 0x18, 0x19, 0x1a, 0x1b
 				if ((newSegment.getRPL() != proc.getCPL()) || (newSegment.getDPL() > proc.getCPL()))
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 				if (!newSegment.isPresent())
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSelector, true)
+					throw new ProcessorException(Type.NOT_PRESENT, targetSelector, true)
 
 				newSegment.checkAddress(targetEIP)
 				newSegment.setRPL(proc.getCPL())
@@ -4044,10 +4052,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 			when 0x1c, 0x1d, 0x1e, 0x1f
 				if (newSegment.getDPL() > proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 
 				if (!newSegment.isPresent())
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSelector, true)
+					throw new ProcessorException(Type.NOT_PRESENT, targetSelector, true)
 
 				newSegment.checkAddress(targetEIP)
 				newSegment.setRPL(proc.getCPL())
@@ -4058,7 +4066,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			else
 				# not a valid segment descriptor for a jump
 				log "Invalid segment type"
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+				throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 
 	call_o32_a32: (target) ->
 		tempEIP = proc.getEIP() + target
@@ -4066,7 +4074,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.cs.checkAddress(tempEIP)
 
 		if ((proc.esp < 4) && (proc.esp > 0))
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.ss.setDoubleWord(proc.esp - 4, proc.getEIP() )
 		proc.esp -= 4
@@ -4088,7 +4096,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.cs.checkAddress(tempEIP)
 
 		if ((0xffff & proc.esp) < 2)
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.ss.setDoubleWord((proc.esp - 2) & 0xffff, proc.getEIP())
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 2) & 0xffff)
@@ -4102,7 +4110,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		if ((proc.esp < 2) && (proc.esp > 0))
 			log "Exception!"
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.ss.setWord(proc.esp - 2, short(0xFFFF & proc.getEIP()))
 		proc.esp -= 2
@@ -4115,7 +4123,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.cs.checkAddress(tempEIP)
 
 		if ((0xffff & proc.esp) < 4)
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.ss.setDoubleWord((proc.esp - 4) & 0xffff, proc.getEIP())
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 4) & 0xffff)
@@ -4126,7 +4134,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.cs.checkAddress(target & 0xFFFF)
 
 		if ((proc.esp & 0xffff) < 2)
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.ss.setWord((proc.esp - 2) & 0xffff, short(0xFFFF & proc.getEIP()))
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 2) & 0xffff)
@@ -4137,7 +4145,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.cs.checkAddress(target & 0xFFFF)
 
 		if ((proc.esp < 2) && (proc.esp > 0))
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.ss.setWord(proc.esp - 2, short(0xFFFF & proc.getEIP()))
 		proc.esp -= 2
@@ -4148,7 +4156,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.cs.checkAddress(target)
 
 		if ((proc.esp < 4) && (proc.esp > 0))
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.ss.setDoubleWord(proc.esp - 4, proc.getEIP())
 		proc.esp -= 4
@@ -4159,7 +4167,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		proc.cs.checkAddress(target)
 
 		if ((proc.esp & 0xffff) < 4)
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.ss.setDoubleWord((proc.esp - 4) & 0xffff, proc.getEIP())
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 4) & 0xffff)
@@ -4169,7 +4177,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 	call_far_o16_a32: (targetEIP, targetSelector) ->
 		newSegment = proc.getSegment(targetSelector)
 		if (newSegment == SegmentFactory.NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true);
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true);
 
 		switch (newSegment.getType())
 			when 0x01, 0x03
@@ -4177,9 +4185,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 				throw new IllegalStateException("Execute Failed (call_far_o16_a32)")
 			when 0x04
 				if ((newSegment.getRPL() > proc.getCPL()) || (newSegment.getDPL() < proc.getCPL()))
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 				if (!newSegment.isPresent())
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSelector, true)
+					throw new ProcessorException(Type.NOT_PRESENT, targetSelector, true)
 
 				ProtectedModeSegment.GateSegment gate = newSegment
 
@@ -4189,20 +4197,20 @@ class ProtectedModeUBlock extends MicrocodeSet
 				try
 					targetSegment = proc.getSegment(targetSegmentSelector)
 				catch e
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector, true)
 
 				if (targetSegment == NULL_SEGMENT)
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 				if (targetSegment.getDPL() > proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 
 				switch (targetSegment.getType())
 
 
 					when 0x18, 0x19, 0x1a, 0x1b
 						if (!targetSegment.isPresent())
-							throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSegmentSelector, true)
+							throw new ProcessorException(Type.NOT_PRESENT, targetSegmentSelector, true)
 
 						if (targetSegment.getDPL() < proc.getCPL())
 							log "16-bit call gate: jump to more privileged segment not implemented"
@@ -4213,17 +4221,17 @@ class ProtectedModeUBlock extends MicrocodeSet
 							throw new IllegalStateException("Execute Failed (call_o16_a32_3")
 
 						else
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector, true);
+							throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector, true);
 
 					when 0x1c, 0x1d, 0x1e, 0x1f
 						if (!targetSegment.isPresent())
-							throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSegmentSelector, true);
+							throw new ProcessorException(Type.NOT_PRESENT, targetSegmentSelector, true);
 
 						log "16-bit call gate: jump to same privilege conforming segment not implemented"
 						throw new IllegalStateException("Execute Failed (call_o_16_a32_4)")
 
 					else
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector, true)
 			when 0x05
 				log "Task gate not implemented"
 				throw new IllegalStateException("Execute Failed (call_o16_a32_5)")
@@ -4235,12 +4243,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 				throw new IllegalStateException("Execute Failed (call_o16_a32_7)")
 			when 0x18, 0x19, 0x1a, 0x1b
 				if ((newSegment.getRPL() > proc.getCPL()) || (newSegment.getDPL() != proc.getCPL()))
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 				if (!newSegment.isPresent())
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSelector, true)
+					throw new ProcessorException(Type.NOT_PRESENT, targetSelector, true)
 
 				if ((proc.esp < 4) && (proc.esp > 0))
-					throw ProcessorException.STACK_SEGMENT_0
+					throw STACK_SEGMENT_0
 
 				newSegment.checkAddress(targetEIP&0xFFFF)
 
@@ -4259,16 +4267,16 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 			else
 				log "Invalid segment type {0,number,integer}", Integer.valueOf(newSegment.getType())
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+				throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 
 	call_far_o16_a16: (targetEIP, targetSelector) ->
 		if ((targetSelector & 0xfffc) == 0)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		newSegment = proc.getSegment(targetSelector)
 
 		if (newSegment == SegmentFactory.NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		switch (newSegment.getType())
 			when 0x01, 0x03
@@ -4276,30 +4284,30 @@ class ProtectedModeUBlock extends MicrocodeSet
 				throw new IllegalStateException("Execute Failed")
 			when 0x04
 				if ((newSegment.getDPL() < newSegment.getRPL()) || (newSegment.getDPL() < proc.getCPL()))
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector & 0xfffc, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector & 0xfffc, true)
 				if (!newSegment.isPresent())
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSelector & 0xfffc, true)
+					throw new ProcessorException(Type.NOT_PRESENT, targetSelector & 0xfffc, true)
 
 				gate = newSegment
 
 				targetSegmentSelector = gate.getTargetSegment()
 
 				if ((targetSegmentSelector & 0xfffc) == 0)
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, 0, true)
+					throw new ProcessorException(Type.NOT_PRESENT, 0, true)
 
 				try
 					targetSegment = proc.getSegment(targetSegmentSelector)
 				catch e
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector & 0xfffc, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector & 0xfffc, true)
 
 				if (targetSegment == NULL_SEGMENT)
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector & 0xfffc, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector & 0xfffc, true)
 
 				if ((targetSegment.getDPL() > proc.getCPL()) || (targetSegment.isSystem()) || ((targetSegment.getType() & 0x18) == 0x10))
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector & 0xfffc, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector & 0xfffc, true)
 
 				if (!targetSegment.isPresent())
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSegmentSelector & 0xfffc, true)
+					throw new ProcessorException(Type.NOT_PRESENT, targetSegmentSelector & 0xfffc, true)
 
 				switch (targetSegment.getType())
 					when 0x18, 0x19, 0x1a, 0x1b
@@ -4312,7 +4320,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 							if ((proc.tss.getType() & 0x8) != 0)
 								tssStackAddress = (targetSegment.getDPL() * 8) + 4
 								if ((tssStackAddress + 7) > proc.tss.getLimit())
-									throw new ProcessorException(ProcessorException.Type.TASK_SWITCH, proc.tss.getSelector(), true)
+									throw new ProcessorException(Type.TASK_SWITCH, proc.tss.getSelector(), true)
 
 								isSup = proc.linearMemory.isSupervisor()
 								try
@@ -4325,32 +4333,32 @@ class ProtectedModeUBlock extends MicrocodeSet
 							else
 								tssStackAddress = (targetSegment.getDPL() * 4) + 2
 								if ((tssStackAddress + 4) > proc.tss.getLimit())
-									throw new ProcessorException(ProcessorException.Type.TASK_SWITCH, proc.tss.getSelector(), true)
+									throw new ProcessorException(Type.TASK_SWITCH, proc.tss.getSelector(), true)
 								newStackSelector = 0xffff & proc.tss.getWord(tssStackAddress + 2)
 								newESP = 0xffff & proc.tss.getWord(tssStackAddress)
 
 
 							if ((newStackSelector & 0xfffc) == 0)
-								throw new ProcessorException(ProcessorException.Type.TASK_SWITCH, 0, true)
+								throw new ProcessorException(Type.TASK_SWITCH, 0, true)
 
 							newStackSegment = null
 							try
 								newStackSegment = proc.getSegment(newStackSelector)
 							catch e
-								throw new ProcessorException(ProcessorException.Type.TASK_SWITCH, newStackSelector, true)
+								throw new ProcessorException(Type.TASK_SWITCH, newStackSelector, true)
 
 							if (newStackSegment.getRPL() != targetSegment.getDPL())
-								throw new ProcessorException(ProcessorException.Type.TASK_SWITCH, newStackSelector & 0xfffc, true)
+								throw new ProcessorException(Type.TASK_SWITCH, newStackSelector & 0xfffc, true)
 
 							if ((newStackSegment.getDPL() != targetSegment.getDPL()) || ((newStackSegment.getType() & 0x1a) != 0x12))
-								throw new ProcessorException(ProcessorException.Type.TASK_SWITCH, newStackSelector & 0xfffc, true)
+								throw new ProcessorException(Type.TASK_SWITCH, newStackSelector & 0xfffc, true)
 
 							if (!(newStackSegment.isPresent()))
-								throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, newStackSelector & 0xfffc, true)
+								throw new ProcessorException(Type.NOT_PRESENT, newStackSelector & 0xfffc, true)
 
 							parameters = gate.getParameterCount() & 0x1f
 							if ((newStackSegment.getDefaultSizeFlag() && (proc.esp < 8 + 2 * parameters) && (proc.esp > 0)) || !newStackSegment.getDefaultSizeFlag() && ((proc.esp & 0xffff) < 8 + 2 * parameters))
-								throw ProcessorException.STACK_SEGMENT_0
+								throw STACK_SEGMENT_0
 
 							targetOffset = 0xffff & gate.getTargetOffset()
 
@@ -4410,14 +4418,14 @@ class ProtectedModeUBlock extends MicrocodeSet
 							log "16-bit call gate: jump to same privilege segment not implemented"
 							throw new IllegalStateException("Execute Failed")
 						else
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector, true)
 
 					when 0x1c, 0x1d, 0x1e, 0x1f
 						log "16-bit call gate: jump to same privilege conforming segment not implemented"
 						throw new IllegalStateException("Execute Failed")
 
 					else
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector, true)
 
 			when 0x05
 				log "Task gate not implemented"
@@ -4430,7 +4438,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 				throw new IllegalStateException("Execute Failed")
 			when 0x18, 0x19, 0x1a, 0x1b
 				if ((proc.esp < 4) && (proc.esp > 0))
-					throw ProcessorException.STACK_SEGMENT_0
+					throw STACK_SEGMENT_0
 
 				newSegment.checkAddress(targetEIP&0xFFFF)
 
@@ -4452,12 +4460,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 				throw new IllegalStateException("Execute Failed")
 			else
 				log "Invalid segment type ",
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+				throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 
 	call_far_o32_a32: (targetEIP, targetSelector) ->
 		newSegment = proc.getSegment(targetSelector)
 		if (newSegment instanceof NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		switch (newSegment.getType())
 			when 0x01, 0x03
@@ -4466,9 +4474,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 			when 0x04
 
 				if ((newSegment.getRPL() > proc.getCPL()) || (newSegment.getDPL() < proc.getCPL()))
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 				if (!newSegment.isPresent())
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSelector, true)
+					throw new ProcessorException(Type.NOT_PRESENT, targetSelector, true)
 
 				gate = newSegment
 
@@ -4477,18 +4485,18 @@ class ProtectedModeUBlock extends MicrocodeSet
 				try
 					targetSegment = proc.getSegment(targetSegmentSelector)
 				catch e
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector, true)
 
 				if (targetSegment instanceof NULL_SEGMENT)
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 				if (targetSegment.getDPL() > proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 
 				switch (targetSegment.getType())
 					when 0x18, 0x19, 0x1a, 0x1b
 						if (!targetSegment.isPresent())
-							throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSegmentSelector, true)
+							throw new ProcessorException(Type.NOT_PRESENT, targetSegmentSelector, true)
 
 						if (targetSegment.getDPL() < proc.getCPL())
 							log "16-bit call gate: jump to more privileged segment not implemented"
@@ -4497,15 +4505,15 @@ class ProtectedModeUBlock extends MicrocodeSet
 							log "16-bit call gate: jump to same privilege segment not implemented"
 							throw new IllegalStateException("Execute Failed")
 						else
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector, true)
 					when 0x1c, 0x1d, 0x1e, 0x1f
 						if (!targetSegment.isPresent())
-							throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSegmentSelector, true)
+							throw new ProcessorException(Type.NOT_PRESENT, targetSegmentSelector, true)
 
 						log "16-bit call gate: jump to same privilege conforming segment not implemented"
 						throw new IllegalStateException("Execute Failed")
 					else
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector, true)
 
 			when 0x05
 				log "Task gate not implemented"
@@ -4518,12 +4526,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 				throw new IllegalStateException("Execute Failed")
 			when 0x18, 0x19, 0x1a, 0x1b
 				if ((newSegment.getRPL() > proc.getCPL()) || (newSegment.getDPL() != proc.getCPL()))
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 				if (!newSegment.isPresent())
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSelector, true)
+					throw new ProcessorException(Type.NOT_PRESENT, targetSelector, true)
 
 				if ((proc.esp < 8) && (proc.esp > 0))
-					throw ProcessorException.STACK_SEGMENT_0
+					throw STACK_SEGMENT_0
 
 				newSegment.checkAddress(targetEIP)
 
@@ -4541,12 +4549,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 				throw new IllegalStateException("Execute Failed")
 			else
 				log "Invalid segment type "
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+				throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 
 	call_far_o32_a16: (targetEIP, targetSelector) ->
 		newSegment = proc.getSegment(targetSelector)
 		if (newSegment instanceof NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		switch (newSegment.getType())
 			when 0x01, 0x03
@@ -4554,9 +4562,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 				throw new IllegalStateException("Execute Failed")
 			when 0x04
 				if ((newSegment.getRPL() > proc.getCPL()) || (newSegment.getDPL() < proc.getCPL()))
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 				if (!newSegment.isPresent())
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSelector, true)
+					throw new ProcessorException(Type.NOT_PRESENT, targetSelector, true)
 
 				gate = newSegment
 
@@ -4565,18 +4573,18 @@ class ProtectedModeUBlock extends MicrocodeSet
 				try
 					targetSegment = proc.getSegment(targetSegmentSelector)
 				catch e
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector, true)
 
 				if (targetSegment instanceof NULL_SEGMENT)
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 				if (targetSegment.getDPL() > proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 
 				switch (targetSegment.getType())
 					when 0x18, 0x19, 0x1a, 0x1b
 						if (!targetSegment.isPresent())
-							throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSegmentSelector, true)
+							throw new ProcessorException(Type.NOT_PRESENT, targetSegmentSelector, true)
 
 						if (targetSegment.getDPL() < proc.getCPL())
 							log "16-bit call gate: jump to more privileged segment not implemented"
@@ -4585,17 +4593,17 @@ class ProtectedModeUBlock extends MicrocodeSet
 							log "16-bit call gate: jump to same privilege segment not implemented"
 							throw new IllegalStateException("Execute Failed")
 						else
-							throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector, true)
+							throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector, true)
 
 					when 0x1c, 0x1d, 0x1e, 0x1f
 						if (!targetSegment.isPresent())
-							throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSegmentSelector, true)
+							throw new ProcessorException(Type.NOT_PRESENT, targetSegmentSelector, true)
 
 						log "16-bit call gate: jump to same privilege conforming segment not implemented"
 						throw new IllegalStateException("Execute Failed")
 
 					else
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSegmentSelector, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, targetSegmentSelector, true)
 			when 0x05
 				log "Task gate not implemented"
 				throw new IllegalStateException("Execute Failed")
@@ -4607,12 +4615,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 				throw new IllegalStateException("Execute Failed")
 			when 0x18, 0x19, 0x1a, 0x1b
 				if ((newSegment.getRPL() > proc.getCPL()) || (newSegment.getDPL() != proc.getCPL()))
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, targetSelector, true)
 				if (!newSegment.isPresent())
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, targetSelector, true)
+					throw new ProcessorException(Type.NOT_PRESENT, targetSelector, true)
 
 				if ((proc.esp & 0xffff) < 8)
-					throw ProcessorException.STACK_SEGMENT_0
+					throw STACK_SEGMENT_0
 
 				newSegment.checkAddress(targetEIP)
 
@@ -4630,7 +4638,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 			else
 				log "Invalid segment type"
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, targetSelector, true)
+				throw new ProcessorException(ype.GENERAL_PROTECTION, targetSelector, true)
 
 	ret_o16_a32: ->
 	# TODO:  supposed to throw SS exception
@@ -4681,47 +4689,47 @@ class ProtectedModeUBlock extends MicrocodeSet
 		try
 			proc.ss.checkAddress((proc.esp + 3) & 0xFFFF)
 		catch e
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		tempEIP = 0xFFFF & proc.ss.getWord(proc.esp & 0xFFFF)
 		tempCS = 0xFFFF & proc.ss.getWord((proc.esp + 2) & 0xFFFF)
 
 		if ((tempCS & 0xfffc) == 0)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		returnSegment = proc.getSegment(tempCS)
 		if (returnSegment instanceof NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		if (returnSegment.getRPL() < proc.getCPL())
 			log("RPL too small in far ret: RPL=" + returnSegment.getRPL() + ", CPL=" + proc.getCPL() + ", new CS=" + tempCS)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, tempCS, true)
 
 		switch (returnSegment.getType())
 			when 0x18, 0x19, 0x1a, 0x1b
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, tempCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, tempCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
 					try
 						proc.ss.checkAddress((proc.esp + 7 + stackdelta) & 0xFFFF)
 					catch e
-						throw ProcessorException.STACK_SEGMENT_0
+						throw STACK_SEGMENT_0
 
 					returnESP = 0xffff & proc.ss.getWord((proc.esp + 4 + stackdelta) & 0xFFFF)
 					newSS = 0xffff & proc.ss.getWord((proc.esp + 6 + stackdelta) & 0xFFFF)
 
 					if ((newSS & 0xfffc) == 0)
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 					returnStackSegment = proc.getSegment(newSS)
 
 					if ((returnStackSegment.getRPL() != returnSegment.getRPL()) || ((returnStackSegment.getType() & 0x12) != 0x12) || (returnStackSegment.getDPL() != returnSegment.getRPL()))
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newSS & 0xfffc, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, newSS & 0xfffc, true)
 
 					if (!returnStackSegment.isPresent())
-						throw new ProcessorException(ProcessorException.Type.STACK_SEGMENT, newSS & 0xfffc, true)
+						throw new ProcessorException(Type.STACK_SEGMENT, newSS & 0xfffc, true)
 
 					returnSegment.checkAddress(tempEIP)
 
@@ -4772,10 +4780,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 					proc.cs = returnSegment
 			when 0x1c, 0x1d, 0x1e, 0x1f
 				if (returnSegment.getDPL() > returnSegment.getRPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, tempCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, tempCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, tempCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
@@ -4790,13 +4798,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 					proc.setEIP(tempEIP)
 					proc.cs = returnSegment
 			else
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
+				throw new ProcessorException(Type.GENERAL_PROTECTION, tempCS, true)
 
 	ret_far_o16_a32: (stackdelta) ->
 		try
 			proc.ss.checkAddress(proc.esp + 3)
 		catch e
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		tempEIP = 0xFFFF & proc.ss.getWord(proc.esp)
 		tempCS = 0xFFFF & proc.ss.getWord(proc.esp + 2)
@@ -4804,15 +4812,15 @@ class ProtectedModeUBlock extends MicrocodeSet
 		returnSegment = proc.getSegment(tempCS)
 
 		if (returnSegment instanceof NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		switch (returnSegment.getType())
 			when 0x18, 0x19, 0x1a, 0x1b
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, tempCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, tempCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, tempCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
@@ -4830,13 +4838,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 			when 0x1c, 0x1d, 0x1e, 0x1f
 
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, tempCS, true)
 
 				if (returnSegment.getDPL() > returnSegment.getRPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, tempCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, tempCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, tempCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
@@ -4852,13 +4860,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 					proc.cs = returnSegment
 
 			else
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
+				throw new ProcessorException(Type.GENERAL_PROTECTION, tempCS, true)
 
 	ret_far_o32_a16: (stackdelta) ->
 		try
 			proc.ss.checkAddress((proc.esp + 7) & 0xFFFF)
 		catch e
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 
 		tempEIP = proc.ss.getDoubleWord(proc.esp & 0xFFFF)
@@ -4867,15 +4875,15 @@ class ProtectedModeUBlock extends MicrocodeSet
 		returnSegment = proc.getSegment(tempCS)
 
 		if (returnSegment instanceof NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		switch (returnSegment.getType())
 			when 0x18, 0x19, 0x1a, 0x1b
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, tempCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, tempCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, tempCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
@@ -4892,13 +4900,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 			when 0x1c, 0x1d, 0x1e, 0x1f
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, tempCS, true)
 
 				if (returnSegment.getDPL() > returnSegment.getRPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, tempCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, tempCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, tempCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
@@ -4914,13 +4922,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 					proc.cs = returnSegment
 
 			else
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempCS, true)
+				throw new ProcessorException(Type.GENERAL_PROTECTION, tempCS, true)
 
 	iretToVirtual8086Mode16BitAddressing: (newCS, newEIP, newEFlags) ->
 		try
 			proc.ss.checkAddress((proc.esp + 23) & 0xffff)
 		catch e
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.cs = SegmentFactory.createVirtual8086ModeSegment(proc.linearMemory, newCS, true)
 		proc.setEIP(newEIP & 0xffff)
@@ -4940,21 +4948,21 @@ class ProtectedModeUBlock extends MicrocodeSet
 		returnSegment = proc.getSegment(newCS)
 
 		if (returnSegment instanceof NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		switch (returnSegment.getType())
 			when 0x18, 0x19, 0x1a, 0x1b
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, newCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, newCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					try
 						proc.ss.checkAddress((proc.esp + 7) & 0xFFFF)
 					catch e
-						throw ProcessorException.STACK_SEGMENT_0
+						throw STACK_SEGMENT_0
 
 
 					returnESP = proc.ss.getDoubleWord((proc.esp)&0xFFFF)
@@ -4963,10 +4971,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnStackSegment = proc.getSegment(newSS)
 
 					if ((returnStackSegment.getRPL() != returnSegment.getRPL()) || ((returnStackSegment.getType() & 0x12) != 0x12) || (returnStackSegment.getDPL() != returnSegment.getRPL()))
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newSS, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, newSS, true)
 
 					if (!returnStackSegment.isPresent())
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newSS, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, newSS, true)
 
 					returnSegment.checkAddress(newEIP)
 
@@ -5049,13 +5057,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 			when 0x1c, 0x1d, 0x1e, 0x1f
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (returnSegment.getDPL() > returnSegment.getRPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, newCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, newCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
@@ -5067,7 +5075,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 					throw new IllegalStateException("Execute Failed")
 			else
 				log "Invalid segment type "
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+				throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 	iret_o32_a16: ->
 
@@ -5077,7 +5085,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			try
 				proc.ss.checkAddress((proc.esp + 11) & 0xffff)
 			catch e
-				throw ProcessorException.STACK_SEGMENT_0
+				throw STACK_SEGMENT_0
 
 			tempEIP = proc.ss.getDoubleWord(proc.esp & 0xFFFF)
 			tempCS = 0xffff & proc.ss.getDoubleWord((proc.esp + 4) & 0xFFFF)
@@ -5097,10 +5105,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 		try
 			proc.ss.checkAddress(proc.esp + 23)
 		catch e
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		if (newEIP > 0xfffff)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION,0,true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION,0,true)
 
 		proc.cs = SegmentFactory.createVirtual8086ModeSegment(proc.linearMemory, newCS, true)
 		proc.setEIP(newEIP & 0xffff)
@@ -5120,22 +5128,22 @@ class ProtectedModeUBlock extends MicrocodeSet
 		returnSegment = proc.getSegment(newCS)
 
 		if (returnSegment instanceof NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		switch (returnSegment.getType())
 			when 0x18, 0x19, 0x1a, 0x1b
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, newCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, newCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
 					try
 						proc.ss.checkAddress(proc.esp + 7)
 					catch e
-						throw ProcessorException.STACK_SEGMENT_0
+						throw STACK_SEGMENT_0
 
 
 					returnESP = proc.ss.getDoubleWord(proc.esp)
@@ -5144,10 +5152,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnStackSegment = proc.getSegment(tempSS)
 
 					if ((returnStackSegment.getRPL() != returnSegment.getRPL()) || ((returnStackSegment.getType() & 0x12) != 0x12) || (returnStackSegment.getDPL() != returnSegment.getRPL()))
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempSS, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, tempSS, true)
 
 					if (!returnStackSegment.isPresent())
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempSS, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, tempSS, true)
 
 					returnSegment.checkAddress(newEIP)
 
@@ -5226,13 +5234,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 			when 0x1c, 0x1d, 0x1e, 0x1f
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (returnSegment.getDPL() > returnSegment.getRPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, newCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, newCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
@@ -5267,7 +5275,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 			else
 				log "Invalid segment type"
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+				throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 	iret_o32_a32: ->
 		if (proc.eflagsNestedTask)
@@ -5276,7 +5284,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			try
 				proc.ss.checkAddress(proc.esp + 11)
 			catch e
-				throw ProcessorException.STACK_SEGMENT_0
+				throw STACK_SEGMENT_0
 
 			tempEIP = proc.ss.getDoubleWord(proc.esp)
 			tempCS = 0xffff & proc.ss.getDoubleWord(proc.esp + 4)
@@ -5295,7 +5303,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			try
 				proc.ss.checkAddress((proc.esp + 5) & 0xffff)
 			catch e
-				throw ProcessorException.STACK_SEGMENT_0
+				throw STACK_SEGMENT_0
 
 			tempEIP = 0xffff & proc.ss.getWord(proc.esp & 0xFFFF)
 			tempCS = 0xffff & proc.ss.getWord((proc.esp + 2) & 0xFFFF)
@@ -5311,7 +5319,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 			try
 				proc.ss.checkAddress(proc.esp + 5)
 			catch e
-				throw ProcessorException.STACK_SEGMENT_0
+				throw STACK_SEGMENT_0
 
 			tempEIP = 0xffff & proc.ss.getWord(proc.esp)
 			tempCS = 0xffff & proc.ss.getWord(proc.esp + 4)
@@ -5324,24 +5332,24 @@ class ProtectedModeUBlock extends MicrocodeSet
 		returnSegment = proc.getSegment(newCS)
 
 		if (returnSegment instanceof NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		switch (returnSegment.getType())
 
 			when 0x18, 0x19, 0x1a, 0x1b
 
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, newCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, newCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
 					try
 						proc.ss.checkAddress((proc.esp + 3) & 0xFFFF)
 					catch e
-						throw ProcessorException.STACK_SEGMENT_0
+						throw STACK_SEGMENT_0
 
 
 					returnESP = 0xffff & proc.ss.getWord(proc.esp & 0xFFFF)
@@ -5350,10 +5358,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnStackSegment = proc.getSegment(newSS)
 
 					if ((returnStackSegment.getRPL() != returnSegment.getRPL()) || ((returnStackSegment.getType() & 0x12) != 0x12) || (returnStackSegment.getDPL() != returnSegment.getRPL()))
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newSS, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, newSS, true)
 
 					if (!returnStackSegment.isPresent())
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newSS, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, newSS, true)
 
 					returnSegment.checkAddress(newEIP)
 
@@ -5435,13 +5443,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 					return eflags
 			when 0x1c, 0x1d, 0x1e, 0x1f
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (returnSegment.getDPL() > returnSegment.getRPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, newCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, newCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
@@ -5453,28 +5461,28 @@ class ProtectedModeUBlock extends MicrocodeSet
 					throw new IllegalStateException("Execute Failed")
 			else
 				log "Invalid segment type "
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+				throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 	iret16ProtectedMode32BitAddressing: (newCS, newEIP, newEFlags) ->
 		returnSegment = proc.getSegment(newCS)
 
 		if (returnSegment instanceof NULL_SEGMENT)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 
 		switch (returnSegment.getType())
 			when 0x18, 0x19, 0x1a, 0x1b
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, newCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, newCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
 					try
 						proc.ss.checkAddress(proc.esp + 3)
 					catch e
-						throw ProcessorException.STACK_SEGMENT_0
+						throw STACK_SEGMENT_0
 
 					returnESP = 0xffff & proc.ss.getWord(proc.esp)
 					tempSS = 0xffff & proc.ss.getWord(proc.esp + 2)
@@ -5482,10 +5490,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 					returnStackSegment = proc.getSegment(tempSS)
 
 					if ((returnStackSegment.getRPL() != returnSegment.getRPL()) || ((returnStackSegment.getType() & 0x12) != 0x12) || (returnStackSegment.getDPL() != returnSegment.getRPL()))
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempSS, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, tempSS, true)
 
 					if (!returnStackSegment.isPresent())
-						throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, tempSS, true)
+						throw new ProcessorException(Type.GENERAL_PROTECTION, tempSS, true)
 
 					returnSegment.checkAddress(newEIP)
 
@@ -5565,13 +5573,13 @@ class ProtectedModeUBlock extends MicrocodeSet
 					return eflags
 			when 0x1c, 0x1d, 0x1e, 0x1f
 				if (returnSegment.getRPL() < proc.getCPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (returnSegment.getDPL() > returnSegment.getRPL())
-					throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+					throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 				if (!(returnSegment.isPresent()))
-					throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, newCS, true)
+					throw new ProcessorException(Type.NOT_PRESENT, newCS, true)
 
 				if (returnSegment.getRPL() > proc.getCPL())
 					#OUTER PRIVILEGE-LEVEL
@@ -5584,12 +5592,12 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 			else
 				log "Invalid segment type "
-				throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, newCS, true)
+				throw new ProcessorException(Type.GENERAL_PROTECTION, newCS, true)
 
 	sysenter: ->
 		csSelector = int(proc.getMSR(proc.SYSENTER_CS_MSR))
 		if (csSelector == 0)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, 0, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, 0, true)
 		proc.eflagsInterruptEnable = proc.eflagsInterruptEnableSoon = false
 		proc.eflagsResume = false
 
@@ -5603,9 +5611,9 @@ class ProtectedModeUBlock extends MicrocodeSet
 	sysexit: (esp, eip) ->
 		int csSelector= int(proc.getMSR(proc.SYSENTER_CS_MSR))
 		if (csSelector == 0)
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 		if (proc.getCPL() != 0)
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 		proc.cs = SegmentFactory.createProtectedModeSegment(proc.linearMemory, (csSelector + 16) | 0x3, 0x00cffb000000ffff)
 		proc.setCPL(3)
@@ -5620,42 +5628,42 @@ class ProtectedModeUBlock extends MicrocodeSet
 			return 0xff & proc.ioports.ioPortReadByte(port)
 		else
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0;
+			throw GENERAL_PROTECTION_0;
 
 	in_o16: (port) ->
 		if (@checkIOPermissionsShort(port))
 			return 0xffff & proc.ioports.ioPortReadWord(port)
 		else
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 	in_o32: (port) ->
 		if (@checkIOPermissionsInt(port))
 			return proc.ioports.ioPortReadLong(port)
 		else
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 	out_o8: (port, data) ->
 		if (@checkIOPermissionsByte(port))
 			proc.ioports.ioPortWriteByte(port, 0xff & data)
 		else
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 	out_o16: (port, data) ->
 		if (@checkIOPermissionsShort(port))
 			proc.ioports.ioPortWriteWord(port, 0xffff & data)
 		else
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 	out_o32: (port, data) ->
 		if (@checkIOPermissionsInt(port))
 			proc.ioports.ioPortWriteLong(port, data)
 		else
 			log "denied access to io port #{port}"
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 	enter_o16_a16: (frameSize, nestingLevel) ->
 		nestingLevel %= 32
@@ -5665,10 +5673,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		if (nestingLevel == 0)
 			if ((tempESP < (2 + frameSize)) && (tempESP > 0))
-				throw ProcessorException.STACK_SEGMENT_0
+				throw STACK_SEGMENT_0
 		else
 			if ((tempESP < (2 + frameSize + 2 * nestingLevel)) && (tempESP > 0))
-				throw ProcessorException.STACK_SEGMENT_0
+				throw STACK_SEGMENT_0
 
 		tempESP -= 2
 		proc.ss.setWord(tempESP, short(tempEBP))
@@ -5696,10 +5704,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		if (nestingLevel == 0)
 			if ((tempESP < (2 + frameSize)) && (tempESP > 0))
-				throw ProcessorException.STACK_SEGMENT_0
+				throw STACK_SEGMENT_0
 		else
 			if ((tempESP < (2 + frameSize + 2 * nestingLevel)) && (tempESP > 0))
-				throw ProcessorException.STACK_SEGMENT_0
+				throw STACK_SEGMENT_0
 
 		tempESP -= 2
 		proc.ss.setWord(tempESP, short(tempEBP))
@@ -5727,10 +5735,10 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		if (nestingLevel == 0)
 			if ((tempESP < (4 + frameSize)) && (tempESP > 0))
-				throw ProcessorException.STACK_SEGMENT_0
+				throw STACK_SEGMENT_0
 		else
 			if ((tempESP < (4 + frameSize + 4 * nestingLevel)) && (tempESP > 0))
-				throw ProcessorException.STACK_SEGMENT_0
+				throw STACK_SEGMENT_0
 
 		tempESP -= 4
 		proc.ss.setDoubleWord(tempESP, tempEBP)
@@ -5781,28 +5789,28 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 	push_o32_a32: (value) ->
 		if ((proc.esp < 4) && (proc.esp > 0))
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.ss.setDoubleWord(proc.esp - 4, int(value))
 		proc.esp -= 4
 
 	push_o32_a16: (value) ->
 		if (((0xffff & proc.esp) < 4) && ((0xffff & proc.esp) > 0))
-			throw ProcessorException.STACK_SEGMENT_0;
+			throw STACK_SEGMENT_0;
 
 		proc.ss.setDoubleWord((proc.esp - 4) & 0xffff, value);
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 4) & 0xffff);
 
 	push_o16_a32: (value) ->
 		if ((proc.esp < 2) && (proc.esp > 0))
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.ss.setWord(proc.esp - 2, short(value))
 		proc.esp -= 2
 
 	push_o16_a16: (value) ->
 		if (((0xffff & proc.esp) < 2) && ((0xffff & proc.esp) > 0))
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		proc.ss.setWord(((0xFFFF & proc.esp) - 2) & 0xffff, short(value))
 		proc.esp = (proc.esp & ~0xffff) | ((proc.esp - 2) & 0xffff)
@@ -5811,7 +5819,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		offset = proc.esp
 		temp = proc.esp
 		if ((offset < 32) && (offset > 0))
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		offset -= 4
 		proc.ss.setDoubleWord(offset, proc.eax)
@@ -5836,7 +5844,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		offset = 0xFFFF & proc.esp
 		temp = 0xFFFF & proc.esp
 		if ((offset < 32) && (offset > 0))
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		offset -= 4
 		proc.ss.setDoubleWord(offset, proc.eax)
@@ -5861,7 +5869,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		offset = proc.esp
 		temp = proc.esp
 		if ((offset < 16) && (offset > 0))
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		offset -= 2
 		proc.ss.setWord(offset, short(0xffff & proc.eax))
@@ -5886,7 +5894,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		offset = 0xFFFF & proc.esp
 		temp = 0xFFFF & proc.esp
 		if ((offset < 16) && (offset > 0))
-			throw ProcessorException.STACK_SEGMENT_0
+			throw STACK_SEGMENT_0
 
 		offset -= 2
 		proc.ss.setWord(offset,short(proc.eax))
@@ -5912,7 +5920,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		#Bochs claims no checking need on POPs
 		#if (offset + 16 >= proc.ss.limit)
-		#    throw ProcessorException.STACK_SEGMENT_0;
+		#    throw STACK_SEGMENT_0;
 
 		newedi = (proc.edi & ~0xffff) | (0xffff & proc.ss.getWord(offset))
 		offset += 2
@@ -5945,7 +5953,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		#Bochs claims no checking need on POPs
 		#if (offset + 16 >= proc.ss.limit)
-		#    throw ProcessorException.STACK_SEGMENT_0;
+		#    throw STACK_SEGMENT_0;
 
 		newedi = proc.ss.getDoubleWord(offset)
 		offset += 4
@@ -5978,7 +5986,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		#Bochs claims no checking need on POPs
 		#if (offset + 16 >= proc.ss.limit)
-		#    throw ProcessorException.STACK_SEGMENT_0;
+		#    throw STACK_SEGMENT_0;
 
 		newedi = (proc.edi & ~0xffff) | (0xffff & proc.ss.getWord(offset))
 		offset += 2
@@ -6011,7 +6019,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		#Bochs claims no checking need on POPs
 		#if (offset + 16 >= proc.ss.limit)
-		#    throw ProcessorException.STACK_SEGMENT_0;
+		#    throw STACK_SEGMENT_0;
 
 		newedi = proc.ss.getDoubleWord(offset)
 		offset += 4
@@ -6120,24 +6128,24 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		newSegment = proc.getSegment(selector & ~0x4)
 		if (newSegment.getType() != 0x02)
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, selector, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, selector, true)
 
 		if (!(newSegment.isPresent()))
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, selector, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, selector, true)
 
 		return newSegment
 
 	ltr: (selector) ->
 		if ((selector & 0x4) != 0) #must be gdtr table
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, selector, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, selector, true)
 
 		tempSegment = proc.getSegment(selector)
 
 		if ((tempSegment.getType() != 0x01) && (tempSegment.getType() != 0x09))
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, selector, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, selector, true)
 
 		if (!(tempSegment.isPresent()))
-			throw new ProcessorException(ProcessorException.Type.GENERAL_PROTECTION, selector, true)
+			throw new ProcessorException(Type.GENERAL_PROTECTION, selector, true)
 
 		descriptor = proc.readSupervisorQuadWord(proc.gdtr, (selector & 0xfff8)) | (0x1 << 41) # set busy flag in segment descriptor
 		proc.setSupervisorQuadWord(proc.gdtr, selector & 0xfff8, descriptor)
@@ -6184,7 +6192,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 		if ((proc.getCPL() == 0) || ((proc.getCR4() & 0x4) == 0))
 			return proc.getClockCount()
 		else
-			throw ProcessorException.GENERAL_PROTECTION_0
+			throw GENERAL_PROTECTION_0
 
 	adc_o32_flags: (result, operand1, operand2) ->
 		carry = (proc.getCarryFlag() ? 1 : 0)
@@ -6384,7 +6392,7 @@ class ProtectedModeUBlock extends MicrocodeSet
 
 		s = proc.getSegment(selector)
 		if (!s.isPresent())
-			throw new ProcessorException(ProcessorException.Type.NOT_PRESENT, 0xc, true)
+			throw new ProcessorException(Type.NOT_PRESENT, 0xc, true)
 		return s
 
 	checkIOPermissionsByte: (ioportAddress) ->

@@ -28,8 +28,12 @@ Type = {
 class ProcessorException
 	constructor: (@type, mid..., @pointtoself) ->
 
-		@hasErrorCode = (mid[0]) ? true : false
-		@errorCode = mid[0]? 0
+		@hasErrorCode = false
+		@errorCode = 0
+
+		if mid[0]
+			@hasErrorCode = true
+			@errorCode = mid[0]
 
 	combinesToDoubleFault: (exception) ->
 		switch (@getType())
@@ -43,8 +47,13 @@ class ProcessorException
 				return (exception.getType() == Type.PAGE_FAULT)
 			else return false
 
+	getType: ->
+		return @type
+
+
+
 	toString: ->
-		if (hasErrorCode())
+		if (@hasErrorCode)
 			return "CPU Exception type " + @type + " with error 0x" + @errorCode
 		else
 			return "CPU Exception type " + @type

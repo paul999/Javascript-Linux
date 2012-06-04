@@ -39,26 +39,19 @@ class Segment
 		return pc.getMemoryOffset(32, @translateAddressRead(offset))
 
 	getQuadWord: (offset) ->
-		tmp = @translateAddressRead(offset)
 
-		result = 0xFFFFFFFF & @memory.getDoubleWord(tmp)
+		result = 0xFFFFFFFF & pc.getMemoryOffset(32, @translateAddressRead(offset))
 		tmp = @translateAddressRead(offset + 4)
-		result |= ((@memory.getDoubleWord(tmp)) << 32)
+		result |= pc.getMemoryOffset(32, tmp)
 		return result
 
 	setByte: (offset, data) ->
-		if offset == 12240
-			log "Writing B to 12240 with " + data
 		pc.setMemory(8, @translateAddressRead(offset), data)
 
 	setWord: (offset, data) ->
-		if offset == 12240
-			log "Writing W to 12240 with " + data
 		pc.setMemory(16, @translateAddressRead(offset), data)
 
 	setDoubleWord: (offset, data) ->
-		if offset == 12240
-			log "Writing D to 12240 with " + data
 		pc.setMemory(32, @translateAddressRead(offset), data)
 
 	setQuadWord: (offset, data) ->

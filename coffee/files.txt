@@ -23,6 +23,7 @@ motherboard/SerialPort
 processor/segment/Segment
 processor/segment/NullSegment
 processor/segment/RealModeSegment
+processor/segment/ProtectedModeSegment
 processor/segment/DescriptorTableSegment
 processor/segment/factory
 processor/ProcessorException

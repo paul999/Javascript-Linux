@@ -304,7 +304,8 @@ class ProtectedModeUDecoder extends MicrocodeSet
 
 		opcode = (opcodePrefix << 8) | opcode
 
-		log "Opcode Hex Found: 0x" + opcode.toString(16)
+		if opcode != 0
+			log "Opcode Hex Found: 0x" + opcode.toString(16)
 
 		switch opcodePrefix
 			when 0x00
