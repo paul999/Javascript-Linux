@@ -39,6 +39,8 @@ class Timer
 
 		log "Enabled: #{@enable}. Expire: #{@expireTime}"
 
+		log time >= @expireTime
+
 		if (@enable && time >= @expireTime)
 			log "Disabled, calling callback"
 			@disable()
