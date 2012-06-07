@@ -13,17 +13,11 @@
 # it under the terms of the GNU General Public License version 2 as published by
 # the Free Software Foundation.
 
-c = document.getElementById("log");
 log = (message) =>
-	if not debug
+	if window.tests or not debug
 		return
 
-#	c.appendChild(document.createTextNode(message));
-#	c.appendChild(document.createElement("br"));
-	if (window.tests == true)
-		return;
-	console.log(message);
-#	c.scrollTop += 20;
+	console.log(message)
 
 	return
 

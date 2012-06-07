@@ -51,7 +51,6 @@ function runCode(cd, cd2)
 			}
 		}
 
-		console.log(rt);
 		ok(rt.length != 0, "Testing microcode length for test + " + i)
 		equal(rt.length, cd2[i].length, "Total microcode length for test + " + i)
 
