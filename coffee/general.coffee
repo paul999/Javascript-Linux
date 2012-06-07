@@ -15,6 +15,9 @@
 
 c = document.getElementById("log");
 log = (message) =>
+	if not debug
+		return
+
 #	c.appendChild(document.createTextNode(message));
 #	c.appendChild(document.createElement("br"));
 	if (window.tests == true)
@@ -94,6 +97,8 @@ short = (x) =>
 int = (x) =>
 	if (x == 'undefined')
 		throw new IllegalStateException('Undefined cant be casted')
+
+	return parseInt x
 	convert = new jDataView(jDataView.createBuffer(x), undefined, undefined)
 
 	result =  convert.getInt32()
