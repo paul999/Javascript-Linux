@@ -38,9 +38,11 @@ class Timer
 		log "Check #{time}"
 
 		log "Enabled: #{@enable}. Expire: #{@expireTime}"
+		log (@enable && time >= @expireTime)
 
 		if (@enable && time >= @expireTime)
 			log "Disabled, calling callback"
+			a.a()
 			@disable()
 			@callback.callback()
 			return true
