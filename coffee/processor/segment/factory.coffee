@@ -27,7 +27,12 @@ class SegmentFactory
 
 	createProtectedModeSegment: (selector, descriptor) ->
 
-		tmp = ((descriptor & (@DESCRIPTOR_TYPE | @SEGMENT_TYPE)) >>> 40)
+		tm = 0x1F0000000000
+
+		log tm
+		log "descriptor: #{descriptor}"
+
+		tmp = ((descriptor & tm) >>> 40)
 
 		log "TMP: #{tmp}"
 

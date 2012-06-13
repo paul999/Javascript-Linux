@@ -345,7 +345,7 @@ class processor
 			@followProtectedModeException(pe.getType(), pe.hasErrorCode, pe.errorCode, false, false)
 		catch e
 			if (e instanceof ProcessorException)
-				log "Double fault" + e
+				log "Double fault: " + e
 
 				@esp = savedESP
 				@setEIP savedEIP
@@ -379,6 +379,9 @@ class processor
 
 
 		selector = vector << 3
+
+		log "Selector: " + selector
+
 		EXT = hardware ? 1:0
 
 		gate = null
@@ -398,7 +401,7 @@ class processor
 			else
 				log "Invalid gate type for throwing interrupt 0x#{gate.getType()}"
 				throw new ProcessorException(Type.GENERAL_PROTECTION, selector + 2 + EXT, true)
-
+		log "Bier"
 		a.a()
 
 
