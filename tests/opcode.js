@@ -1,5 +1,19 @@
 QUnit.module("Test opcode convertor")
 
+QUnit.test("Test Functions Decoder", function()
+{
+	setup()
+	window.pc.create()
+	proc.reset()
+
+	var p = new ProtectedModeUDecoder()
+	console.log(proc.isProtectedMode())
+	p.prefices = 0x0
+	p.setOperand(true)
+	equal(p.prefices, 0x18, "Test operand update in decoded")
+
+});
+
 QUnit.test("Simple opcode", function()
 {
 	ok(window.testOpCodes, "Opcodes are required to run the tests for the CPU")
@@ -18,6 +32,10 @@ function runCode(cd, cd2)
 		var bt;
 
 //		SYS_RAM_SIZE = 1024 * 2
+
+		setup()
+		window.pc.create()
+		proc.reset()
 
 		window.pc.resetMemory()
 

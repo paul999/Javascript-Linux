@@ -176,6 +176,8 @@ class PC
 		@stp = true
 		log "STOP!"
 
+		log "Bitwise operations: #{bits}"
+
 		@proc = null
 		document.getElementById("stop").disabled = true
 	_configure: ->

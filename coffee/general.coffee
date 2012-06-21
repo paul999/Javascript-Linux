@@ -104,7 +104,7 @@ numberOfSetBits = (i) ->
 	i = (i & 0x33333333) + ((i >> 2) & 0x33333333)
 	return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24
 
-scale64: (input,multiply,devide) ->
+scale64 = (input,multiply,devide) ->
 	rl = (0xffffffff & input) * multiply
 	rh = (input >>> 32) * multiply
 
@@ -114,6 +114,17 @@ scale64: (input,multiply,devide) ->
 	resultLow = 0xffffffff & ((((rh % divide) << 32) + (rl & 0xffffffff)) / divide)
 
 	(resultHigh << 32) | resultLow
+
+bits = 0
+bitand = (bita, bitb) =>
+	bits++
+	if bita == 'undefined' || bita == false || bita == null
+		a.a()
+		throw new IllegalStateException('Bita is undefined')
+	if bitb == 'undefined' || bitb == false || bitb == null
+		a.a()
+		throw new IllegalStateException('Bitb is undefined')
+	return bita & bitb
 
 class TimerResponsive
 	constructor: ->
