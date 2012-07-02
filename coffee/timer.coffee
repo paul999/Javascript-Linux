@@ -35,11 +35,6 @@ class Timer
 		@myOwner.update(@)
 
 	check: (time) ->
-		log "Check #{time}"
-
-		log "Enabled: #{@enable}. Expire: #{@expireTime}"
-		log (@enable && time >= @expireTime)
-
 		log time >= @expireTime
 
 		if (@enable && time >= @expireTime)

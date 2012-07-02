@@ -24,8 +24,6 @@ class RealModeSegment extends Segment
 		@defaultSize = false
 #		@defaultSize = true
 
-		log "Base of this: " + @base
-
 	translateAddressRead: (offset) ->
 		return @base + offset
 		return offset

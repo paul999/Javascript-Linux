@@ -100,28 +100,28 @@ int = (x) =>
 	return result
 
 numberOfSetBits = (i) ->
-	i = i - ((i >> 1) & 0x55555555)
-	i = (i & 0x33333333) + ((i >> 2) & 0x33333333)
-	return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24
+	i = i - bitand((i >> 1), 0x55555555)
+	i = bitand(i, 0x33333333) + bitand((i >> 2), 0x33333333)
+	return (bitand((i + (i >> 4)), 0x0F0F0F0F) * 0x01010101) >> 24
 
 scale64 = (input,multiply,devide) ->
-	rl = (0xffffffff & input) * multiply
+	rl = bitand(0xffffffff, input) * multiply
 	rh = (input >>> 32) * multiply
 
 	rh += (rl >> 32)
 
-	resultHigh = 0xffffffff & (rh / divide)
-	resultLow = 0xffffffff & ((((rh % divide) << 32) + (rl & 0xffffffff)) / divide)
+	resultHigh = bitand 0xffffffff, (rh / divide)
+	resultLow = bitand 0xffffffff, ((((rh % divide) << 32) + bitand(rl, 0xffffffff)) / divide)
 
 	(resultHigh << 32) | resultLow
 
 bits = 0
 bitand = (bita, bitb) =>
 	bits++
-	if bita == 'undefined' || bita == false || bita == null
+	if bita == 'undefined' || bita == null
 		a.a()
 		throw new IllegalStateException('Bita is undefined')
-	if bitb == 'undefined' || bitb == false || bitb == null
+	if bitb == 'undefined' || bitb == null
 		a.a()
 		throw new IllegalStateException('Bitb is undefined')
 	return bita & bitb

@@ -311,8 +311,6 @@ class processor
 
 		return result
 	acceptComponent: (component) ->
-		log "Got a " + component + " for proc"
-
 		if (component instanceof IOPortHandler && !@ioports)
 			@ioports = component
 
@@ -832,18 +830,11 @@ class processor
 			a.a()
 			throw "dead"
 			return
+		if i == 78095
+			a.a()
 
-		if (@nextstop)
-			log "78904 received"
-			a.a();
-			throw "dead"
-			return
-		if (i == 78096)
-			@nextstop = true
-		else
-			@nextstop = false
 
-		if (i == 12312)
-			a.a();
+		if (i == 0)
+			throw new IllegalStateException("new EIP is set to 0")
 
 		@ip = i

@@ -40,7 +40,6 @@ class InterruptController
 		return (@cpuFound && @ioportRegistrered);
 
 	acceptComponent: (component) ->
-		log "acceptComponent on Interrupt"
 		if (component instanceof processor)
 			@cpuFound = true
 

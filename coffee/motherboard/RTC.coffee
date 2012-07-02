@@ -90,7 +90,6 @@ class RTC
 		return [@ioPortBase, @ioPortBase+1]
 
 	acceptComponent: (component) ->
-		log "acceptComponent on RTC with #{component}"
 		if (component instanceof InterruptController) && component.initialised()
 			@irqDevice = component
 

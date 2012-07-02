@@ -54,7 +54,7 @@ class PC
 
 		tmp = 0x1000
 
-		tmp2 = tmp & 0xff
+		tmp2 = bitand tmp, 0xff
 		log tmp
 		log tmp2
 
@@ -223,7 +223,7 @@ class PC
 		st = "console=ttyS0 root=/dev/hda ro init=/sbin/init notsc=1"
 		loc = 0xf800 #& 0xff
 		for i in [0...st.length]
-			if (!window.pc.setMemory(8, loc+i, (st.charCodeAt(i) & 0xff)))
+			if (!window.pc.setMemory(8, loc+i, bitand(st.charCodeAt(i), 0xff)))
 				throw new memoryOutOfBound()
 			loc++
 

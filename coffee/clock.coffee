@@ -32,8 +32,6 @@ class clock
 	process: ->
 		tempTimer = @timers.peek()
 
-		log "Ik ben een tempTimer: #{tempTimer}"
-
 		if ((tempTimer == null) || !tempTimer.check(@getTime()))
 			return false
 		else
@@ -41,7 +39,6 @@ class clock
 
 
 	updateAndProcess: (instructions) ->
-		log "updateAndProcess(#{instructions})"
 		@totalTicks += instructions
 		@currentTime += instructions * @NSPI
 		@process()
@@ -64,8 +61,6 @@ class clock
 
 	getTime: ->
 		if (@ticksEnabled)
-			log "real: #{@getRealTime()} + offset: #{@ticksOffset}"
-
 			return @getRealTime() + @ticksOffset
 		else
 			return @ticksStatic
