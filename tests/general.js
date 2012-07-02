@@ -38,13 +38,11 @@ QUnit.test("And", function()
 {
 	raises(function(){bitand(a, 1);}, "Test if bitand throws a exception when bita is undefined")
 	raises(function(){bitand(null, 1);}, "Test if bitand throws a exception when bita is null")
-	raises(function(){bitand(false, 1);}, "Test if bitand throws a exception when bita is false")
-
 
 	raises(function(){bitand(1, a);}, "Test if bitand throws a exception when bitb is undefined")
 	raises(function(){bitand(1, null);}, "Test if bitand throws a exception when bitb is null")
-	raises(function(){bitand(1, false);}, "Test if bitand throws a exception when bitb is false")
 
 	equal(bitand(1, 1), 1, "test if 1 & 1 == 1");
-	equal(bitand(85, 0x7), 5);
+	equal(bitand(85, 0x7), 5, "test if 85 & 0x7 == 5");
+	equal(bitand(0, 0), 0, "test if 0 & 0 == 0");
 });
