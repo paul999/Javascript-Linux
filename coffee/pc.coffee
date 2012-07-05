@@ -26,6 +26,16 @@ class PC
 		log "pc.construct"
 		proc = null
 		sgm = null
+
+	reset: ->
+		proc = null
+		sgm = null
+		@running = false
+		@created = false
+
+		term.close()
+		term.reset()
+		@create()
 	create: ->
 		if (@created)
 			return true
