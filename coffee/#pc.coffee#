@@ -332,13 +332,13 @@ class PC
 			tmp.getError()
 			return false
 
-#		len = @getMemoryLength(type, offset)
-#		if (!len)
-#			log "Memory returned a zero length."
-#		if (offset > len)
+		len = @getMemoryLength(type, offset)
+		if (!len)
+			log "Memory returned a zero length."
+		if (offset > len)
 #			log "Set memory length error: len: #{len} offset: #{offset} result: " + (offset > len)
 			#tmp.getError()
-#			return false
+			return false
 
 #		log "Saving memory type: #{type}, offset: #{offset}, data: #{data}"
 
